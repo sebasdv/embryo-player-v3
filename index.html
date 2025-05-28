@@ -1085,13 +1085,18 @@
         /* Menú contextual */
         .context-menu {
             position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: var(--bg-color);
             border: 2px solid var(--shadow-color-dark);
             box-shadow: 4px 4px 0 var(--shadow-color-dark);
-            padding: 10px;
+            padding: 18px 16px 12px 16px;
             z-index: 1000;
             display: none;
-            min-width: 150px;
+            min-width: 200px;
+            border-radius: 10px;
+            text-align: center;
         }
 
         .context-menu-item {
@@ -1148,12 +1153,24 @@
 
     <div id="help-modal" class="help-modal">
         <div class="help-content">
-            <h3>Controls</h3>
+            <h3>Controles</h3>
             <ul>
-                <li>Double-click: Open sample slicer</li>
-                <li>Long press + tap: Move sample to another pad</li>
-                <li>Keyboard mapping: 1234/QWER/ASDF/ZXCV → Pads 1-16</li>
-                <li>Input methods: 🖱️ Mouse/Touch • ⌨️ Keyboard • 🎹 MIDI</li>
+                <li>🖱️ <strong>Click/Tap:</strong> Reproducir sample</li>
+                <li>⏱️ <strong>Long press (2s):</strong> Abrir menú contextual</li>
+                <li>🔪 <strong>Botón Slicer:</strong> Activar modo de corte de samples</li>
+                <li>⌨️ <strong>Teclado:</strong> 1234/QWER/ASDF/ZXCV → Pads 1-16</li>
+                <li>🎹 <strong>MIDI:</strong> Soporte para controladores MIDI</li>
+            </ul>
+            <h3>Menú Contextual</h3>
+            <ul>
+                <li>🗑️ <strong>Eliminar:</strong> Quitar sample del pad</li>
+            </ul>
+            <h3>Secuenciador</h3>
+            <ul>
+                <li>⏺️ <strong>REC:</strong> Grabar secuencia</li>
+                <li>▶️ <strong>PLAY:</strong> Reproducir secuencia</li>
+                <li>⏹️ <strong>STOP:</strong> Detener reproducción</li>
+                <li>🗑️ <strong>CLEAR:</strong> Borrar secuencia</li>
             </ul>
             <button class="close-help">×</button>
         </div>
@@ -2023,24 +2040,14 @@
             showContextMenu(padNumber) {
                 const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
                 if (!pad) return;
-                
-                const rect = pad.getBoundingClientRect();
                 const menu = this.contextMenu.element;
-                
-                // Posicionar el menú
-                menu.style.left = rect.left + 'px';
-                menu.style.top = rect.bottom + 5 + 'px';
-                
-                // Mostrar el menú
+                // El menú ahora siempre está centrado, no se posiciona relativo al pad
                 menu.style.display = 'block';
                 this.contextMenu.targetPad = padNumber;
                 this.contextMenu.isActive = true;
-                
-                // Feedback táctil
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
-                
                 this.updateStatus('Menú contextual abierto - Pad ' + padNumber);
             }
             
