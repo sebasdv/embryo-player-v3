@@ -442,21 +442,7 @@
 
         /* Estado para mover samples */
         .pad.selected-for-move {
-            border: 3px solid var(--shadow-color-dark);
-            background: var(--shadow-color-light);
-            box-shadow: 0 0 20px var(--shadow-color-dark);
-            animation: selectedPulse 1.5s steps(4) infinite;
-        }
-
-        @keyframes selectedPulse {
-            0%, 100% { 
-                border-color: var(--shadow-color-dark);
-                box-shadow: 0 0 20px var(--shadow-color-dark);
-            }
-            50% { 
-                border-color: var(--shadow-color-light);
-                box-shadow: 0 0 25px var(--shadow-color-dark);
-            }
+            display: none;
         }
 
         /* Estados de Drag & Drop */
@@ -703,25 +689,7 @@
 
         /* Indicador de move operation */
         .move-indicator {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--shadow-color-dark);
-            color: var(--bg-color);
-            padding: 8px 12px;
-            border: 2px solid var(--shadow-color-dark);
-            box-shadow: 4px 4px 0 var(--shadow-color-dark);
-            font-size: 10px;
-            font-weight: bold;
-            z-index: 20;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .pad.selected-for-move .move-indicator {
-            opacity: 1;
+            display: none;
         }
 
         .pad:hover {
@@ -1106,6 +1074,13 @@
                 font-size: 12px;
             }
         }
+
+        /* Nuevo estilo para el botón Slicer */
+        #slicer-mode.active {
+            background-color: var(--shadow-color-dark);
+            color: var(--bg-color) !important;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -1168,9 +1143,7 @@
         <div class="header-row">
             <button id="load-samples" class="header-button btn-load">Load Samples</button>
             <button id="clear-bank" class="header-button">Clear Bank</button>
-            <div class="header-button" style="background: transparent; box-shadow: none; font-size: 11px; color: var(--braun-grey); text-align: center;">
-                SOON!
-            </div>
+            <button id="slicer-mode" class="header-button">Slicer</button>
             <div class="empty-space"></div>
         </div>
     </div>
@@ -1236,7 +1209,9 @@
         const MAX_BPM = 200;
         const PRE_COUNT_BARS = 1;
         const BAR_COUNT = 4;
-        const LONG_PRESS_DURATION = 1200; // Long press para move samples
+        const LONG_PRESS_DURATION = 800; // Reducido de 1200ms para mejor respuesta
+        const DOUBLE_TAP_DURATION = 400; // Aumentado de 300ms para mejor detección
+        const TAP_DURATION = 200; // Nuevo: duración máxima para considerar un tap
         const BPM_LONG_PRESS_DELAY = 300; // Delay para iniciar cambios rápidos de BPM
         const BPM_RAPID_INTERVAL = 150; // Intervalo para cambios rápidos de BPM
 
@@ -1552,12 +1527,9 @@
                 this.slicerSourceBuffer = null;
                 this.slices = {};
 
-                // Move Samples
-                this.moveState = {
-                    isActive: false,
-                    sourcePad: null,
-                    longPressTimer: null,
-                    isPressing: false
+                // Eliminar moveState y reemplazar por slicerMode
+                this.slicerMode = {
+                    isActive: false
                 };
                 
                 // NEW: Controladores especializados
@@ -1623,6 +1595,11 @@
                 
                 // Responsive
                 window.addEventListener('resize', function() { self.resizeCanvases(); });
+                
+                // Nuevo evento para el botón Slicer
+                document.getElementById('slicer-mode').addEventListener('click', function() {
+                    self.toggleSlicerMode();
+                });
             }
             
             /**
@@ -1755,77 +1732,46 @@
                 pad.addEventListener('mousedown', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.startLongPress(padNumber);
+                    self.handlePadInteraction(padNumber);
                 });
                 
                 pad.addEventListener('mouseup', function(e) {
                     e.preventDefault();
-                    if (self.moveState.isActive) {
-                        self.executeMoveOperation(padNumber);
-                        return;
-                    }
-                    self.cancelLongPress();
-                    if (self.moveState.isPressing) {
-                        if (e.detail === 2) return; // Evitar doble clic
+                    if (!self.slicerMode.isActive) {
                         self.padController.triggerPad(padNumber, 127, 'mouse');
                     }
-                });
-                
-                pad.addEventListener('mouseleave', function() {
-                    self.cancelLongPress();
                 });
                 
                 // Touch events
                 pad.addEventListener('touchstart', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.startLongPress(padNumber);
-                    
-                    // Detección de doble tap
-                    const now = Date.now();
-                    const timeSinceLastTap = now - (self.lastTapTime || 0);
-                    const lastTappedPad = self.lastTappedPad;
-                    
-                    self.lastTapTime = now;
-                    self.lastTappedPad = padNumber;
-                    
-                    if (timeSinceLastTap < 300 && lastTappedPad === padNumber) {
-                        self.cancelLongPress();
-                        self.openSlicerModal(padNumber);
-                        return;
-                    }
+                    self.handlePadInteraction(padNumber);
                 });
                 
                 pad.addEventListener('touchend', function(e) {
                     e.preventDefault();
-                    if (self.moveState.isActive) {
-                        self.executeMoveOperation(padNumber);
-                        return;
+                    if (!self.slicerMode.isActive) {
+                        self.padController.triggerPad(padNumber, 127, 'touch');
                     }
-                    self.cancelLongPress();
-                    if (self.moveState.isPressing) {
-                        setTimeout(function() {
-                            const currentTime = Date.now();
-                            if (currentTime - self.lastTapTime >= 250) {
-                                self.padController.triggerPad(padNumber, 127, 'touch');
-                                self.touchedPads.add(padNumber);
-                            }
-                        }, 250);
-                    }
-                    self.touchedPads.delete(padNumber);
                 });
                 
                 pad.addEventListener('touchcancel', function() {
-                    self.cancelLongPress();
                     self.touchedPads.delete(padNumber);
                 });
-                
-                // Doble clic para slicer
-                pad.addEventListener('dblclick', function(e) {
-                    e.preventDefault();
-                    self.cancelLongPress();
-                    self.openSlicerModal(padNumber);
-                });
+            }
+            
+            // Nuevo método para manejar la interacción con los pads
+            handlePadInteraction(padNumber) {
+                if (this.slicerMode.isActive) {
+                    if (this.samples[padNumber]) {
+                        this.openSlicerModal(padNumber);
+                        this.toggleSlicerMode(); // Desactivar modo slicer después de abrir el modal
+                    } else {
+                        this.updateStatus('❌ No hay sample en este pad para cortar');
+                        this.toggleSlicerMode(); // Desactivar modo slicer si no hay sample
+                    }
+                }
             }
             
             // REPRODUCCIÓN Y CONTROL DE AUDIO
@@ -3280,6 +3226,20 @@
                 this.currentBar = 0;
                 this.updateBarBeatDisplay();
                 this.updateStatus('Sequence Deleted');
+            }
+            
+            // Nuevo método para toggle del modo Slicer
+            toggleSlicerMode() {
+                this.slicerMode.isActive = !this.slicerMode.isActive;
+                const slicerBtn = document.getElementById('slicer-mode');
+                
+                if (this.slicerMode.isActive) {
+                    slicerBtn.classList.add('active');
+                    this.updateStatus('🔪 Slicer Mode: ON - Select a sample to slice');
+                } else {
+                    slicerBtn.classList.remove('active');
+                    this.updateStatus('Slicer Mode: OFF');
+                }
             }
         }
         
