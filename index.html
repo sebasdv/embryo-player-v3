@@ -1081,6 +1081,56 @@
             color: var(--bg-color) !important;
             font-weight: bold;
         }
+
+        /* Menú contextual */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            padding: 10px;
+            z-index: 1000;
+            display: none;
+            min-width: 150px;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background: var(--shadow-color-light);
+        }
+
+        .context-menu-item.delete {
+            color: var(--braun-red);
+        }
+
+        .context-menu-item i {
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .context-menu {
+                min-width: 180px;
+            }
+
+            .context-menu-item {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+
+            .context-menu-item i {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1177,6 +1227,14 @@
     <footer>
         <p>Embrio Player v3.0 - WIP </p>
     </footer>
+
+    <!-- Menú contextual -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item delete" data-action="delete">
+            <i class="fas fa-trash"></i>
+            <span>Eliminar muestra</span>
+        </div>
+    </div>
 
     <script>
         /**
@@ -1536,6 +1594,15 @@
                 this.padController = new PadController(this);
                 this.bpmController = new BPMController(this);
                 
+                // Nuevo: Variables para el menú contextual
+                this.contextMenu = {
+                    element: null,
+                    targetPad: null,
+                    longPressTimer: null,
+                    longPressDuration: 2000, // 2 segundos
+                    isActive: false
+                };
+                
                 // Inicializar
                 this.initEventListeners();
                 this.loadSampleInfoFromStorage();
@@ -1599,6 +1666,27 @@
                 // Nuevo evento para el botón Slicer
                 document.getElementById('slicer-mode').addEventListener('click', function() {
                     self.toggleSlicerMode();
+                });
+                
+                // Inicializar menú contextual
+                this.contextMenu.element = document.getElementById('context-menu');
+                
+                // Cerrar menú al hacer clic fuera
+                document.addEventListener('click', function(e) {
+                    if (!self.contextMenu.element.contains(e.target)) {
+                        self.hideContextMenu();
+                    }
+                });
+                
+                // Eventos del menú contextual
+                this.contextMenu.element.querySelectorAll('.context-menu-item').forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        const action = this.dataset.action;
+                        if (action === 'delete' && self.contextMenu.targetPad) {
+                            self.deletePadSample(self.contextMenu.targetPad);
+                        }
+                        self.hideContextMenu();
+                    });
                 });
             }
             
@@ -1732,31 +1820,38 @@
                 pad.addEventListener('mousedown', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.handlePadInteraction(padNumber);
+                    self.startLongPress(padNumber);
                 });
                 
                 pad.addEventListener('mouseup', function(e) {
                     e.preventDefault();
-                    if (!self.slicerMode.isActive) {
+                    self.cancelLongPress();
+                    if (!self.contextMenu.isActive) {
                         self.padController.triggerPad(padNumber, 127, 'mouse');
                     }
+                });
+                
+                pad.addEventListener('mouseleave', function() {
+                    self.cancelLongPress();
                 });
                 
                 // Touch events
                 pad.addEventListener('touchstart', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.handlePadInteraction(padNumber);
+                    self.startLongPress(padNumber);
                 });
                 
                 pad.addEventListener('touchend', function(e) {
                     e.preventDefault();
-                    if (!self.slicerMode.isActive) {
+                    self.cancelLongPress();
+                    if (!self.contextMenu.isActive) {
                         self.padController.triggerPad(padNumber, 127, 'touch');
                     }
                 });
                 
                 pad.addEventListener('touchcancel', function() {
+                    self.cancelLongPress();
                     self.touchedPads.delete(padNumber);
                 });
             }
@@ -1910,29 +2005,49 @@
             
             // FUNCIONALIDAD DE MOVER SAMPLES (MEJORADA)
             startLongPress(padNumber) {
-                this.cancelLongPress();
-                
-                if (!this.samples[padNumber]) {
-                    return;
-                }
-                
-                this.moveState.isPressing = true;
+                if (!this.samples[padNumber]) return;
                 
                 const self = this;
-                this.moveState.longPressTimer = setTimeout(function() {
-                    if (self.moveState.isPressing) {
-                        self.activateMoveMode(padNumber);
-                    }
-                }, LONG_PRESS_DURATION);
+                this.contextMenu.longPressTimer = setTimeout(function() {
+                    self.showContextMenu(padNumber);
+                }, this.contextMenu.longPressDuration);
             }
             
             cancelLongPress() {
-                this.moveState.isPressing = false;
-                
-                if (this.moveState.longPressTimer) {
-                    clearTimeout(this.moveState.longPressTimer);
-                    this.moveState.longPressTimer = null;
+                if (this.contextMenu.longPressTimer) {
+                    clearTimeout(this.contextMenu.longPressTimer);
+                    this.contextMenu.longPressTimer = null;
                 }
+            }
+            
+            showContextMenu(padNumber) {
+                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (!pad) return;
+                
+                const rect = pad.getBoundingClientRect();
+                const menu = this.contextMenu.element;
+                
+                // Posicionar el menú
+                menu.style.left = rect.left + 'px';
+                menu.style.top = rect.bottom + 5 + 'px';
+                
+                // Mostrar el menú
+                menu.style.display = 'block';
+                this.contextMenu.targetPad = padNumber;
+                this.contextMenu.isActive = true;
+                
+                // Feedback táctil
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                
+                this.updateStatus('Menú contextual abierto - Pad ' + padNumber);
+            }
+            
+            hideContextMenu() {
+                this.contextMenu.element.style.display = 'none';
+                this.contextMenu.targetPad = null;
+                this.contextMenu.isActive = false;
             }
             
             activateMoveMode(sourcePadNumber) {
