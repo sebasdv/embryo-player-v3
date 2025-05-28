@@ -1091,22 +1091,41 @@
             background: var(--bg-color);
             border: 2px solid var(--shadow-color-dark);
             box-shadow: 4px 4px 0 var(--shadow-color-dark);
-            padding: 18px 16px 12px 16px;
+            padding: 0;
             z-index: 1000;
             display: none;
-            min-width: 200px;
+            min-width: 250px;
             border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .context-menu-header {
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            padding: 12px;
             text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 2px solid var(--shadow-color-dark);
+        }
+
+        .context-menu-section {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--shadow-color-light);
+        }
+
+        .context-menu-section:last-child {
+            border-bottom: none;
         }
 
         .context-menu-item {
-            padding: 10px 15px;
+            padding: 12px 16px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-color);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             transition: all 0.2s ease;
         }
 
@@ -1114,26 +1133,100 @@
             background: var(--shadow-color-light);
         }
 
+        .context-menu-item i {
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+
         .context-menu-item.delete {
             color: var(--braun-red);
         }
 
-        .context-menu-item i {
-            font-size: 14px;
-        }
-
         @media (max-width: 768px) {
             .context-menu {
-                min-width: 180px;
+                min-width: 280px;
             }
 
             .context-menu-item {
-                padding: 12px 15px;
+                padding: 14px 16px;
                 font-size: 14px;
             }
 
             .context-menu-item i {
                 font-size: 16px;
+            }
+        }
+
+        /* Estilos para el control de volumen */
+        .volume-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        #volume-slider {
+            width: 100%;
+            height: 30px;
+            -webkit-appearance: none;
+            background: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            cursor: pointer;
+        }
+
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 30px;
+            height: 30px;
+            background: var(--shadow-color-dark);
+            cursor: pointer;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        #volume-slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: var(--shadow-color-dark);
+            cursor: pointer;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        #volume-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+            text-align: center;
+            min-width: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .volume-control {
+                gap: 10px;
+                margin: 15px 0;
+            }
+
+            #volume-slider {
+                height: 25px;
+            }
+
+            #volume-slider::-webkit-slider-thumb {
+                width: 25px;
+                height: 25px;
+            }
+
+            #volume-slider::-moz-range-thumb {
+                width: 25px;
+                height: 25px;
+            }
+
+            #volume-value {
+                font-size: 14px;
             }
         }
     </style>
@@ -1247,9 +1340,86 @@
 
     <!-- Menú contextual -->
     <div id="context-menu" class="context-menu">
-        <div class="context-menu-item delete" data-action="delete">
-            <i class="fas fa-trash"></i>
-            <span>Eliminar muestra</span>
+        <div class="context-menu-header">
+            <span>Editar Muestra</span>
+        </div>
+        <div class="context-menu-section">
+            <div class="context-menu-item" data-action="volume">
+                <i class="fas fa-volume-up"></i>
+                <span>Volumen</span>
+            </div>
+            <div class="context-menu-item" data-action="reverse">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Invertir</span>
+            </div>
+            <div class="context-menu-item" data-action="normalize">
+                <i class="fas fa-compress-arrows-alt"></i>
+                <span>Normalizar</span>
+            </div>
+            <div class="context-menu-item" data-action="trim">
+                <i class="fas fa-cut"></i>
+                <span>Recortar</span>
+            </div>
+        </div>
+        <div class="context-menu-section">
+            <div class="context-menu-item" data-action="pitch">
+                <i class="fas fa-music"></i>
+                <span>Pitch</span>
+            </div>
+            <div class="context-menu-item" data-action="speed">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Velocidad</span>
+            </div>
+            <div class="context-menu-item" data-action="fade">
+                <i class="fas fa-wave-square"></i>
+                <span>Fade In/Out</span>
+            </div>
+            <div class="context-menu-item" data-action="loop">
+                <i class="fas fa-redo"></i>
+                <span>Loop</span>
+            </div>
+        </div>
+        <div class="context-menu-section">
+            <div class="context-menu-item" data-action="rename">
+                <i class="fas fa-font"></i>
+                <span>Renombrar</span>
+            </div>
+            <div class="context-menu-item" data-action="duplicate">
+                <i class="fas fa-copy"></i>
+                <span>Duplicar</span>
+            </div>
+            <div class="context-menu-item" data-action="move-bank">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Mover a Banco</span>
+            </div>
+            <div class="context-menu-item" data-action="export">
+                <i class="fas fa-file-export"></i>
+                <span>Exportar</span>
+            </div>
+        </div>
+        <div class="context-menu-section">
+            <div class="context-menu-item delete" data-action="delete">
+                <i class="fas fa-trash"></i>
+                <span>Eliminar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Control de Volumen -->
+    <div id="volume-modal" class="slicer-modal">
+        <div class="slicer-panel">
+            <div class="slicer-title">🔊 Control de Volumen</div>
+            <div id="volume-info" class="slicer-info">
+                Ajustar volumen de la muestra
+            </div>
+            <div class="volume-control">
+                <input type="range" id="volume-slider" min="0" max="200" value="100" step="1">
+                <div id="volume-value">100%</div>
+            </div>
+            <div class="slicer-actions">
+                <button class="slicer-btn" id="apply-volume">Aplicar</button>
+                <button class="slicer-cancel" onclick="embryoPlayer.closeVolumeModal()">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -1623,6 +1793,24 @@
                 // Inicializar
                 this.initEventListeners();
                 this.loadSampleInfoFromStorage();
+                
+                // Nuevo: Estado para edición de audio
+                this.audioEditState = {
+                    volume: 1.0,
+                    pitch: 1.0,
+                    speed: 1.0,
+                    isReversed: false,
+                    isLooping: false,
+                    fadeIn: 0,
+                    fadeOut: 0
+                };
+
+                // Nuevo: Estado para el control de volumen
+                this.volumeState = {
+                    currentPad: null,
+                    originalVolume: 1.0,
+                    currentVolume: 1.0
+                };
             }
             
             // INICIALIZACIÓN Y CONFIGURACIÓN
@@ -1696,13 +1884,13 @@
                 });
                 
                 // Eventos del menú contextual
-                this.contextMenu.element.querySelectorAll('.context-menu-item').forEach(function(item) {
-                    item.addEventListener('click', function() {
-                        const action = this.dataset.action;
-                        if (action === 'delete' && self.contextMenu.targetPad) {
-                            self.deletePadSample(self.contextMenu.targetPad);
+                this.contextMenu.element.querySelectorAll('.context-menu-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const action = e.currentTarget.dataset.action;
+                        if (this.contextMenu.targetPad) {
+                            this.handleContextMenuAction(action, this.contextMenu.targetPad);
                         }
-                        self.hideContextMenu();
+                        this.hideContextMenu();
                     });
                 });
             }
@@ -3362,6 +3550,189 @@
                     slicerBtn.classList.remove('active');
                     this.updateStatus('Slicer Mode: OFF');
                 }
+            }
+
+            handleContextMenuAction(action, padNumber) {
+                switch(action) {
+                    case 'volume':
+                        this.showVolumeControl(padNumber);
+                        break;
+                    case 'reverse':
+                        this.reverseSample(padNumber);
+                        break;
+                    case 'normalize':
+                        this.normalizeSample(padNumber);
+                        break;
+                    case 'trim':
+                        this.showTrimControl(padNumber);
+                        break;
+                    case 'pitch':
+                        this.showPitchControl(padNumber);
+                        break;
+                    case 'speed':
+                        this.showSpeedControl(padNumber);
+                        break;
+                    case 'fade':
+                        this.showFadeControl(padNumber);
+                        break;
+                    case 'loop':
+                        this.toggleLoop(padNumber);
+                        break;
+                    case 'rename':
+                        this.showRenameDialog(padNumber);
+                        break;
+                    case 'duplicate':
+                        this.duplicateSample(padNumber);
+                        break;
+                    case 'move-bank':
+                        this.showMoveBankDialog(padNumber);
+                        break;
+                    case 'export':
+                        this.exportSample(padNumber);
+                        break;
+                    case 'delete':
+                        this.deletePadSample(padNumber);
+                        break;
+                }
+            }
+
+            // Nuevos métodos para manejar las acciones del menú contextual
+            showVolumeControl(padNumber) {
+                if (!this.samples[padNumber]) {
+                    this.updateStatus('❌ No hay sample en este pad para ajustar el volumen');
+                    return;
+                }
+
+                this.volumeState.currentPad = padNumber;
+                this.volumeState.originalVolume = this.audioEditState.volume;
+                this.volumeState.currentVolume = this.audioEditState.volume;
+
+                const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
+                document.getElementById('volume-info').textContent = `Ajustar volumen de "${sampleName}"`;
+
+                const slider = document.getElementById('volume-slider');
+                const valueDisplay = document.getElementById('volume-value');
+                
+                // Convertir el volumen actual a porcentaje (0-200%)
+                const volumePercent = Math.round(this.audioEditState.volume * 100);
+                slider.value = volumePercent;
+                valueDisplay.textContent = volumePercent + '%';
+
+                // Evento para actualizar el valor mostrado
+                slider.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    valueDisplay.textContent = value + '%';
+                    this.volumeState.currentVolume = value / 100;
+                });
+
+                // Evento para aplicar el volumen
+                document.getElementById('apply-volume').onclick = () => {
+                    this.applyVolumeChange(padNumber);
+                };
+
+                document.getElementById('volume-modal').style.display = 'flex';
+                this.updateStatus('🔊 Ajustando volumen del Pad ' + padNumber);
+            }
+
+            closeVolumeModal() {
+                document.getElementById('volume-modal').style.display = 'none';
+                this.volumeState.currentPad = null;
+                this.volumeState.currentVolume = 1.0;
+                this.updateStatus('Control de volumen cerrado');
+            }
+
+            applyVolumeChange(padNumber) {
+                if (!this.samples[padNumber]) return;
+
+                const newVolume = this.volumeState.currentVolume;
+                this.audioEditState.volume = newVolume;
+
+                // Crear un nuevo buffer con el volumen ajustado
+                const sourceBuffer = this.samples[padNumber];
+                const numberOfChannels = sourceBuffer.numberOfChannels;
+                const length = sourceBuffer.length;
+                const sampleRate = sourceBuffer.sampleRate;
+
+                const newBuffer = this.audioContext.createBuffer(
+                    numberOfChannels,
+                    length,
+                    sampleRate
+                );
+
+                // Aplicar el volumen a cada canal
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const channelData = sourceBuffer.getChannelData(channel);
+                    const newChannelData = newBuffer.getChannelData(channel);
+
+                    for (let i = 0; i < length; i++) {
+                        newChannelData[i] = channelData[i] * newVolume;
+                    }
+                }
+
+                // Actualizar el sample con el nuevo buffer
+                this.samples[padNumber] = newBuffer;
+                this.bankSamples[this.currentBank][padNumber] = newBuffer;
+
+                // Reproducir el sample para feedback
+                this.playPad(padNumber);
+
+                this.closeVolumeModal();
+                this.updateStatus(`✅ Volumen ajustado a ${Math.round(newVolume * 100)}%`);
+            }
+
+            reverseSample(padNumber) {
+                // TODO: Implementar inversión de sample
+                this.updateStatus('Inversión de sample - En desarrollo');
+            }
+
+            normalizeSample(padNumber) {
+                // TODO: Implementar normalización
+                this.updateStatus('Normalización - En desarrollo');
+            }
+
+            showTrimControl(padNumber) {
+                // TODO: Implementar control de recorte
+                this.updateStatus('Control de recorte - En desarrollo');
+            }
+
+            showPitchControl(padNumber) {
+                // TODO: Implementar control de pitch
+                this.updateStatus('Control de pitch - En desarrollo');
+            }
+
+            showSpeedControl(padNumber) {
+                // TODO: Implementar control de velocidad
+                this.updateStatus('Control de velocidad - En desarrollo');
+            }
+
+            showFadeControl(padNumber) {
+                // TODO: Implementar control de fade
+                this.updateStatus('Control de fade - En desarrollo');
+            }
+
+            toggleLoop(padNumber) {
+                // TODO: Implementar loop
+                this.updateStatus('Loop - En desarrollo');
+            }
+
+            showRenameDialog(padNumber) {
+                // TODO: Implementar renombrado
+                this.updateStatus('Renombrar - En desarrollo');
+            }
+
+            duplicateSample(padNumber) {
+                // TODO: Implementar duplicación
+                this.updateStatus('Duplicar - En desarrollo');
+            }
+
+            showMoveBankDialog(padNumber) {
+                // TODO: Implementar mover a otro banco
+                this.updateStatus('Mover a banco - En desarrollo');
+            }
+
+            exportSample(padNumber) {
+                // TODO: Implementar exportación
+                this.updateStatus('Exportar - En desarrollo');
             }
         }
         
