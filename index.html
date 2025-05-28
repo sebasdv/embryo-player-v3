@@ -1423,6 +1423,24 @@
         </div>
     </div>
 
+    <!-- Modal de Control de Pitch -->
+    <div id="pitch-modal" class="slicer-modal">
+        <div class="slicer-panel">
+            <div class="slicer-title">🎵 Control de Pitch</div>
+            <div id="pitch-info" class="slicer-info">
+                Ajustar pitch de la muestra
+            </div>
+            <div class="volume-control">
+                <input type="range" id="pitch-slider" min="-12" max="12" value="0" step="1">
+                <div id="pitch-value">0 semitonos</div>
+            </div>
+            <div class="slicer-actions">
+                <button class="slicer-btn" id="apply-pitch">Aplicar</button>
+                <button class="slicer-cancel" onclick="embryoPlayer.closePitchModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         /**
          * Embrio Player v3.0
@@ -1811,6 +1829,19 @@
                     originalVolume: 1.0,
                     currentVolume: 1.0
                 };
+
+                // Nuevo: Mapa para almacenar el volumen de cada pad
+                this.padVolumes = {};
+
+                // Nuevo: Estado para el control de pitch
+                this.pitchState = {
+                    currentPad: null,
+                    originalPitch: 0,
+                    currentPitch: 0
+                };
+
+                // Nuevo: Mapa para almacenar el pitch de cada pad
+                this.padPitches = {};
             }
             
             // INICIALIZACIÓN Y CONFIGURACIÓN
@@ -2025,13 +2056,17 @@
                 pad.addEventListener('mousedown', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.startLongPress(padNumber);
+                    if (self.slicerMode.isActive) {
+                        self.handlePadInteraction(padNumber);
+                    } else {
+                        self.startLongPress(padNumber);
+                    }
                 });
                 
                 pad.addEventListener('mouseup', function(e) {
                     e.preventDefault();
                     self.cancelLongPress();
-                    if (!self.contextMenu.isActive) {
+                    if (!self.contextMenu.isActive && !self.slicerMode.isActive) {
                         self.padController.triggerPad(padNumber, 127, 'mouse');
                     }
                 });
@@ -2044,13 +2079,17 @@
                 pad.addEventListener('touchstart', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                    self.startLongPress(padNumber);
+                    if (self.slicerMode.isActive) {
+                        self.handlePadInteraction(padNumber);
+                    } else {
+                        self.startLongPress(padNumber);
+                    }
                 });
                 
                 pad.addEventListener('touchend', function(e) {
                     e.preventDefault();
                     self.cancelLongPress();
-                    if (!self.contextMenu.isActive) {
+                    if (!self.contextMenu.isActive && !self.slicerMode.isActive) {
                         self.padController.triggerPad(padNumber, 127, 'touch');
                     }
                 });
@@ -2066,11 +2105,12 @@
                 if (this.slicerMode.isActive) {
                     if (this.samples[padNumber]) {
                         this.openSlicerModal(padNumber);
-                        this.toggleSlicerMode(); // Desactivar modo slicer después de abrir el modal
                     } else {
                         this.updateStatus('❌ No hay sample en este pad para cortar');
-                        this.toggleSlicerMode(); // Desactivar modo slicer si no hay sample
                     }
+                    this.toggleSlicerMode(); // Desactivar modo slicer después de la interacción
+                } else {
+                    this.playPad(padNumber);
                 }
             }
             
@@ -2083,7 +2123,17 @@
                 const source = this.createAudioSource(padNumber);
                 const analyser = this.createAnalyser();
                 
-                source.connect(analyser);
+                // Aplicar el volumen guardado si existe
+                const savedVolume = this.padVolumes[padNumber];
+                if (savedVolume !== undefined) {
+                    const gainNode = this.audioContext.createGain();
+                    gainNode.gain.value = savedVolume;
+                    source.connect(gainNode);
+                    gainNode.connect(analyser);
+                } else {
+                    source.connect(analyser);
+                }
+                
                 analyser.connect(this.audioContext.destination);
                 
                 source.start(0);
@@ -3113,30 +3163,28 @@
                 }
             }
             
-            createSlices(sourceBuffer, numSlices) {
+            createSlices(buffer, numSlices) {
+                const sliceLength = Math.floor(buffer.length / numSlices);
                 const slices = [];
-                const totalFrames = sourceBuffer.length;
-                const framesPerSlice = Math.floor(totalFrames / numSlices);
-                const sampleRate = sourceBuffer.sampleRate;
-                const numberOfChannels = sourceBuffer.numberOfChannels;
                 
                 for (let i = 0; i < numSlices; i++) {
-                    const startFrame = i * framesPerSlice;
-                    const endFrame = Math.min(startFrame + framesPerSlice, totalFrames);
-                    const sliceLength = endFrame - startFrame;
+                    const start = i * sliceLength;
+                    const end = (i === numSlices - 1) ? buffer.length : (i + 1) * sliceLength;
                     
+                    // Crear un nuevo buffer para el slice
                     const sliceBuffer = this.audioContext.createBuffer(
-                        numberOfChannels, 
-                        sliceLength, 
-                        sampleRate
+                        buffer.numberOfChannels,
+                        end - start,
+                        buffer.sampleRate
                     );
                     
-                    for (let channel = 0; channel < numberOfChannels; channel++) {
-                        const sourceData = sourceBuffer.getChannelData(channel);
+                    // Copiar los datos del buffer original al slice
+                    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                        const channelData = buffer.getChannelData(channel);
                         const sliceData = sliceBuffer.getChannelData(channel);
                         
-                        for (let frame = 0; frame < sliceLength; frame++) {
-                            sliceData[frame] = sourceData[startFrame + frame];
+                        for (let j = 0; j < end - start; j++) {
+                            sliceData[j] = channelData[start + j];
                         }
                     }
                     
@@ -3604,8 +3652,11 @@
                 }
 
                 this.volumeState.currentPad = padNumber;
-                this.volumeState.originalVolume = this.audioEditState.volume;
-                this.volumeState.currentVolume = this.audioEditState.volume;
+                
+                // Obtener el volumen actual del pad o usar 1.0 si no tiene volumen guardado
+                const currentVolume = this.padVolumes[padNumber] || 1.0;
+                this.volumeState.originalVolume = currentVolume;
+                this.volumeState.currentVolume = currentVolume;
 
                 const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
                 document.getElementById('volume-info').textContent = `Ajustar volumen de "${sampleName}"`;
@@ -3614,7 +3665,7 @@
                 const valueDisplay = document.getElementById('volume-value');
                 
                 // Convertir el volumen actual a porcentaje (0-200%)
-                const volumePercent = Math.round(this.audioEditState.volume * 100);
+                const volumePercent = Math.round(currentVolume * 100);
                 slider.value = volumePercent;
                 valueDisplay.textContent = volumePercent + '%';
 
@@ -3645,7 +3696,9 @@
                 if (!this.samples[padNumber]) return;
 
                 const newVolume = this.volumeState.currentVolume;
-                this.audioEditState.volume = newVolume;
+                
+                // Guardar el volumen en el mapa de volúmenes del pad
+                this.padVolumes[padNumber] = newVolume;
 
                 // Crear un nuevo buffer con el volumen ajustado
                 const sourceBuffer = this.samples[padNumber];
@@ -3696,8 +3749,101 @@
             }
 
             showPitchControl(padNumber) {
-                // TODO: Implementar control de pitch
-                this.updateStatus('Control de pitch - En desarrollo');
+                if (!this.samples[padNumber]) {
+                    this.updateStatus('❌ No hay sample en este pad para ajustar el pitch');
+                    return;
+                }
+
+                this.pitchState.currentPad = padNumber;
+                
+                // Obtener el pitch actual del pad o usar 0 si no tiene pitch guardado
+                const currentPitch = this.padPitches[padNumber] || 0;
+                this.pitchState.originalPitch = currentPitch;
+                this.pitchState.currentPitch = currentPitch;
+
+                const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
+                document.getElementById('pitch-info').textContent = `Ajustar pitch de "${sampleName}"`;
+
+                const slider = document.getElementById('pitch-slider');
+                const valueDisplay = document.getElementById('pitch-value');
+                
+                slider.value = currentPitch;
+                valueDisplay.textContent = currentPitch + ' semitonos';
+
+                // Evento para actualizar el valor mostrado
+                slider.addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    valueDisplay.textContent = value + ' semitonos';
+                    this.pitchState.currentPitch = value;
+                });
+
+                // Evento para aplicar el pitch
+                document.getElementById('apply-pitch').onclick = () => {
+                    this.applyPitchChange(padNumber);
+                };
+
+                document.getElementById('pitch-modal').style.display = 'flex';
+                this.updateStatus('🎵 Ajustando pitch del Pad ' + padNumber);
+            }
+
+            closePitchModal() {
+                document.getElementById('pitch-modal').style.display = 'none';
+                this.pitchState.currentPad = null;
+                this.pitchState.currentPitch = 0;
+                this.updateStatus('Control de pitch cerrado');
+            }
+
+            applyPitchChange(padNumber) {
+                if (!this.samples[padNumber]) return;
+
+                const newPitch = this.pitchState.currentPitch;
+                
+                // Guardar el pitch en el mapa de pitches del pad
+                this.padPitches[padNumber] = newPitch;
+
+                // Crear un nuevo buffer con el pitch ajustado
+                const sourceBuffer = this.samples[padNumber];
+                const numberOfChannels = sourceBuffer.numberOfChannels;
+                const length = sourceBuffer.length;
+                const sampleRate = sourceBuffer.sampleRate;
+
+                // Calcular el factor de pitch (2^(semitones/12))
+                const pitchFactor = Math.pow(2, newPitch / 12);
+                
+                // Crear un nuevo buffer con la duración ajustada
+                const newLength = Math.floor(length / pitchFactor);
+                const newBuffer = this.audioContext.createBuffer(
+                    numberOfChannels,
+                    newLength,
+                    sampleRate
+                );
+
+                // Aplicar el pitch a cada canal
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const channelData = sourceBuffer.getChannelData(channel);
+                    const newChannelData = newBuffer.getChannelData(channel);
+
+                    for (let i = 0; i < newLength; i++) {
+                        // Interpolar entre muestras para suavizar el cambio de pitch
+                        const oldIndex = i * pitchFactor;
+                        const index1 = Math.floor(oldIndex);
+                        const index2 = Math.min(index1 + 1, length - 1);
+                        const fraction = oldIndex - index1;
+                        
+                        newChannelData[i] = channelData[index1] * (1 - fraction) + 
+                                          channelData[index2] * fraction;
+                    }
+                }
+
+                // Actualizar el sample con el nuevo buffer
+                this.samples[padNumber] = newBuffer;
+                this.bankSamples[this.currentBank][padNumber] = newBuffer;
+
+                // Reproducir el sample para feedback
+                this.playPad(padNumber);
+
+                this.closePitchModal();
+                this.updateStatus(`✅ Pitch ajustado a ${newPitch} semitonos`);
             }
 
             showSpeedControl(padNumber) {
