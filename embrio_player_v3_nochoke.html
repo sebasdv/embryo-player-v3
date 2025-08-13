@@ -976,6 +976,85 @@
             }
         }
 
+        /* Estilos para el botón de slicer móvil */
+        .btn-slicer {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+            transition: all 0.2s ease;
+        }
+
+        .btn-slicer:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .btn-slicer:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .btn-slicer:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--shadow-color-dark) !important;
+            color: var(--bg-color) !important;
+            transform: none !important;
+        }
+        
+        /* Responsive para el botón slicer */
+        @media (max-width: 768px) {
+            .btn-slicer {
+                font-size: 10px;
+                padding: 0 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn-slicer {
+                font-size: 8px;
+                padding: 0 2px;
+            }
+        }
+        
+        /* NUEVO: Estilos para indicador de swipe */
+        .swipe-indicator {
+            background: linear-gradient(45deg, var(--accent-color), var(--accent-color-light));
+            color: var(--bg-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px auto;
+            max-width: 400px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation: swipePulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes swipePulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        
+        /* Responsive para indicador de swipe */
+        @media (max-width: 768px) {
+            .swipe-indicator {
+                font-size: 0.8em;
+                padding: 6px 12px;
+                max-width: 350px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .swipe-indicator {
+                font-size: 0.7em;
+                padding: 5px 10px;
+                max-width: 300px;
+            }
+        }
+        
         /* Estilos para botones activos del secuenciador */
         .btn-record.active, .btn-play.active {
             background-color: var(--shadow-color-dark);
@@ -1018,6 +1097,11 @@
             Active methods: 🖱️ Mouse/Touch • ⌨️ Teclado • 🎹 MIDI (disconnected)
         </div>
         
+        <!-- NEW: Swipe Gesture Indicator -->
+        <div id="swipe-indicator" class="swipe-indicator" style="display: none;">
+            <span>👆 Swipe activo - ←→ Cambiar Bank • ↑↓ Ajustar BPM</span>
+        </div>
+        
         <div class="section-title">Sequencer Section</div>
         
         <div class="header-row sequencer-row">
@@ -1047,9 +1131,7 @@
         <div class="header-row">
             <button id="load-samples" class="header-button btn-load">Load Samples</button>
             <button id="clear-bank" class="header-button">Clear Bank</button>
-            <div class="header-button" style="background: transparent; box-shadow: none; font-size: 11px; color: var(--braun-grey); text-align: center;">
-                SOON!
-            </div>
+            <button id="mobile-slicer" class="header-button btn-slicer">🔪 Slicer</button>
             <div class="empty-space"></div>
         </div>
     </div>
@@ -1115,9 +1197,14 @@
         const MAX_BPM = 200;
         const PRE_COUNT_BARS = 1;
         const BAR_COUNT = 4;
-        const LONG_PRESS_DURATION = 1200; // Long press para move samples
-        const BPM_LONG_PRESS_DELAY = 300; // Delay para iniciar cambios rápidos de BPM
-        const BPM_RAPID_INTERVAL = 150; // Intervalo para cambios rápidos de BPM
+        const LONG_PRESS_DURATION = 800; // Long press para move samples (reducido de 1200ms)
+        const BPM_LONG_PRESS_DELAY = 200; // Delay para iniciar cambios rápidos de BPM (reducido de 300ms)
+        const BPM_RAPID_INTERVAL = 200; // Intervalo para cambios rápidos de BPM (aumentado de 150ms para mejor control)
+
+        // NUEVO: Constantes para feedback táctil y gestos
+        const SWIPE_THRESHOLD = 50; // Distancia mínima para detectar swipe
+        const SWIPE_TIMEOUT = 300; // Tiempo máximo para completar swipe
+        const TACTILE_FEEDBACK_ENABLED = true; // Habilitar/deshabilitar feedback táctil
 
         // Lista de archivos de audio predeterminados
         const audioFiles = [
@@ -1446,6 +1533,9 @@
                 // Inicializar
                 this.initEventListeners();
                 this.loadSampleInfoFromStorage();
+                
+                // NUEVO: Inicializar detección de swipe y feedback táctil
+                this.initSwipeDetection();
             }
             
             // INICIALIZACIÓN Y CONFIGURACIÓN
@@ -1500,6 +1590,11 @@
                 document.getElementById('load-samples').addEventListener('click', function() { self.loadMultipleSamples(); });
                 document.getElementById('clear-bank').addEventListener('click', function() { self.clearCurrentBank(); });
                 
+                // NUEVO: Botón táctil para slicer
+                document.getElementById('mobile-slicer').addEventListener('click', function() { 
+                    self.showPadSelectorForSlicer(); 
+                });
+                
                 // Responsive
                 window.addEventListener('resize', function() { self.resizeCanvases(); });
             }
@@ -1526,6 +1621,10 @@
                     
                     // Actualizar UI
                     document.getElementById('start-audio').disabled = true;
+                    // NUEVO: Feedback táctil al iniciar audio
+                    this.triggerTactileFeedback('strong');
+                    this.playTactileSound(1200, 0.15);
+                    
                     this.updateStatus('Audio iniciado. Cargando samples...');
                     
                     // Inicializar componentes
@@ -1710,6 +1809,10 @@
             // REPRODUCCIÓN Y CONTROL DE AUDIO
             playPad(padNumber) {
                 if (!this.validatePlayback(padNumber)) return;
+                
+                // NUEVO: Feedback táctil al tocar pad
+                this.triggerTactileFeedback('medium');
+                this.playTactileSound(400, 0.06);
                 
                 this.stopPadIfPlaying(padNumber);
                 
@@ -1978,6 +2081,10 @@
                 this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, this.bpm + change));
                 document.getElementById('tempo-display').textContent = this.bpm + ' BPM';
                 
+                // NUEVO: Feedback táctil al cambiar BPM
+                this.triggerTactileFeedback('light');
+                this.playTactileSound(500, 0.03);
+                
                 if (this.isRecording || this.isPlaying) {
                     this.restartTimers();
                 }
@@ -2028,6 +2135,10 @@
                 
                 this.samples = this.bankSamples[bank] || {};
                 this.updatePadBankIndicators();
+                
+                // NUEVO: Feedback táctil al cambiar bank
+                this.triggerTactileFeedback('light');
+                this.playTactileSound(600, 0.04);
                 
                 this.updateStatus('Banco ' + bank + ' seleccionado.');
             }
@@ -2346,18 +2457,27 @@
             }
             
             loadUserSample(padNumber, bank, file) {
-                if (!this.audioContext) {
-                    this.updateStatus('Por favor, inicia el audio primero');
-                    return;
-                }
-                
-                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
-                if (pad) {
-                    pad.classList.add('loading');
-                }
-                
-                const reader = new FileReader();
-                const self = this;
+                try {
+                    // Validaciones mejoradas
+                    if (!this.audioContext) {
+                        throw new Error('Audio no inicializado. Por favor, inicia el audio primero.');
+                    }
+                    
+                    if (!file || file.size === 0) {
+                        throw new Error('Archivo inválido o vacío.');
+                    }
+                    
+                    if (file.size > 50 * 1024 * 1024) {
+                        throw new Error('Archivo demasiado grande. Máximo 50MB.');
+                    }
+                    
+                    const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                    if (pad) {
+                        pad.classList.add('loading');
+                    }
+                    
+                    const reader = new FileReader();
+                    const self = this;
                 
                 reader.onload = function(e) {
                     self.audioContext.decodeAudioData(e.target.result).then(function(audioBuffer) {
@@ -2393,11 +2513,15 @@
                             }
                             
                             self.showLoadedEffect(pad);
+                            
+                            // NUEVO: Feedback táctil al cargar sample de usuario
+                            self.triggerTactileFeedback('light');
+                            self.playTactileSound(800, 0.05);
                         }
                         
                         self.saveSampleInfo();
                         
-                        self.updateStatus('✅ "' + nameWithoutExt + '" cargado en Pad ' + padNumber + ' (Banco ' + bank + ')');
+                        self.updateStatus('✅ "' + nameWithoutExt + '" cargado en Pad ' + padNumber + ' (Banco ' + padNumber + ')');
                     }).catch(function(error) {
                         console.error('Error decodificando audio:', error);
                         
@@ -2405,7 +2529,15 @@
                             pad.classList.remove('loading');
                         }
                         
-                        self.updateStatus('Error al procesar el archivo de audio: ' + error.message);
+                        // Mensaje de error más específico
+                        let errorMessage = 'Error al procesar el archivo de audio.';
+                        if (error.name === 'EncodingError') {
+                            errorMessage = 'Formato de audio no soportado o archivo corrupto.';
+                        } else if (error.name === 'NotSupportedError') {
+                            errorMessage = 'Formato de audio no soportado por el navegador.';
+                        }
+                        
+                        self.updateStatus('❌ ' + errorMessage);
                     });
                 };
                 
@@ -2416,10 +2548,22 @@
                         pad.classList.remove('loading');
                     }
                     
-                    self.updateStatus('Error al leer el archivo');
+                    self.updateStatus('❌ Error al leer el archivo. Verifica que el archivo no esté corrupto.');
                 };
                 
                 reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error en loadUserSample:', error);
+                
+                // Limpiar estado del pad en caso de error
+                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (pad) {
+                    pad.classList.remove('loading');
+                }
+                
+                this.updateStatus('❌ Error: ' + error.message);
+            }
             }
             
             loadAllSamples() {
@@ -2492,6 +2636,10 @@
                         self.sampleNames[bank][padNumber] = nameWithoutExt;
                         
                         self.updateStatus('Audio "' + audioName + '" cargado en el Pad ' + padNumber + ' (Banco ' + bank + ')');
+                        
+                        // NUEVO: Feedback táctil al cargar sample
+                        self.triggerTactileFeedback('light');
+                        self.playTactileSound(800, 0.05);
                         
                         return audioBuffer;
                     })
@@ -2729,6 +2877,11 @@
                     this.closeSlicerModal();
                     
                     const endPad = this.slicerSourcePad + numSlices - 1;
+                    
+                    // NUEVO: Feedback táctil al crear slices
+                    this.triggerTactileFeedback('strong');
+                    this.playTactileSound(1000, 0.1);
+                    
                     this.updateStatus('✅ ' + numSlices + ' slices: Pads ' + this.slicerSourcePad + '-' + Math.min(endPad, 16));
                     
                 } catch (error) {
@@ -3096,6 +3249,200 @@
                 this.updateBarBeatDisplay();
                 this.updateStatus('Secuencia borrada');
             }
+            
+            // NUEVO: Mostrar selector de pad para slicer
+            showPadSelectorForSlicer() {
+                if (!this.audioContext) {
+                    this.updateStatus('❌ Por favor, inicia el audio antes de usar el slicer.');
+                    return;
+                }
+                
+                // Encontrar el primer pad con sample
+                let firstPadWithSample = null;
+                for (let i = 1; i <= 16; i++) {
+                    if (this.samples[i]) {
+                        firstPadWithSample = i;
+                        break;
+                    }
+                }
+                
+                if (!firstPadWithSample) {
+                    this.updateStatus('❌ No hay samples cargados para usar el slicer.');
+                    return;
+                }
+                
+                // Abrir slicer en el primer pad disponible
+                this.openSlicerModal(firstPadWithSample);
+                
+                this.updateStatus('🔪 Slicer abierto para Pad ' + firstPadWithSample + '. Doble clic en cualquier pad para cambiar.');
+            }
+
+            // NUEVO: Feedback táctil (vibración)
+            triggerTactileFeedback(intensity = 'medium') {
+                if (!TACTILE_FEEDBACK_ENABLED) return;
+                
+                try {
+                    if (navigator.vibrate) {
+                        let duration;
+                        switch (intensity) {
+                            case 'light': duration = 10; break;
+                            case 'medium': duration = 20; break;
+                            case 'strong': duration = 30; break;
+                            default: duration = 20;
+                        }
+                        navigator.vibrate(duration);
+                    }
+                } catch (error) {
+                    console.log('Vibración no disponible:', error);
+                }
+            }
+
+            // NUEVO: Feedback táctil (sonido sutil)
+            playTactileSound(frequency = 800, duration = 0.05) {
+                if (!TACTILE_FEEDBACK_ENABLED || !this.audioContext) return;
+                
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration);
+                } catch (error) {
+                    console.log('Sonido táctil no disponible:', error);
+                }
+            }
+
+            // NUEVO: Detectar gestos de swipe
+            initSwipeDetection() {
+                let startX = 0;
+                let startY = 0;
+                let startTime = 0;
+                let isSwiping = false;
+
+                const handleTouchStart = (e) => {
+                    if (e.touches.length !== 1) return;
+                    
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    startTime = Date.now();
+                    isSwiping = false;
+                };
+
+                const handleTouchMove = (e) => {
+                    if (!startTime || e.touches.length !== 1) return;
+                    
+                    const currentX = e.touches[0].clientX;
+                    const currentY = e.touches[0].clientY;
+                    const deltaX = currentX - startX;
+                    const deltaY = currentY - startY;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    
+                    if (distance > SWIPE_THRESHOLD && !isSwiping) {
+                        isSwiping = true;
+                        
+                        // Determinar dirección del swipe
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            // Swipe horizontal
+                            if (deltaX > 0) {
+                                this.handleSwipeRight();
+                            } else {
+                                this.handleSwipeLeft();
+                            }
+                        } else {
+                            // Swipe vertical
+                            if (deltaY > 0) {
+                                this.handleSwipeDown();
+                            } else {
+                                this.handleSwipeUp();
+                            }
+                        }
+                        
+                        // Feedback táctil
+                        this.triggerTactileFeedback('medium');
+                        this.playTactileSound(600, 0.08);
+                        
+                        // Mostrar indicador de swipe
+                        this.showSwipeIndicator();
+                    }
+                };
+
+                const handleTouchEnd = () => {
+                    startTime = 0;
+                    isSwiping = false;
+                };
+
+                // Agregar event listeners para swipe
+                document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                document.addEventListener('touchmove', handleTouchMove, { passive: true });
+                document.addEventListener('touchend', handleTouchEnd, { passive: true });
+            }
+
+            // NUEVO: Manejadores de swipe
+            handleSwipeLeft() {
+                // Cambiar al bank anterior
+                const banks = ['A', 'B', 'C', 'D'];
+                const currentIndex = banks.indexOf(this.currentBank);
+                if (currentIndex > 0) {
+                    this.currentBank = banks[currentIndex - 1];
+                    this.selectBank(this.currentBank);
+                    this.updateStatus('🔄 Bank ' + this.currentBank + ' cargado');
+                    this.triggerTactileFeedback('light');
+                }
+            }
+
+            handleSwipeRight() {
+                // Cambiar al bank siguiente
+                const banks = ['A', 'B', 'C', 'D'];
+                const currentIndex = banks.indexOf(this.currentBank);
+                if (currentIndex < 3) {
+                    this.currentBank = banks[currentIndex + 1];
+                    this.selectBank(this.currentBank);
+                    this.updateStatus('🔄 Bank ' + this.currentBank + ' cargado');
+                    this.triggerTactileFeedback('light');
+                }
+            }
+
+            handleSwipeUp() {
+                // Aumentar BPM
+                if (this.bpm < 200) {
+                    this.bpm = Math.min(200, this.bpm + 5);
+                    document.getElementById('tempo-display').textContent = this.bpm + ' BPM';
+                    this.updateStatus('⚡ BPM: ' + this.bpm);
+                    this.triggerTactileFeedback('light');
+                }
+            }
+
+            handleSwipeDown() {
+                // Disminuir BPM
+                if (this.bpm > 60) {
+                    this.bpm = Math.max(60, this.bpm - 5);
+                    document.getElementById('tempo-display').textContent = this.bpm + ' BPM';
+                    this.updateStatus('⚡ BPM: ' + this.bpm);
+                    this.triggerTactileFeedback('light');
+                }
+            }
+            
+            // NUEVO: Mostrar/ocultar indicador de swipe
+            showSwipeIndicator() {
+                const indicator = document.getElementById('swipe-indicator');
+                if (indicator) {
+                    indicator.style.display = 'block';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000);
+                }
+            }
+
+
         }
         
         // INICIALIZACIÓN DE LA APLICACIÓN
@@ -3105,12 +3452,15 @@
             // LOG DE INICIALIZACIÓN
             console.log('🎵 Embrio Player v3.0 - Enhanced Version Iniciado');
             console.log('✨ Nuevas características:');
-            console.log('   - Long Press BPM (cambios rápidos cada 150ms)');
+            console.log('   - Long Press BPM (cambios rápidos cada 200ms)');
             console.log('   - Sistema de entrada múltiple (Mouse + Touch + Teclado + MIDI)');
             console.log('   - Mapeo de teclado: QWER/ASDF/ZXCV/1234 → Pads 1-16');
             console.log('   - Indicadores de método de entrada activo');
             console.log('   - Feedback visual mejorado');
             console.log('   - Sistema unificado de control de pads');
+            console.log('   - Feedback táctil (vibración + sonidos sutiles)');
+            console.log('   - Gestos de swipe para navegación (←→ Banks, ↑↓ BPM)');
+            console.log('   - Botón táctil para slicer móvil');
             console.log('🎛️ Listo para usar - Inicia el audio para comenzar');
         });
     </script>
