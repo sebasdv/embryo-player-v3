@@ -1,0 +1,4180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Embrio Player v3.0</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #9bbc0f;  /* Verde GameBoy */
+            --shadow-color-dark: #0f380f;  /* Verde oscuro GameBoy */
+            --shadow-color-light: #8bac0f;  /* Verde claro GameBoy */
+            --text-color: #0f380f;  /* Verde oscuro para texto */
+            --accent-color: #306230;  /* Verde medio para acentos */
+            --braun-yellow: #8bac0f;  /* Verde claro para botones */
+            --braun-red: #306230;  /* Verde medio para alertas */
+            --braun-orange: #306230;  /* Verde medio para acciones */
+            --braun-grey: #0f380f;  /* Verde oscuro para elementos secundarios */
+            --braun-darkgrey: #0f380f;  /* Verde oscuro para elementos terciarios */
+            --braun-black: #0f380f;  /* Verde oscuro para texto principal */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            touch-action: none;
+            max-width: 100vw;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Efecto de scanlines */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Title Styles */
+        .title-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .title-container h1 {
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-color);
+            font-size: 24px;
+            text-shadow: 2px 2px 0 var(--shadow-color-dark);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        /* Header Styles */
+        .header-container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto 20px;
+        }
+
+        .header-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-button {
+            width: 100%;
+            height: 50px;
+            border-radius: 0;
+            background: var(--bg-color);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            border: 2px solid var(--shadow-color-dark);
+            color: var(--text-color);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-button:hover {
+            background: var(--shadow-color-light);
+        }
+
+        .header-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .header-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .empty-space {
+            width: 100%;
+            height: 60px;
+        }
+        
+        .header-row .header-button:first-child {
+            color: var(--text-color);
+        }
+        
+        /* BPM Button Long Press Styles */
+        .bpm-button {
+            transition: all 0.1s ease;
+        }
+
+        .bpm-button.long-pressing {
+            background-color: var(--shadow-color-dark) !important;
+            color: var(--bg-color) !important;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        @keyframes bpmPulse {
+            0%, 100% { 
+                box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            }
+            50% { 
+                box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            }
+        }
+        
+        /* Botón de Grabación (Record) */
+        .btn-record {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+        }
+        
+        /* Botón de Reproducción (Play) */
+        .btn-play {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+        }
+        
+        /* Estilos para el botón de carga de samples */
+        .btn-load {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+        }
+
+        .btn-load:hover {
+            background-color: var(--shadow-color-light);
+        }
+        
+        /* Mantener color de texto en hover */
+        .btn-record:hover, .btn-play:hover {
+            background-color: var(--shadow-color-light);
+        }
+        
+        .btn-record:hover {
+            background-color: var(--shadow-color-dark);
+        }
+        
+        .btn-play:hover {
+            background-color: var(--shadow-color-dark);
+        }
+        
+        .header-button i {
+            margin-right: 8px;
+        }
+        
+        /* Terminal Footer Styles */
+        .terminal-footer {
+            background: var(--shadow-color-dark);
+            border: 2px solid var(--shadow-color-light);
+            border-radius: 4px;
+            margin: 15px 0;
+            padding: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: var(--bg-color);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            overflow: visible;
+            position: relative;
+        }
+        
+        .terminal-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .terminal-prompt {
+            color: var(--accent-color);
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        
+        .terminal-text {
+            color: var(--bg-color);
+            word-wrap: break-word;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .terminal-footer.info {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .terminal-footer.warning {
+            background: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .terminal-footer.error {
+            background: var(--error-color);
+            border-color: var(--error-color);
+        }
+        
+
+        
+        /* Estilos para el botón de ayuda y su modal */
+        .help-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+        }
+
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border: 2px solid var(--shadow-color-dark);
+        }
+
+        .help-content {
+            position: relative;
+            color: var(--shadow-color-dark);
+        }
+
+        .help-content h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .help-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .help-content li {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .close-help {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .section-title {
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-color);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 15px 0 10px;
+        }
+        
+        .sequencer-row {
+            position: relative;
+        }
+        
+        .sequencer-row::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--shadow-color-dark);
+            opacity: 0.2;
+        }
+        
+        .tempo-controls {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            margin-top: 15px;
+            gap: 10px;
+        }
+        
+        .tempo-btn {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .tempo-display {
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tap-tempo-btn {
+            background-color: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .tap-tempo-btn:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 var(--shadow-color-dark);
+        }
+        
+        .tap-tempo-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0 var(--shadow-color-dark);
+        }
+        
+        .tap-tempo-btn.tapping {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            transform: scale(1.05);
+        }
+        
+        .bar-label {
+            color: var(--text-color);
+            font-size: 10px;
+        }
+        
+        .bar-btn {
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        /* Bank Selector Styles - Updated for 8 buttons */
+        .bank-selector-row {
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+        
+        .bank-btn {
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 10px;
+            padding: 8px 4px;
+        }
+        
+        .bank-active {
+            background-color: var(--shadow-color-dark);
+            color: var(--bg-color) !important;
+            font-weight: bold;
+        }
+        
+        .bank-btn:hover:not(.bank-active) {
+            background-color: var(--shadow-color-light);
+        }
+        
+        /* Responsive adjustments for bank selector */
+        @media (max-width: 768px) {
+            .bank-selector-row {
+                gap: 6px;
+            }
+            
+            .bank-btn {
+                font-size: 8px;
+                padding: 6px 2px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .bank-selector-row {
+                gap: 4px;
+            }
+            
+            .bank-btn {
+                font-size: 7px;
+                padding: 4px 1px;
+            }
+        }
+
+        /* Input Status Indicator */
+        .input-status {
+            display: none;
+        }
+
+        /* Main Content Styles */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .pad {
+            position: relative;
+            aspect-ratio: 1/1;
+            border-radius: 0;
+            background: var(--bg-color);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            border: 2px solid var(--shadow-color-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+
+        /* Pad Active/Playing Enhanced Feedback */
+        .pad.pad-active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            background-color: var(--shadow-color-dark) !important;
+        }
+
+
+
+        /* Estados de Drag & Drop */
+        .pad.drag-over {
+            border: 3px dashed var(--shadow-color-dark);
+            background: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .pad.drag-valid {
+            border-color: var(--shadow-color-dark);
+            background: var(--shadow-color-light);
+        }
+
+        /* Sample Slicer Modal */
+        .slicer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 56, 15, 0.8);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slicer-panel {
+            background: var(--bg-color);
+            border: 4px solid var(--shadow-color-dark);
+            box-shadow: 8px 8px 0 var(--shadow-color-dark);
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .slicer-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .slicer-info {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+
+        .slicer-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .slicer-btn {
+            padding: 15px 25px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slicer-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .slicer-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+
+        .slicer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+            background: var(--shadow-color-dark) !important;
+            color: var(--bg-color) !important;
+            transform: none !important;
+        }
+
+        .slicer-btn:disabled:hover {
+            transform: none !important;
+            background: var(--shadow-color-dark) !important;
+        }
+
+        .slicer-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .slicer-cancel {
+            padding: 10px 20px;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+        }
+
+        .slicer-cancel:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        /* Indicador de slice en pads */
+        .slice-indicator {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            font-size: 8px;
+            padding: 2px 4px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            z-index: 6;
+            display: none;
+            font-weight: bold;
+            transform: translate(25%, 25%);
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Botón para eliminar sample individual */
+        .delete-pad-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 15;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            line-height: 1;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            transform: translate(25%, -25%);
+        }
+
+        .delete-pad-btn:hover {
+            transform: translate(25%, -25%) scale(1.1);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+        }
+
+        .delete-pad-btn:active {
+            transform: translate(25%, -25%) scale(0.9);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        /* Mostrar botón X solo cuando el pad tiene sample y se hace hover */
+        .pad.loaded:hover .delete-pad-btn {
+            display: flex;
+        }
+
+        /* En móviles, mantener el posicionamiento concéntrico */
+        @media (max-width: 768px) {
+            .pad.loaded .delete-pad-btn {
+                display: flex;
+                opacity: 0.8;
+                width: 16px;
+                height: 16px;
+                font-size: 10px;
+                top: 5px;
+                right: 5px;
+            }
+            
+            .pad.loaded .delete-pad-btn:hover {
+                opacity: 1;
+            }
+            
+            /* Slice indicator en móvil */
+            .slice-indicator {
+                bottom: 5px;
+                right: 5px;
+                font-size: 7px;
+                padding: 1px 3px;
+            }
+        }
+
+        /* En pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .delete-pad-btn {
+                width: 14px;
+                height: 14px;
+                font-size: 9px;
+                top: 4px;
+                right: 4px;
+            }
+            
+            .slice-indicator {
+                bottom: 4px;
+                right: 4px;
+                font-size: 6px;
+                padding: 1px 2px;
+            }
+        }
+
+        /* Indicador de drop */
+        .drop-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            padding: 8px 12px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .pad.drag-over .drop-indicator {
+            opacity: 1;
+        }
+
+        /* Indicador de move operation */
+        .move-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            padding: 8px 12px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .pad.selected-for-move .move-indicator {
+            opacity: 1;
+        }
+
+        .pad:hover {
+            background: var(--shadow-color-light);
+        }
+
+        /* Colores para diferentes tipos de pads */
+        .pad:nth-child(4n+1) { 
+            border-color: var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+2) { 
+            border-color: var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+3) { 
+            border-color: var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+4) { 
+            border-color: var(--shadow-color-dark);
+        }
+
+        .pad:active, .pad.playing {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .pad.loaded { opacity: 1; }
+
+        .pad.loading {
+            opacity: 0.5;
+            animation: pulse 1.5s steps(4) infinite;
+        }
+        
+        /* NEW: Visual indicator for full bank */
+        .pad.full-bank {
+            border-color: var(--braun-red);
+            background: var(--shadow-color-dark);
+            opacity: 0.7;
+        }
+        
+        .pad.full-bank::after {
+            content: "FULL";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--braun-red);
+            color: var(--bg-color);
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 2px solid var(--braun-red);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            z-index: 20;
+        }
+
+        .visualizer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 56, 15, 0.1) !important;
+            pointer-events: none;
+            z-index: 1;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        /* Etiquetas para mostrar el banco y nombre del sample */
+        .sample-indicator {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: var(--shadow-color-dark);
+            color: var(--bg-color);
+            font-size: 8px;
+            padding: 2px 4px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            z-index: 5;
+            display: none;
+        }
+
+        .sample-name {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-size: 8px;
+            color: var(--text-color);
+            max-width: calc(100% - 35px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 5;
+            display: none;
+        }
+
+        /* Keyboard Indicator */
+        .keyboard-indicator {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 8px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+            z-index: 7;
+            display: none;
+            transform: none;
+        }
+
+        .pad.loaded .keyboard-indicator {
+            display: block;
+        }
+
+        /* Ajustes para móviles */
+        @media (max-width: 768px) {
+            .keyboard-indicator {
+                top: 4px;
+                left: 4px;
+                font-size: 7px;
+                padding: 1px 3px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .keyboard-indicator {
+                top: 3px;
+                left: 3px;
+                font-size: 6px;
+                padding: 1px 2px;
+            }
+        }
+
+        /* Efectos de brillo específicos por tipo de pad cuando están activos */
+        .pad:nth-child(4n+1).playing { 
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+2).playing { 
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+3).playing { 
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        .pad:nth-child(4n+4).playing { 
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+            100% { opacity: 0.3; }
+        }
+
+        /* Footer Styles */
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 10px;
+        }
+
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .title-container h1 { 
+                font-size: 20px; 
+                margin-bottom: 10px;
+            }
+            
+            .section-title { 
+                font-size: 10px; 
+                margin: 12px 0 8px; 
+            }
+            
+            .header-row { 
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            
+            .header-button { 
+                height: 40px; 
+                font-size: 10px;
+            }
+            
+            .empty-space { 
+                height: 40px; 
+            }
+            
+            .pad-grid { 
+                gap: 8px; 
+            }
+            
+            .tempo-btn {
+                font-size: 14px;
+            }
+            
+            .tempo-display,
+            .bar-btn {
+                font-size: 10px;
+            }
+            
+            .bar-label {
+                font-size: 8px;
+            }
+            
+            footer {
+                margin-top: 20px;
+                padding: 10px;
+                font-size: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .title-container h1 { 
+                font-size: 16px; 
+                margin-bottom: 8px;
+            }
+            
+            .section-title { 
+                font-size: 8px; 
+                margin: 8px 0 5px; 
+            }
+            
+            .header-row { 
+                gap: 5px;
+                margin-bottom: 8px;
+            }
+            
+            .header-button { 
+                height: 36px; 
+                font-size: 8px;
+                padding: 0 2px;
+            }
+            
+            .empty-space { 
+                height: 36px; 
+            }
+            
+            .pad-grid { 
+                gap: 5px; 
+            }
+            
+            .tempo-btn {
+                font-size: 12px;
+            }
+            
+            .tempo-display,
+            .bar-btn {
+                font-size: 8px;
+            }
+            
+            .bar-label {
+                font-size: 6px;
+            }
+            
+            footer {
+                margin-top: 15px;
+                padding: 8px;
+                font-size: 6px;
+            }
+            
+
+        }
+        
+        /* Ajustes específicos para teléfonos pequeños */
+        @media (max-width: 360px) {
+            .header-button {
+                font-size: 6px;
+                height: 32px;
+                padding: 0;
+            }
+            
+            .tempo-controls {
+                gap: 3px;
+            }
+            
+            .pad-grid {
+                gap: 4px;
+            }
+            
+            .slicer-panel {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .slicer-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .slicer-btn {
+                padding: 12px 20px;
+                font-size: 10px;
+            }
+        }
+
+        /* Estilos para el botón de slicer móvil */
+        .btn-slicer {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+            transition: all 0.2s ease;
+        }
+
+        .btn-slicer:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .btn-slicer:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+                .btn-slicer:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--shadow-color-dark) !important;
+            color: var(--bg-color) !important;
+            transform: none !important;
+        }
+        
+        /* Estilos para el botón de rendimiento */
+        .btn-performance {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+            transition: all 0.2s ease;
+        }
+        .btn-performance:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        .btn-performance:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .btn-performance.performance-mode {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        
+        .btn-performance.performance-mode:hover {
+            background-color: var(--shadow-color-dark);
+        }
+        
+        /* NEW: Estilos para el sistema de cuantización */
+        .btn-quantize {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-quantize:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .btn-quantize:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .btn-quantize.quantize-active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        
+        .btn-quantize.quantize-active:hover {
+            background-color: var(--shadow-color-dark);
+        }
+        
+
+        
+        /* Estilos para el modo slicer */
+        .btn-slicer.slicer-active {
+            background-color: var(--shadow-color-dark);
+            color: var(--bg-color) !important;
+            font-weight: bold;
+        }
+        
+        .pad.slicer-selectable {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
+            animation: slicerPulse 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes slicerPulse {
+            0% { 
+                box-shadow: 0 0 15px var(--accent-color);
+                transform: scale(1);
+            }
+            100% { 
+                box-shadow: 0 0 25px var(--accent-color);
+                transform: scale(1.02);
+            }
+        }
+        
+        /* Responsive para el botón slicer */
+        @media (max-width: 768px) {
+            .btn-slicer {
+                font-size: 10px;
+                padding: 0 5px;
+            }
+            .btn-performance {
+                font-size: 10px;
+                padding: 0 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn-slicer {
+                font-size: 8px;
+                padding: 0 2px;
+            }
+            .btn-performance {
+                font-size: 8px;
+                padding: 0 2px;
+            }
+        }
+        
+        
+        
+        /* Estilos para botones activos del secuenciador */
+        .btn-record.active, .btn-play.active {
+            background-color: var(--shadow-color-dark);
+            color: var(--bg-color) !important;
+            font-weight: bold;
+        }
+        
+        /* Hover unificado para todos los botones del secuenciador */
+        .sequencer-row .header-button:hover:not(.active) {
+            background-color: var(--shadow-color-light);
+        }
+        
+
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <h1>Embrio Player v3.0</h1>
+    </div>
+
+    <div class="header-row">
+        <button id="start-audio" class="header-button"><i class="fas fa-power-off"></i> Start</button>
+        <button id="help-button" class="header-button help-button">?</button>
+        <div id="help-modal" class="help-modal">
+            <div class="help-content">
+                <h3>Controls</h3>
+                <ul>
+    
+                    <li>Keyboard mapping: 1234/QWER/ASDF/ZXCV → Pads 1-16</li>
+                                            <li>Input methods: [MOUSE] Mouse/Touch • [KEY] Keyboard • [MIDI] MIDI</li>
+                </ul>
+                <button class="close-help">×</button>
+            </div>
+        </div>
+        <div class="empty-space"></div>
+        <div class="empty-space"></div>
+    </div>
+        
+        <!-- NEW: Input Status Indicator -->
+        <div id="input-status" class="input-status">
+            Active methods: [MOUSE] Mouse/Touch • [KEY] Teclado • [MIDI] MIDI (disconnected)
+        </div>
+        
+
+        
+        <div class="section-title">Sequencer Section</div>
+        
+        <div class="header-row sequencer-row">
+            <button id="record-sequence" class="header-button btn-record">REC</button>
+            <button id="play-sequence" class="header-button btn-play">PLAY</button>
+            <button id="stop-sequence" class="header-button" title="Stop all audio and sequences">STOP ALL</button>
+            <button id="clear-sequence" class="header-button">CLEAR</button>
+        </div>
+        
+        <div class="header-row tempo-controls">
+            <button id="tempo-up" class="header-button tempo-btn bpm-button">+</button>
+            <button id="tempo-display" class="header-button tempo-display tap-tempo-btn" title="Tap to set tempo">120 BPM</button>
+            <button id="tempo-down" class="header-button tempo-btn bpm-button">-</button>
+            <div class="header-button bar-label">bar / beat</div>
+            <div id="current-bar" class="header-button bar-btn">1</div>
+            <div id="current-beat" class="header-button bar-btn">1</div>
+        </div>
+        
+        <div class="section-title">Bank Selection</div>
+        <div class="header-row bank-selector-row">
+            <button id="bank-a" class="header-button bank-btn bank-active">Bank A</button>
+            <button id="bank-b" class="header-button bank-btn">Bank B</button>
+            <button id="bank-c" class="header-button bank-btn">Bank C</button>
+            <button id="bank-d" class="header-button bank-btn">Bank D</button>
+            <button id="bank-e" class="header-button bank-btn">Bank E</button>
+            <button id="bank-f" class="header-button bank-btn">Bank F</button>
+            <button id="bank-g" class="header-button bank-btn">Bank G</button>
+            <button id="bank-h" class="header-button bank-btn">Bank H</button>
+        </div>
+        
+        <div class="header-row">
+                    <button id="load-samples" class="header-button btn-load">Load Samples</button>
+        <button id="clear-bank" class="header-button">Clear Bank</button>
+                            <button id="mobile-slicer" class="header-button btn-slicer">[SLICE] Slicer Help</button>
+                                        <button id="toggle-performance-mode" class="header-button btn-performance" title="Toggle between viz mode (high latency) and perf mode (low latency)">[PERF] Perf Mode</button>
+        </div>
+        
+        <div class="header-row">
+            <button id="toggle-quantize" class="header-button btn-quantize" title="Toggle quantization on/off">[QUANT] Quantize ON</button>
+            <button id="quantize-strength" class="header-button" title="Click to cycle through quantization strength">Strength: 50%</button>
+            
+        </div>
+        
+
+        
+
+    </div>
+
+    <!-- Terminal Footer -->
+    <footer id="terminal-footer" class="terminal-footer">
+        <div class="terminal-content">
+            <span class="terminal-prompt">></span>
+            <span class="terminal-text" id="terminal-text">Waiting Input...</span>
+        </div>
+
+    </footer>
+
+    <main>
+        <div id="pad-grid" class="pad-grid">
+            <!-- Los pads se generan dinámicamente mediante JavaScript -->
+        </div>
+    </main>
+
+    <!-- Modal del Sample Slicer -->
+    <div id="slicer-modal" class="slicer-modal">
+        <div class="slicer-panel">
+                            <div class="slicer-title">[SLICE] Sample Slicer</div>
+            <div id="slicer-info" class="slicer-info">
+                Slice "sample-name" into equal parts
+            </div>
+            <div class="slicer-buttons" id="slicer-buttons">
+                <button class="slicer-btn" onclick="embryoPlayer.applySlicer(4)">4 Slices</button>
+                <button class="slicer-btn" onclick="embryoPlayer.applySlicer(8)">8 Slices</button>
+                <button class="slicer-btn" onclick="embryoPlayer.applySlicer(16)">16 Slices</button>
+            </div>
+            <div class="slicer-actions">
+                <button class="slicer-cancel" onclick="embryoPlayer.closeSlicerModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        /**
+         * Embrio Player v3.0
+         * Un sampler y secuenciador web avanzado con múltiples funcionalidades de audio.
+         * 
+         * @version 3.0
+         * @author [Tu nombre]
+         * @license MIT
+         */
+        
+        /**
+         * EMBRIO PLAYER v3.0 - ENHANCED VERSION
+         * Reproductor de samples con secuenciador y funcionalidades avanzadas
+         * 
+         * NUEVAS CARACTERÍSTICAS v3.0:
+         * - Long Press para BPM (cambios rápidos cada 200ms)
+         * - Tap Tempo para establecer BPM tocando el botón central
+         * - Sistema de entrada múltiple mejorado (Mouse + Touch + Teclado + MIDI)
+         * - Mapeo de teclado completo (QWER/ASDF/ZXCV/1234)
+         * - Indicadores de método de entrada activo
+         * - Feedback visual mejorado para todas las interacciones
+         * - Sistema unificado de control de pads
+         */
+        
+        // CONSTANTS & CONFIGURATION
+        const GITHUB_REPO_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/169a0a75db1d0af6149bdced5f3af7cefff5f23a/Bank%20A/';
+        const FFT_SIZE = 256;
+        const BEATS_PER_BAR = 4;
+        const MIN_BPM = 60;
+        const MAX_BPM = 200;
+        const PRE_COUNT_BARS = 1;
+        const BAR_COUNT = 4;
+        const BPM_LONG_PRESS_DELAY = 200; // Delay para iniciar cambios rápidos de BPM (reducido de 300ms)
+        const BPM_RAPID_INTERVAL = 200; // Intervalo para cambios rápidos de BPM (aumentado de 150ms para mejor control)
+        
+        // NEW: QUANTIZATION SYSTEM CONSTANTS
+        const GRID_RESOLUTION = 16; // 16th notes per bar (4 beats × 4 subdivisions)
+        const GRID_STEPS_PER_BEAT = 4; // 4 steps per beat (16th notes)
+        const QUANTIZE_STRENGTH = 0.5; // 0.0 = no quantization, 1.0 = full quantization
+        const QUANTIZE_THRESHOLD = 0.125; // Threshold for quantization (in beats)
+
+        // Lista de archivos de audio personalizados desde Bank A
+        const audioFiles = [
+            '01-Pad 88 BPM.wav', '02-Bass 88 BPM.wav', '03-Arp 88 BPM.wav', '04-BD SN HH OH Slice .wav',
+            '05-Kick 88.wav', '06-Snare 88.wav', '07-HH 88.wav', '08-Shaker 88.wav'
+        ];
+
+        // PAD CONTROLLER CLASS - Sistema Unificado de Control
+        class PadController {
+            constructor(embryoPlayer) {
+                this.embryoPlayer = embryoPlayer;
+                this.pads = new Map();
+                this.midiAvailable = false;
+                
+                        // NEW: Key mapping to pads (customizable)
+        this.keyToPad = {
+            // Top row: 1234
+            '1': 1, '2': 2, '3': 3, '4': 4,
+            // Upper middle row: QWER
+            'q': 5, 'w': 6, 'e': 7, 'r': 8,
+            // Lower middle row: ASDF
+            'a': 9, 's': 10, 'd': 11, 'f': 12,
+            // Bottom row: ZXCV
+            'z': 13, 'x': 14, 'c': 15, 'v': 16
+        };
+                
+                this.pressedKeys = new Set();
+                this.init();
+            }
+            
+            init() {
+                this.setupKeyboardControl();
+                this.updateInputStatus();
+            }
+            
+            // Unified method to trigger any pad
+            triggerPad(padNumber, velocity, source) {
+                velocity = velocity || 127;
+                source = source || 'unknown';
+                console.log('Pad ' + padNumber + ' triggered from ' + source + ' - Velocity: ' + velocity);
+                
+                // Play sample
+                this.embryoPlayer.playPad(padNumber);
+                
+                // Unified visual feedback
+                this.showPadFeedback(padNumber);
+            }
+            
+            // Feedback visual para pads
+            showPadFeedback(padNumber) {
+                const padElement = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (padElement) {
+                    padElement.classList.add('pad-active');
+                    setTimeout(function() {
+                        padElement.classList.remove('pad-active');
+                    }, 150);
+                }
+            }
+            
+            // Setup keyboard control
+            setupKeyboardControl() {
+                const self = this;
+                
+                document.addEventListener('keydown', function(e) {
+                    const key = e.key.toLowerCase();
+                    
+                    // Avoid repetition if key is held down
+                    if (self.pressedKeys.has(key)) return;
+                    
+                    // Only process if not a text input
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    
+                    self.pressedKeys.add(key);
+                    
+                    if (self.keyToPad[key]) {
+                        e.preventDefault();
+                        self.triggerPad(self.keyToPad[key], 127, 'keyboard');
+                    }
+                });
+                
+                document.addEventListener('keyup', function(e) {
+                    const key = e.key.toLowerCase();
+                    self.pressedKeys.delete(key);
+                });
+                
+                // Clear pressed keys when window loses focus
+                window.addEventListener('blur', function() {
+                    self.pressedKeys.clear();
+                });
+            }
+            
+            // Setup MIDI connection
+            setMIDIAvailable(available) {
+                this.midiAvailable = available;
+                this.updateInputStatus();
+            }
+            
+            // Update input methods indicator
+            updateInputStatus() {
+                const statusDiv = document.getElementById('input-status');
+                const methods = [];
+                
+                methods.push('[MOUSE] Mouse/Touch');
+                methods.push('[KEY] Keyboard');
+                
+                if (this.midiAvailable) {
+                    methods.push('[MIDI] MIDI (connected)');
+                } else {
+                    methods.push('[MIDI] MIDI (disconnected)');
+                }
+                
+                statusDiv.innerHTML = 'Active methods: ' + methods.join(' • ');
+            }
+            
+            // Obtener tecla para un pad específico
+            getKeyForPad(padNumber) {
+                for (const key in this.keyToPad) {
+                    if (this.keyToPad[key] === padNumber) {
+                        return key.toUpperCase();
+                    }
+                }
+                return '';
+            }
+        }
+
+        /**
+         * BPM Controller
+         * @class BPMController
+         * @description Handles tempo control, BPM changes, and tap tempo functionality
+         * 
+         * @property {EmbrioPlayer} embryoPlayer - Main player instance
+         * @property {number} longPressTimer - Timer for long press
+         * @property {number} rapidTimer - Timer for rapid changes
+         * @property {boolean} isLongPressing - Long press state
+         * @property {Array<number>} tapTimes - Array of tap timestamps for tap tempo
+         * @property {number} maxTaps - Maximum number of taps to consider for BPM calculation
+         * 
+         * @example
+         * const bpmController = new BPMController(embryoPlayer);
+         * bpmController.changeBPM(1); // Increase BPM
+         * bpmController.handleTapTempo(); // Handle tap tempo input
+         */
+        class BPMController {
+            constructor(embryoPlayer) {
+                this.embryoPlayer = embryoPlayer;
+                this.longPressTimer = null;
+                this.rapidTimer = null;
+                this.isLongPressing = false;
+                this.tapTimes = [];
+                this.maxTaps = 4;
+                this.init();
+            }
+            
+            init() {
+                this.setupBPMButtons();
+            }
+            
+            // Setup BPM buttons with long press
+            setupBPMButtons() {
+                const bpmUpBtn = document.getElementById('tempo-up');
+                const bpmDownBtn = document.getElementById('tempo-down');
+                const tapTempoBtn = document.getElementById('tempo-display');
+                
+                // BPM increase button
+                this.setupBPMButton(bpmUpBtn, 1);
+                
+                // BPM decrease button
+                this.setupBPMButton(bpmDownBtn, -1);
+                
+                // Tap tempo button
+                this.setupTapTempoButton(tapTempoBtn);
+            }
+            
+            // Setup individual BPM button
+            setupBPMButton(button, direction) {
+                const self = this;
+                
+                // Mouse events
+                button.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    self.startBPMLongPress(direction, button);
+                });
+                
+                button.addEventListener('mouseup', function(e) {
+                    e.preventDefault();
+                    self.stopBPMLongPress(button);
+                });
+                
+                button.addEventListener('mouseleave', function(e) {
+                    self.stopBPMLongPress(button);
+                });
+                
+                // Touch events
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    self.startBPMLongPress(direction, button);
+                });
+                
+                button.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    self.stopBPMLongPress(button);
+                });
+                
+                button.addEventListener('touchcancel', function(e) {
+                    e.preventDefault();
+                    self.stopBPMLongPress(button);
+                });
+            }
+            
+            // Setup tap tempo button
+            setupTapTempoButton(button) {
+                const self = this;
+                
+                // Mouse events
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.handleTapTempo();
+                });
+                
+                // Touch events
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    self.handleTapTempo();
+                });
+            }
+            
+            // Start BPM long press
+            startBPMLongPress(direction, button) {
+                const self = this;
+                
+                // Immediate change (single click)
+                this.changeBPM(direction);
+                
+                // Start long press after delay
+                this.longPressTimer = setTimeout(function() {
+                    self.isLongPressing = true;
+                    button.classList.add('long-pressing');
+                    
+                    // Rapid changes every specified interval
+                    self.rapidTimer = setInterval(function() {
+                        if (self.isLongPressing) {
+                            self.changeBPM(direction);
+                        } else {
+                            clearInterval(self.rapidTimer);
+                            self.rapidTimer = null;
+                        }
+                    }, BPM_RAPID_INTERVAL);
+                }, BPM_LONG_PRESS_DELAY);
+            }
+            
+            // Stop BPM long press
+            stopBPMLongPress(button) {
+                if (this.longPressTimer) {
+                    clearTimeout(this.longPressTimer);
+                    this.longPressTimer = null;
+                }
+                
+                if (this.rapidTimer) {
+                    clearInterval(this.rapidTimer);
+                    this.rapidTimer = null;
+                }
+                
+                this.isLongPressing = false;
+                button.classList.remove('long-pressing');
+            }
+            
+            // Change BPM
+            changeBPM(direction) {
+                this.embryoPlayer.changeTempo(direction);
+            }
+            
+            // Handle tap tempo
+            handleTapTempo() {
+                const now = Date.now();
+                const button = document.getElementById('tempo-display');
+                
+                // Add visual feedback
+                button.classList.add('tapping');
+                
+                // Add current tap time
+                this.tapTimes.push(now);
+                
+                // Keep only the last maxTaps taps
+                if (this.tapTimes.length > this.maxTaps) {
+                    this.tapTimes.shift();
+                }
+                
+                // Calculate BPM if we have at least 2 taps
+                if (this.tapTimes.length >= 2) {
+                    const intervals = [];
+                    for (let i = 1; i < this.tapTimes.length; i++) {
+                        intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+                    }
+                    
+                    // Calculate average interval in milliseconds
+                    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+                    
+                    // Convert to BPM (60000ms / interval = BPM)
+                    const newBPM = Math.round(60000 / avgInterval);
+                    
+                    // Clamp to valid BPM range
+                    const clampedBPM = Math.max(MIN_BPM, Math.min(MAX_BPM, newBPM));
+                    
+                    // Update BPM if it's different
+                    if (clampedBPM !== this.embryoPlayer.bpm) {
+                        this.embryoPlayer.bpm = clampedBPM;
+                        this.embryoPlayer.updateTempoDisplay();
+                        this.embryoPlayer.logToTerminal(`Tap tempo: ${clampedBPM} BPM`, 'info');
+                    }
+                }
+                
+                // Remove visual feedback after a short delay
+                setTimeout(() => {
+                    button.classList.remove('tapping');
+                }, 150);
+                
+                // Clear old taps after 3 seconds of inactivity
+                setTimeout(() => {
+                    if (this.tapTimes.length > 0 && Date.now() - this.tapTimes[this.tapTimes.length - 1] > 3000) {
+                        this.tapTimes = [];
+                    }
+                }, 3000);
+            }
+        }
+
+
+
+        /**
+         * Main player class
+         * @class EmbrioPlayer
+         * @description Handles the main player logic, including audio, sequencer and UI
+         * 
+         * @property {AudioContext} audioContext - Web Audio API audio context
+         * @property {Object} samples - Map of loaded samples
+         * @property {Object} activeSources - Active audio sources
+         * @property {Object} visualizers - Audio visualizers
+         * @property {Set} touchedPads - Currently touched pads
+         * @property {boolean} isAudioInitialized - Audio initialization state
+         * @property {boolean} isRecording - Recording state
+         * @property {boolean} isPlaying - Playback state
+         * @property {number} bpm - Current tempo
+         * @property {number} currentBar - Current bar
+         * @property {number} currentBeat - Current beat
+         * @property {Array} sequence - Recorded sequence
+         * 
+         * @example
+         * const player = new EmbrioPlayer();
+         * player.initAudio();
+         */
+        class EmbrioPlayer {
+            constructor() {
+                // Audio
+                this.audioContext = null;
+                this.samples = {};
+                this.activeSources = {};
+                this.visualizers = {};
+                
+                // Estado de la UI
+                this.touchedPads = new Set();
+                this.isAudioInitialized = false;
+                
+                // Secuenciador
+                this.isRecording = false;
+                this.isPlaying = false;
+                this.bpm = 120;
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                this.sequence = Array(BAR_COUNT).fill().map(function() { return []; });
+                this.sequenceStartTime = 0;
+                this.metronomeInterval = null;
+                this.beatInterval = null;
+                this.barAdvancementInterval = null;
+                
+                // MIDI
+                this.midiAccess = null;
+                
+                // Bancos de sonidos
+                this.currentBank = 'A';
+                this.bankSamples = {
+                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}, 'F': {}, 'G': {}, 'H': {}
+                };
+
+                // Nombres de los samples
+                this.sampleNames = {
+                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}, 'F': {}, 'G': {}, 'H': {}
+                };
+
+                // Sample Slicer
+                this.slicerSourcePad = null;
+                this.slicerSourceBuffer = null;
+                this.slices = {};
+                this.slicerMode = false; // NEW: Slicer mode state
+                
+                // NEW: QUANTIZATION SYSTEM
+                this.quantizeMode = true; // Enable quantization by default
+                this.quantizeStrength = QUANTIZE_STRENGTH;
+                this.gridResolution = GRID_RESOLUTION;
+                this.gridStepsPerBeat = GRID_STEPS_PER_BEAT;
+                
+                // OPTIMIZATION: Latency configuration
+                this.performanceMode = false; // false = viz mode (high latency), true = perf mode (low latency)
+                this.preCreatedAnalysers = {};
+                this.preCreatedGains = {};
+
+
+
+                
+                // NEW: Specialized controllers
+                this.padController = new PadController(this);
+                this.bpmController = new BPMController(this);
+                
+                // Initialize
+                this.initEventListeners();
+                this.loadSampleInfoFromStorage();
+                
+
+            }
+            
+            // INITIALIZATION AND CONFIGURATION
+            loadSampleInfoFromStorage() {
+                try {
+                    const savedInfo = localStorage.getItem('embryoPlayerSamples');
+                    if (savedInfo) {
+                        const info = JSON.parse(savedInfo);
+                        if (info.sampleNames) {
+                            this.sampleNames = info.sampleNames;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error loading saved information:', e);
+                }
+            }
+            
+            saveSampleInfo() {
+                try {
+                    const info = {
+                        sampleNames: this.sampleNames
+                    };
+                    localStorage.setItem('embryoPlayerSamples', JSON.stringify(info));
+                } catch (e) {
+                    console.error('Error saving information:', e);
+                }
+            }
+            
+            initEventListeners() {
+                const self = this;
+                
+                // Main buttons
+                document.getElementById('start-audio').addEventListener('click', function() { self.initAudio(); });
+                document.getElementById('help-button').addEventListener('click', function() {
+                    document.getElementById('help-modal').style.display = 'block';
+                });
+                document.querySelector('.close-help').addEventListener('click', function() {
+                    document.getElementById('help-modal').style.display = 'none';
+                });
+                document.getElementById('record-sequence').addEventListener('click', function() { self.toggleRecording(); });
+                document.getElementById('play-sequence').addEventListener('click', function() { self.playSequence(); });
+                document.getElementById('stop-sequence').addEventListener('click', function() { self.stopAll(); });
+                document.getElementById('clear-sequence').addEventListener('click', function() { self.clearSequence(); });
+                
+                // Bank selection buttons
+                document.getElementById('bank-a').addEventListener('click', function() { self.selectBank('A'); });
+                document.getElementById('bank-b').addEventListener('click', function() { self.selectBank('B'); });
+                document.getElementById('bank-c').addEventListener('click', function() { self.selectBank('C'); });
+                document.getElementById('bank-d').addEventListener('click', function() { self.selectBank('D'); });
+                document.getElementById('bank-e').addEventListener('click', function() { self.selectBank('E'); });
+                document.getElementById('bank-f').addEventListener('click', function() { self.selectBank('F'); });
+                document.getElementById('bank-g').addEventListener('click', function() { self.selectBank('G'); });
+                document.getElementById('bank-h').addEventListener('click', function() { self.selectBank('H'); });
+                
+                // Batch loading buttons
+                document.getElementById('load-samples').addEventListener('click', function() { self.loadMultipleSamples(); });
+                document.getElementById('clear-bank').addEventListener('click', function() { self.clearCurrentBank(); });
+                
+                // NEW: Touch button for slicer
+                document.getElementById('mobile-slicer').addEventListener('click', function() { 
+                    if (self.slicerMode) {
+                        self.deactivateSlicerMode();
+                        self.logToTerminal('Slicer mode deactivated', 'info');
+                    } else {
+                        self.showPadSelectorForSlicer(); 
+                    }
+                });
+                
+                // NEW: Button to toggle perf mode
+                document.getElementById('toggle-performance-mode').addEventListener('click', function() { 
+                    self.togglePerformanceMode(); 
+                });
+                
+                // NEW: Quantization system buttons
+                document.getElementById('toggle-quantize').addEventListener('click', function() { 
+                    self.toggleQuantizeMode(); 
+                });
+                
+                document.getElementById('quantize-strength').addEventListener('click', function() { 
+                    self.cycleQuantizeStrength(); 
+                });
+                
+
+                
+
+                
+                // Responsive
+                window.addEventListener('resize', function() { self.resizeCanvases(); });
+            }
+            
+            /**
+             * Initialize audio
+             * @method initAudio
+             * @description Creates the audio context and prepares the player
+             * @throws {Error} If audio context cannot be created
+             * @returns {Promise} Promise that resolves when audio is ready
+             */
+            async initAudio() {
+                const self = this;
+                
+                if (this.audioContext) {
+                    this.logToTerminal('Audio is already started.', 'info');
+                    return;
+                }
+                
+                try {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    
+                    // OPTIMIZACIÓN: Configurar AudioContext para latencia mínima
+                    const audioContextOptions = {
+                        latencyHint: 'interactive', // Latencia mínima para interacción en tiempo real
+                        sampleRate: 44100 // Sample rate estándar para mejor compatibilidad
+                    };
+                    
+                    this.audioContext = new AudioContextClass(audioContextOptions);
+                    
+                    // Check audioWorklet compatibility after creating the instance
+                    try {
+                        if (this.audioContext && typeof this.audioContext.audioWorklet !== 'undefined') {
+                            console.log('[OK] audioWorklet available for latency optimization');
+                        } else {
+                            console.log('[WARN] audioWorklet not available, using standard configuration');
+                        }
+                    } catch (e) {
+                        console.log('[WARN] audioWorklet not available in this browser:', e.message);
+                    }
+                    
+                    // OPTIMIZATION: Configure context for minimum latency
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                    
+                    // OPTIMIZATION: Pre-create audio nodes to reduce latency
+                    this.preCreateAudioNodes();
+                    
+
+                    
+                    this.isAudioInitialized = true;
+                    
+                    // Show latency statistics on startup
+                    setTimeout(() => {
+                        this.showLatencyStats();
+                    }, 1000);
+                    
+                    // Update UI
+                    document.getElementById('start-audio').disabled = true;
+
+                    
+                            this.logToTerminal('Audio started. No samples loaded. Use "Load Samples" to add your own.', 'info');
+                    
+                    // Initialize components
+                    this.createPadGrid();
+                    this.initMIDI();
+                    // REMOVED: Auto-load samples - will be loaded manually
+                    // this.loadAllSamples().then(function() {
+                    //     self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                    // });
+                    
+                } catch (error) {
+                    console.error('Error starting audio:', error);
+                            this.logToTerminal('Error starting audio: ' + error.message + '. Please reload the page.', 'error');
+                }
+            }
+            
+            // OPTIMIZATION: Pre-create audio nodes to reduce latency
+            preCreateAudioNodes() {
+                // Pre-create analysers for each pad
+                this.preCreatedAnalysers = {};
+                for (let i = 1; i <= 16; i++) {
+                    this.preCreatedAnalysers[i] = this.audioContext.createAnalyser();
+                    this.preCreatedAnalysers[i].fftSize = FFT_SIZE;
+                    this.preCreatedAnalysers[i].smoothingTimeConstant = 0.3; // Reduce smoothing for lower latency
+                }
+                
+                // Pre-create gain nodes for each pad
+                this.preCreatedGains = {};
+                for (let i = 1; i <= 16; i++) {
+                    this.preCreatedGains[i] = this.audioContext.createGain();
+                    this.preCreatedGains[i].gain.setValueAtTime(1.0, this.audioContext.currentTime);
+                }
+                
+                console.log('[AUDIO] Audio nodes pre-created for minimum latency');
+            }
+            
+            // IMPROVED PAD SYSTEM
+            createPadGrid() {
+                const grid = document.getElementById('pad-grid');
+                grid.innerHTML = '';
+                
+                for (let i = 1; i <= 16; i++) {
+                    const pad = document.createElement('div');
+                    pad.className = 'pad';
+                    pad.dataset.number = i;
+                    
+                    // Create canvas for visualizer
+                    const visualizer = document.createElement('canvas');
+                    visualizer.className = 'visualizer';
+                    pad.appendChild(visualizer);
+                    
+                    // Create drop indicator
+                    const dropIndicator = document.createElement('div');
+                    dropIndicator.className = 'drop-indicator';
+                    dropIndicator.textContent = 'Drop here';
+                    pad.appendChild(dropIndicator);
+                    
+                    // Create bank indicator
+                    const sampleIndicator = document.createElement('div');
+                    sampleIndicator.className = 'sample-indicator';
+                    sampleIndicator.style.display = 'none';
+                    pad.appendChild(sampleIndicator);
+                    
+                    // Create label for sample name
+                    const nameLabel = document.createElement('div');
+                    nameLabel.className = 'sample-name';
+                    nameLabel.style.display = 'none';
+                    pad.appendChild(nameLabel);
+                    
+                    // Create slice indicator
+                    const sliceIndicator = document.createElement('div');
+                    sliceIndicator.className = 'slice-indicator';
+                    sliceIndicator.style.display = 'none';
+                    pad.appendChild(sliceIndicator);
+                    
+                    // NEW: Create keyboard indicator
+                    const keyboardIndicator = document.createElement('div');
+                    keyboardIndicator.className = 'keyboard-indicator';
+                    keyboardIndicator.textContent = this.padController.getKeyForPad(i);
+                    keyboardIndicator.style.display = 'none';
+                    pad.appendChild(keyboardIndicator);
+                    
+                    // Create button to delete sample
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-pad-btn';
+                    deleteBtn.innerHTML = '×';
+                    deleteBtn.title = 'Delete sample';
+                    
+                    // Event listeners for delete
+                    const self = this;
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        self.deletePadSample(i);
+                    });
+                    
+                    deleteBtn.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    });
+                    
+                    deleteBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    });
+                    
+                    pad.appendChild(deleteBtn);
+                    
+                    // NEW IMPROVED EVENT LISTENERS
+                    this.setupPadEventListeners(pad, i);
+                    this.setupDragAndDrop(pad, i);
+                    
+                    grid.appendChild(pad);
+                }
+                
+                this.resizeCanvases();
+            }
+            
+            // Setup event listeners for a pad
+            setupPadEventListeners(pad, padNumber) {
+                const self = this;
+                
+                // Mouse events
+                pad.addEventListener('mousedown', function(e) {
+                    if (e.target.classList.contains('delete-pad-btn')) return;
+                    e.preventDefault();
+                });
+                
+                pad.addEventListener('mouseup', function(e) {
+                    e.preventDefault();
+                    if (e.detail === 2) return; // Avoid double click
+                    
+                    // Check if slicer mode is active
+                    if (self.slicerMode && self.samples[padNumber]) {
+                        self.selectPadForSlicing(padNumber);
+                    } else {
+                        self.padController.triggerPad(padNumber, 127, 'mouse');
+                    }
+                });
+                
+
+                
+                // Touch events
+                pad.addEventListener('touchstart', function(e) {
+                    if (e.target.classList.contains('delete-pad-btn')) return;
+                    e.preventDefault();
+                    
+                    
+                });
+                
+                pad.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    
+                    // Check if slicer mode is active
+                    if (self.slicerMode && self.samples[padNumber]) {
+                        self.selectPadForSlicing(padNumber);
+                    } else {
+                        self.padController.triggerPad(padNumber, 127, 'touch');
+                        self.touchedPads.add(padNumber);
+                        self.touchedPads.delete(padNumber);
+                    }
+                });
+                
+                pad.addEventListener('touchcancel', function(e) {
+                    self.touchedPads.delete(padNumber);
+                });
+                
+
+                
+
+            }
+            
+            // AUDIO PLAYBACK AND CONTROL - OPTIMIZED FOR MINIMUM LATENCY
+            playPad(padNumber) {
+                if (!this.validatePlayback(padNumber)) return;
+                
+                // OPTIMIZATION: Use pre-created nodes to reduce latency
+                const source = this.createAudioSource(padNumber);
+                const analyser = this.preCreatedAnalysers[padNumber];
+                const gain = this.preCreatedGains[padNumber];
+                
+                // Connect audio directly to destination
+                source.connect(gain);
+                gain.connect(analyser);
+                analyser.connect(this.audioContext.destination);
+                
+                // OPTIMIZATION: Start audio immediately without delay
+                source.start();
+                this.activeSources[padNumber] = source;
+                
+                // OPTIMIZATION: Update UI asynchronously to not block audio
+                requestAnimationFrame(() => {
+                    this.updatePadUI(padNumber, source);
+                });
+                
+                // OPTIMIZATION: Optional visualization (can be disabled for maximum latency)
+                if (!this.performanceMode) {
+                    const canvas = document.querySelector('.pad[data-number="' + padNumber + '"] .visualizer');
+                    if (canvas) {
+                        this.visualize(padNumber, analyser, canvas);
+                    }
+                }
+                
+                // OPTIMIZATION: Background recording
+                if (this.isRecording) {
+                    requestAnimationFrame(() => {
+                        this.recordPadEvent(padNumber);
+                    });
+                }
+                
+                // OPTIMIZATION: Asynchronous status update
+                requestAnimationFrame(() => {
+                            this.logToTerminal('Playing Pad ' + padNumber + ' (Bank ' + this.currentBank + ')', 'info');
+                });
+            }
+            
+            validatePlayback(padNumber) {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before playing samples.', 'warning');
+                    return false;
+                }
+                
+                if (!this.samples[padNumber]) {
+                    this.logToTerminal('No audio assigned to Pad ' + padNumber + ' in Bank ' + this.currentBank, 'warning');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            stopPadIfPlaying(padNumber) {
+                if (this.activeSources[padNumber]) {
+                    try {
+                        this.activeSources[padNumber].stop();
+                        this.activeSources[padNumber].disconnect();
+                    } catch (e) {
+                        console.warn('Error stopping audio source:', e);
+                    }
+                }
+            }
+            
+            createAudioSource(padNumber) {
+                // OPTIMIZATION: Create audio source with optimized configuration
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.samples[padNumber];
+                
+                // OPTIMIZATION: Configure for minimum latency
+                if (source.playbackRate) {
+                    source.playbackRate.setValueAtTime(1.0, this.audioContext.currentTime);
+                }
+                
+                return source;
+            }
+            
+            createAnalyser() {
+                const analyser = this.audioContext.createAnalyser();
+                analyser.fftSize = FFT_SIZE;
+                return analyser;
+            }
+            
+            updatePadUI(padNumber, source) {
+                const self = this;
+                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (!pad) return;
+                
+                pad.classList.add('playing');
+                
+                source.onended = function() {
+                    pad.classList.remove('playing');
+                    delete self.activeSources[padNumber];
+                    
+                    if (self.visualizers[padNumber]) {
+                        cancelAnimationFrame(self.visualizers[padNumber]);
+                        delete self.visualizers[padNumber];
+                    }
+                };
+            }
+            
+            // MIDI INTEGRATION
+            initMIDI() {
+                const self = this;
+                
+                if (navigator.requestMIDIAccess) {
+                    navigator.requestMIDIAccess()
+                        .then(function(midiAccess) { self.onMIDISuccess(midiAccess); })
+                        .catch(function(error) { self.onMIDIFailure(error); });
+                } else {
+                    this.logToTerminal('Web MIDI API not supported in this browser.', 'warning');
+                }
+            }
+            
+            onMIDISuccess(midiAccess) {
+                const self = this;
+                this.midiAccess = midiAccess;
+                this.padController.setMIDIAvailable(true);
+                
+                const inputs = midiAccess.inputs.values();
+                
+                for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+                    input.value.onmidimessage = function(msg) { self.onMIDIMessage(msg); };
+                }
+                
+                        this.logToTerminal('MIDI connected (OMNI - all channels). MIDI controller ready.', 'info');
+            }
+            
+            onMIDIFailure(error) {
+                console.error('Error accessing MIDI:', error);
+                this.padController.setMIDIAvailable(false);
+                        this.logToTerminal('Error connecting MIDI. You can continue using mouse, touch or keyboard.', 'warning');
+            }
+            
+            onMIDIMessage(message) {
+                const data = message.data;
+                const status = data[0];
+                const note = data[1]; 
+                const velocity = data[2];
+                
+                // Detect Note On in any MIDI channel (144-159 = 0x90-0x9F)
+                if ((status >= 144 && status <= 159) && velocity > 0) {
+                    const padNumber = note % 16 + 1;
+                    
+                    // MIDI uses the unified system
+                    this.padController.triggerPad(padNumber, velocity, 'MIDI');
+                    
+                    console.log('MIDI: Channel ' + ((status & 0x0F) + 1) + ', Note ' + note + ', Velocity ' + velocity + ' → Pad ' + padNumber);
+                }
+            }
+            
+
+            
+
+            
+
+            
+
+            
+
+            
+            // TEMPO Y BPM (MEJORADO)
+            changeTempo(change) {
+                this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, this.bpm + change));
+                this.updateTempoDisplay();
+                
+                // Log BPM change to terminal
+                this.logToTerminal(`BPM changed to ${this.bpm}`, 'info');
+                
+                if (this.isRecording || this.isPlaying) {
+                    this.restartTimers();
+                }
+            }
+            
+            // Update tempo display
+            updateTempoDisplay() {
+                document.getElementById('tempo-display').textContent = this.bpm + ' BPM';
+            }
+            
+            restartTimers() {
+                this.stopTimers();
+                
+                if (this.isRecording || this.isPlaying) {
+                    if (this.isRecording) {
+                        this.startMetronome();
+                    }
+                    this.startBarAdvancement();
+                }
+            }
+            
+            stopTimers() {
+                let timersStopped = 0;
+                
+                if (this.metronomeInterval) {
+                    clearInterval(this.metronomeInterval);
+                    this.metronomeInterval = null;
+                    timersStopped++;
+                }
+                
+                if (this.beatInterval) {
+                    clearInterval(this.beatInterval);
+                    this.beatInterval = null;
+                    timersStopped++;
+                }
+                
+                if (this.barAdvancementInterval) {
+                    clearInterval(this.barAdvancementInterval);
+                    this.barAdvancementInterval = null;
+                    timersStopped++;
+                }
+                
+                if (timersStopped > 0) {
+                    this.logToTerminal('Stopped ' + timersStopped + ' active timers', 'info');
+                }
+            }
+            
+            // BANK SYSTEM (EXISTING)
+            selectBank(bank) {
+                if (this.currentBank === bank) return;
+                
+                this.currentBank = bank;
+                
+                document.querySelectorAll('.bank-btn').forEach(function(btn) {
+                    btn.classList.remove('bank-active');
+                });
+                document.getElementById('bank-' + bank.toLowerCase()).classList.add('bank-active');
+                
+                this.samples = this.bankSamples[bank] || {};
+                this.updatePadBankIndicators();
+                
+                // NEW: Show bank status when selecting
+                this.showBankStatus();
+                
+                        this.logToTerminal('Bank ' + bank + ' selected.', 'info');
+            }
+
+            updatePadBankIndicators() {
+                for (let i = 1; i <= 16; i++) {
+                    const pad = document.querySelector('.pad[data-number="' + i + '"]');
+                    if (!pad) continue;
+                    
+                    // Indicadores existentes
+                    let nameLabel = pad.querySelector('.sample-name');
+                    let sliceIndicator = pad.querySelector('.slice-indicator');
+                    let deleteBtn = pad.querySelector('.delete-pad-btn');
+                    let keyboardIndicator = pad.querySelector('.keyboard-indicator');
+                    
+                    // Crear indicadores si no existen
+                    if (!nameLabel) {
+                        nameLabel = document.createElement('div');
+                        nameLabel.className = 'sample-name';
+                        pad.appendChild(nameLabel);
+                    }
+                    
+                    if (!sliceIndicator) {
+                        sliceIndicator = document.createElement('div');
+                        sliceIndicator.className = 'slice-indicator';
+                        pad.appendChild(sliceIndicator);
+                    }
+                    
+                    if (!keyboardIndicator) {
+                        keyboardIndicator = document.createElement('div');
+                        keyboardIndicator.className = 'keyboard-indicator';
+                        keyboardIndicator.textContent = this.padController.getKeyForPad(i);
+                        pad.appendChild(keyboardIndicator);
+                    }
+                    
+                    if (!deleteBtn) {
+                        deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-pad-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.title = 'Eliminar sample';
+                        
+                        const self = this;
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            self.deletePadSample(i);
+                        });
+                        
+                        deleteBtn.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        deleteBtn.addEventListener('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        pad.appendChild(deleteBtn);
+                    }
+                    
+                    // Verificar si hay sample en este pad
+                    const hasSample = !!this.bankSamples[this.currentBank][i];
+                    
+                    if (hasSample) {
+                        pad.classList.add('loaded');
+                        pad.classList.remove('full-bank');
+                        
+                        const name = this.sampleNames[this.currentBank][i] || ('Sample ' + i);
+                        nameLabel.textContent = name;
+                        nameLabel.style.display = 'block';
+                        
+                        deleteBtn.style.display = 'flex';
+                        keyboardIndicator.style.display = 'block';
+                        
+                        if (name.indexOf('-') === -1) {
+                            sliceIndicator.style.display = 'none';
+                        }
+                    } else {
+                        pad.classList.remove('loaded');
+                        nameLabel.style.display = 'none';
+                        sliceIndicator.style.display = 'none';
+                        deleteBtn.style.display = 'none';
+                        keyboardIndicator.style.display = 'none';
+                    }
+                }
+                
+                // NEW: Check if bank is full and apply visual indicator
+                const emptyPads = this.findEmptyPads();
+                if (emptyPads.length === 0) {
+                    // Bank is full, show visual indicator
+                    document.querySelectorAll('.pad').forEach(pad => {
+                        if (!pad.classList.contains('loaded')) {
+                            pad.classList.add('full-bank');
+                        }
+                    });
+                } else {
+                    // Bank has empty pads, remove full indicator
+                    document.querySelectorAll('.pad.full-bank').forEach(pad => {
+                        pad.classList.remove('full-bank');
+                    });
+                }
+            }
+            
+            // SAMPLE LOADING (EXISTING)
+            loadMultipleSamples() {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio first', 'warning');
+                    return;
+                }
+                
+                // NEW: Show current bank status first
+                const bankStatus = this.showBankStatus();
+                
+                if (bankStatus.emptyPads.length === 0) {
+                    this.showFullBankError('load samples');
+                    return;
+                }
+                
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'audio/*';
+                input.multiple = true;
+                
+                const self = this;
+                input.onchange = function(e) {
+                    const files = Array.from(e.target.files);
+                    if (files.length === 0) return;
+                    
+                    const filesToLoad = files.slice(0, 16);
+                    
+                    self.logToTerminal('Attempting to load ' + filesToLoad.length + ' samples in Bank ' + self.currentBank + '...', 'info');
+                    
+                    // NEW: Find empty pads first
+                    const emptyPads = self.findEmptyPads();
+                    
+                    if (emptyPads.length === 0) {
+                        self.showFullBankError('load samples');
+                        return;
+                    }
+                    
+                    if (emptyPads.length < filesToLoad.length) {
+                        self.logToTerminal('Only ' + emptyPads.length + ' empty pads available. Loading ' + emptyPads.length + ' samples.', 'warning');
+                        filesToLoad.splice(emptyPads.length);
+                    }
+                    
+                    self.logToTerminal('Loading samples into pads: ' + emptyPads.slice(0, filesToLoad.length).join(', '), 'info');
+                    
+                    // Load files into empty pads
+                    filesToLoad.forEach(function(file, index) {
+                        const padNumber = emptyPads[index];
+                        if (self.validateAudioFile(file)) {
+                            self.loadUserSample(padNumber, self.currentBank, file);
+                        }
+                    });
+                };
+                
+                input.click();
+            }
+            
+            // NEW: Find empty pads in current bank
+            findEmptyPads() {
+                const emptyPads = [];
+                for (let i = 1; i <= 16; i++) {
+                    if (!this.bankSamples[this.currentBank][i]) {
+                        emptyPads.push(i);
+                    }
+                }
+                return emptyPads;
+            }
+            
+            // NEW: Show bank status information
+            showBankStatus() {
+                const emptyPads = this.findEmptyPads();
+                const loadedPads = 16 - emptyPads.length;
+                
+                let statusMessage = `Bank ${this.currentBank}: ${loadedPads}/16 pads loaded`;
+                if (emptyPads.length > 0) {
+                    statusMessage += ` (${emptyPads.length} empty)`;
+                } else {
+                    statusMessage += ' (FULL - no empty pads)';
+                }
+                
+                this.logToTerminal(statusMessage, 'info');
+                
+                if (emptyPads.length === 0) {
+                    this.logToTerminal('Bank is full. Use "Clear Bank" or delete individual samples to free space.', 'warning');
+                } else {
+                    this.logToTerminal(`Empty pads available: ${emptyPads.join(', ')}`, 'info');
+                }
+                
+                return { emptyPads, loadedPads };
+            }
+            
+            // NEW: Enhanced error message for full bank
+            showFullBankError(action = 'load samples') {
+                this.logToTerminal(`Cannot ${action}: Bank ${this.currentBank} is FULL`, 'error');
+                this.logToTerminal('Available actions:', 'info');
+                this.logToTerminal('• Use "Clear Bank" to remove all samples', 'info');
+                this.logToTerminal('• Delete individual samples using the × button', 'info');
+                this.logToTerminal('• Switch to another bank with available space', 'info');
+            }
+
+            clearCurrentBank() {
+                const bank = this.currentBank;
+                
+                if (confirm('Are you sure you want to clear all samples from Bank ' + bank + '?')) {
+                    this.bankSamples[bank] = {};
+                    this.samples = {};
+                    this.sampleNames[bank] = {};
+                    
+                    this.updatePadBankIndicators();
+                    this.saveSampleInfo();
+                    
+                    this.logToTerminal('All samples from Bank ' + bank + ' have been cleared.', 'info');
+                }
+            }
+            
+            deletePadSample(padNumber) {
+                const bank = this.currentBank;
+                const sampleName = this.sampleNames[bank][padNumber] || ('Pad ' + padNumber);
+                
+                this.stopPadIfPlaying(padNumber);
+                
+                delete this.bankSamples[bank][padNumber];
+                delete this.samples[padNumber];
+                delete this.sampleNames[bank][padNumber];
+                
+                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (pad) {
+                    pad.classList.remove('loaded');
+                    
+                    const sampleIndicator = pad.querySelector('.sample-indicator');
+                    const nameLabel = pad.querySelector('.sample-name');
+                    const sliceIndicator = pad.querySelector('.slice-indicator');
+                    const deleteBtn = pad.querySelector('.delete-pad-btn');
+                    const keyboardIndicator = pad.querySelector('.keyboard-indicator');
+                    
+                    if (sampleIndicator) sampleIndicator.style.display = 'none';
+                    if (nameLabel) nameLabel.style.display = 'none';
+                    if (sliceIndicator) sliceIndicator.style.display = 'none';
+                    if (deleteBtn) deleteBtn.style.display = 'none';
+                    if (keyboardIndicator) keyboardIndicator.style.display = 'none';
+                }
+                
+                this.saveSampleInfo();
+                
+                this.logToTerminal('"' + sampleName + '" deleted from Pad ' + padNumber, 'info');
+            }
+            
+            // HELPER FUNCTIONS AND UTILITIES
+            
+            showLoadedEffect(pad) {
+                const originalBoxShadow = pad.style.boxShadow;
+                pad.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.8)';
+                
+                setTimeout(function() {
+                    pad.style.boxShadow = originalBoxShadow;
+                }, 500);
+            }
+            
+            // REST OF EXISTING FUNCTIONS
+            setupDragAndDrop(pad, padNumber) {
+                const self = this;
+                pad.addEventListener('dragenter', function(e) { self.handleDragEnter(e, padNumber); }, false);
+                pad.addEventListener('dragover', function(e) { self.handleDragOver(e, padNumber); }, false);
+                pad.addEventListener('dragleave', function(e) { self.handleDragLeave(e, padNumber); }, false);
+                pad.addEventListener('drop', function(e) { self.handleDrop(e, padNumber); }, false);
+            }
+            
+            handleDragEnter(e, padNumber) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const pad = e.currentTarget;
+                const files = Array.from(e.dataTransfer.files);
+                
+                if (files.length > 0) {
+                    const self = this;
+                    const validFiles = files.filter(function(file) { return self.validateAudioFile(file); });
+                    
+                    if (validFiles.length > 0) {
+                        pad.classList.add('drag-over', 'drag-valid');
+                        const indicator = pad.querySelector('.drop-indicator');
+                        
+                        if (files.length === 1) {
+                            indicator.textContent = '[FILE] ' + files[0].name;
+                        } else {
+                            indicator.textContent = '[FILE] ' + validFiles.length + ' files';
+                        }
+                    } else {
+                        pad.classList.add('drag-over', 'drag-invalid');
+                        const indicator = pad.querySelector('.drop-indicator');
+                        indicator.textContent = '[ERROR] Invalid format';
+                    }
+                }
+            }
+            
+            handleDragOver(e, padNumber) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = 'copy';
+            }
+            
+            handleDragLeave(e, padNumber) {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    const pad = e.currentTarget;
+                    pad.classList.remove('drag-over', 'drag-valid', 'drag-invalid');
+                    
+                    const indicator = pad.querySelector('.drop-indicator');
+                    indicator.textContent = 'Soltar aquí';
+                }
+            }
+            
+            handleDrop(e, padNumber) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const pad = e.currentTarget;
+                pad.classList.remove('drag-over', 'drag-valid', 'drag-invalid');
+                
+                const files = Array.from(e.dataTransfer.files);
+                
+                if (files.length > 0) {
+                    if (!this.audioContext) {
+                        this.logToTerminal('Please start audio before loading samples', 'warning');
+                        return;
+                    }
+                    
+                    const self = this;
+                    const validFiles = files.filter(function(file) { return self.validateAudioFile(file); });
+                    
+                    if (validFiles.length === 0) {
+                        this.logToTerminal('No valid audio files found', 'error');
+                        return;
+                    }
+                    
+                    if (validFiles.length === 1) {
+                        const file = validFiles[0];
+                        // NEW: Check if target pad is empty
+                        if (this.bankSamples[this.currentBank][padNumber]) {
+                            this.logToTerminal('Pad ' + padNumber + ' already has a sample. Please drop on an empty pad.', 'warning');
+                            return;
+                        }
+                        this.logToTerminal('Loading "' + file.name + '" in Pad ' + padNumber + '...', 'info');
+                        this.loadUserSample(padNumber, this.currentBank, file);
+                    } else {
+                        // NEW: For multiple files, find empty pads starting from target
+                        this.loadMultipleFilesToPads(validFiles, padNumber);
+                    }
+                }
+                
+                const indicator = pad.querySelector('.drop-indicator');
+                indicator.textContent = 'Drop here';
+            }
+            
+            loadMultipleFilesToPads(files, startPadNumber) {
+                this.logToTerminal('Loading ' + files.length + ' files from Pad ' + startPadNumber + '...', 'info');
+                
+                // NEW: Find empty pads starting from the target pad
+                const emptyPads = [];
+                for (let i = startPadNumber; i <= 16; i++) {
+                    if (!this.bankSamples[this.currentBank][i]) {
+                        emptyPads.push(i);
+                    }
+                }
+                
+                // Also check earlier pads if we need more space
+                if (emptyPads.length < files.length) {
+                    for (let i = 1; i < startPadNumber; i++) {
+                        if (!this.bankSamples[this.currentBank][i]) {
+                            emptyPads.push(i);
+                        }
+                        if (emptyPads.length >= files.length) break;
+                    }
+                }
+                
+                if (emptyPads.length === 0) {
+                    this.showFullBankError('load multiple files');
+                    return;
+                }
+                
+                const filesToLoad = files.slice(0, emptyPads.length);
+                
+                if (emptyPads.length < files.length) {
+                    this.logToTerminal('Only ' + emptyPads.length + ' empty pads available. Loading ' + emptyPads.length + ' samples.', 'warning');
+                }
+                
+                const self = this;
+                filesToLoad.forEach(function(file, index) {
+                    const targetPad = emptyPads[index];
+                    if (targetPad <= 16) {
+                        setTimeout(function() {
+                            self.loadUserSample(targetPad, self.currentBank, file);
+                        }, index * 100);
+                    }
+                });
+                
+                const totalLoaded = Math.min(filesToLoad.length, emptyPads.length);
+                this.logToTerminal('Loading ' + totalLoaded + ' samples in available empty pads...', 'info');
+            }
+            
+            validateAudioFile(file) {
+                if (!file) return false;
+                
+                const validTypes = [
+                    'audio/wav', 'audio/x-wav', 'audio/mp3', 'audio/mpeg', 
+                    'audio/ogg', 'audio/aac', 'audio/m4a', 'audio/flac'
+                ];
+                
+                const fileName = file.name.toLowerCase();
+                const extension = fileName.split('.').pop();
+                const validExtensions = ['wav', 'mp3', 'ogg', 'aac', 'm4a', 'flac'];
+                
+                const isValidType = validTypes.includes(file.type) || 
+                                   validExtensions.includes(extension);
+                
+                if (!isValidType) {
+                    return false;
+                }
+                
+                if (file.size > 50 * 1024 * 1024) { // 50MB
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            loadUserSample(padNumber, bank, file) {
+                try {
+                    // Enhanced validations
+                    if (!this.audioContext) {
+                        throw new Error('Audio not initialized. Please start audio first.');
+                    }
+                    
+                    if (!file || file.size === 0) {
+                        throw new Error('Invalid or empty file.');
+                    }
+                    
+                    if (file.size > 50 * 1024 * 1024) {
+                        throw new Error('File too large. Maximum 50MB.');
+                    }
+                    
+                    const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                    if (pad) {
+                        pad.classList.add('loading');
+                    }
+                    
+                    const reader = new FileReader();
+                    const self = this;
+                
+                reader.onload = function(e) {
+                    self.audioContext.decodeAudioData(e.target.result).then(function(audioBuffer) {
+                        self.bankSamples[bank][padNumber] = audioBuffer;
+                        
+                        if (bank === self.currentBank) {
+                            self.samples[padNumber] = audioBuffer;
+                        }
+                        
+                        const fileName = file.name;
+                        const nameWithoutExt = fileName.split('.').slice(0, -1).join('.');
+                        self.sampleNames[bank][padNumber] = nameWithoutExt;
+                        
+                        if (pad) {
+                            pad.classList.remove('loading');
+                            pad.classList.add('loaded');
+                            
+                            const sampleIndicator = pad.querySelector('.sample-indicator');
+                            if (sampleIndicator) {
+                                sampleIndicator.textContent = 'Bank ' + bank;
+                                sampleIndicator.style.display = 'block';
+                            }
+                            
+                            const nameLabel = pad.querySelector('.sample-name');
+                            if (nameLabel) {
+                                nameLabel.textContent = nameWithoutExt;
+                                nameLabel.style.display = 'block';
+                            }
+                            
+                            const keyboardIndicator = pad.querySelector('.keyboard-indicator');
+                            if (keyboardIndicator) {
+                                keyboardIndicator.style.display = 'block';
+                            }
+                            
+                            self.showLoadedEffect(pad);
+                            
+                            // NEW: Tactile feedback when loading user sample
+
+                        }
+                        
+                        self.saveSampleInfo();
+                        
+                        self.logToTerminal('"' + nameWithoutExt + '" loaded in Pad ' + padNumber + ' (Bank ' + padNumber + ')', 'info');
+                    }).catch(function(error) {
+                        console.error('Error decoding audio:', error);
+                        
+                        if (pad) {
+                            pad.classList.remove('loading');
+                        }
+                        
+                        // More specific error message
+                        let errorMessage = 'Error processing audio file.';
+                        if (error.name === 'EncodingError') {
+                            errorMessage = 'Unsupported audio format or corrupted file.';
+                        } else if (error.name === 'NotSupportedError') {
+                            errorMessage = 'Audio format not supported by browser.';
+                        }
+                        
+                        self.logToTerminal(errorMessage, 'error');
+                    });
+                };
+                
+                reader.onerror = function(error) {
+                    console.error('Error reading file:', error);
+                    
+                    if (pad) {
+                        pad.classList.remove('loading');
+                    }
+                    
+                    self.logToTerminal('Error reading file. Verify that the file is not corrupted.', 'error');
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error in loadUserSample:', error);
+                
+                // Clean pad state in case of error
+                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                if (pad) {
+                    pad.classList.remove('loading');
+                }
+                
+                this.logToTerminal('Error: ' + error.message, 'error');
+            }
+            }
+            
+            // DISABLED: Auto-load samples function (commented out for manual loading)
+            /*
+            loadAllSamples() {
+                this.logToTerminal('Loading 8 custom samples from Bank A (88 BPM)...', 'info');
+                
+                // FORCE LOAD: Clear Bank A first to ensure clean loading
+                this.bankSamples['A'] = {};
+                this.sampleNames['A'] = {};
+                
+                const loadPromises = [];
+                const self = this;
+                
+                // FORCE LOAD: Use first 8 pads (1-8) for the 8 samples
+                const targetPads = [1, 2, 3, 4, 5, 6, 7, 8];
+                const samplesToLoad = audioFiles;
+                
+                this.logToTerminal('Loading 8 samples into pads: ' + targetPads.join(', '), 'info');
+                
+                samplesToLoad.forEach(function(file, index) {
+                    const padNumber = targetPads[index];
+                    const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                    
+                    if (pad) {
+                        pad.classList.add('loading');
+                    }
+                    
+                    const promise = self.loadAudioForPad(padNumber, file, 'A')
+                        .then(function() {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                                pad.classList.add('loaded');
+                                
+                                const nameWithoutExt = file.split('.').slice(0, -1).join('.');
+                                self.sampleNames['A'][padNumber] = nameWithoutExt;
+                                
+                                self.updatePadBankIndicators();
+                                self.showLoadedEffect(pad);
+                            }
+                        })
+                        .catch(function(error) {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                            }
+                            console.error('Error loading sample ' + padNumber + ':', error);
+                        });
+                    
+                    loadPromises.push(promise);
+                });
+                
+                return Promise.allSettled(loadPromises).then(function() {
+                    self.saveSampleInfo();
+                    self.updatePadBankIndicators(); // Update UI after all samples loaded
+                    self.logToTerminal('8 custom samples loaded successfully from Bank A', 'info');
+                    return loadPromises;
+                });
+            }
+            */
+            
+            loadAudioForPad(padNumber, audioName, bank) {
+                const self = this;
+                bank = bank || 'A';
+                
+                if (!this.audioContext) return Promise.reject(new Error('Contexto de audio no inicializado'));
+                
+                const audioUrl = GITHUB_REPO_URL + audioName;
+                return fetch(audioUrl)
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('HTTP error! status: ' + response.status);
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(function(arrayBuffer) {
+                        return self.audioContext.decodeAudioData(arrayBuffer);
+                    })
+                    .then(function(audioBuffer) {
+                        self.bankSamples[bank][padNumber] = audioBuffer;
+                        
+                        if (bank === self.currentBank) {
+                            self.samples[padNumber] = audioBuffer;
+                        }
+                        
+                        const nameWithoutExt = audioName.split('.').slice(0, -1).join('.');
+                        self.sampleNames[bank][padNumber] = nameWithoutExt;
+                        
+                                self.logToTerminal('Audio "' + audioName + '" loaded in Pad ' + padNumber + ' (Bank ' + bank + ')', 'info');
+                        
+                        return audioBuffer;
+                    })
+                    .catch(function(error) {
+                                self.logToTerminal('Error loading audio for Pad ' + padNumber + ' (Bank ' + bank + ')', 'error');
+                        throw error;
+                    });
+            }
+            
+            recordPadEvent(padNumber) {
+                const currentTime = this.audioContext.currentTime;
+                const relativeTime = (currentTime - this.sequenceStartTime) % (60 / this.bpm * BEATS_PER_BAR);
+                
+                // NEW: Apply quantization if enabled
+                let quantizedTime = relativeTime;
+                if (this.quantizeMode) {
+                    quantizedTime = this.quantizeTime(relativeTime);
+                }
+                
+                this.sequence[this.currentBar].push({
+                    pad: padNumber,
+                    time: quantizedTime,
+                    bank: this.currentBank,
+                    originalTime: relativeTime, // Keep original timing for reference
+                    quantized: this.quantizeMode
+                });
+                
+                const timingInfo = this.quantizeMode ? 
+                    `(Original: ${relativeTime.toFixed(3)}s → Quantized: ${quantizedTime.toFixed(3)}s)` :
+                    `(Time: ${relativeTime.toFixed(3)}s)`;
+                
+                console.log('Recorded in bar ' + (this.currentBar+1) + ', ' + timingInfo + ', bank: ' + this.currentBank);
+            }
+            
+            // NEW: QUANTIZATION SYSTEM FUNCTIONS
+            
+            /**
+             * Quantize time to the nearest grid step
+             * @param {number} time - Time in seconds
+             * @returns {number} Quantized time in seconds
+             */
+            quantizeTime(time) {
+                const beatDuration = 60 / this.bpm; // Duration of one beat in seconds
+                const stepDuration = beatDuration / this.gridStepsPerBeat; // Duration of one grid step
+                
+                // Calculate which grid step this time falls into
+                const stepIndex = Math.round(time / stepDuration);
+                
+                // Calculate the quantized time
+                const quantizedTime = stepIndex * stepDuration;
+                
+                // Apply quantization strength (blend between original and quantized)
+                const finalTime = time + (quantizedTime - time) * this.quantizeStrength;
+                
+                // Ensure time stays within the bar
+                return finalTime % (beatDuration * BEATS_PER_BAR);
+            }
+            
+            /**
+             * Get grid step information for a given time
+             * @param {number} time - Time in seconds
+             * @returns {Object} Grid step info
+             */
+            getGridStepInfo(time) {
+                const beatDuration = 60 / this.bpm;
+                const stepDuration = beatDuration / this.gridStepsPerBeat;
+                const stepIndex = Math.round(time / stepDuration);
+                const beatIndex = Math.floor(time / beatDuration);
+                const stepInBeat = stepIndex % this.gridStepsPerBeat;
+                
+                return {
+                    stepIndex: stepIndex,
+                    beatIndex: beatIndex,
+                    stepInBeat: stepInBeat,
+                    stepDuration: stepDuration,
+                    quantizedTime: stepIndex * stepDuration
+                };
+            }
+            
+            /**
+             * Toggle quantization mode on/off
+             */
+            toggleQuantizeMode() {
+                this.quantizeMode = !this.quantizeMode;
+                
+                const btn = document.getElementById('toggle-quantize');
+                if (this.quantizeMode) {
+                    btn.textContent = '[QUANT] Quantize ON';
+                    btn.classList.add('quantize-active');
+                    this.logToTerminal('Quantization ENABLED - Hits will snap to 16th note grid', 'info');
+                } else {
+                    btn.textContent = '[QUANT] Quantize OFF';
+                    btn.classList.remove('quantize-active');
+                    this.logToTerminal('Quantization DISABLED - Free timing recording', 'info');
+                }
+                
+                console.log('[QUANTIZE] Mode:', this.quantizeMode ? 'ENABLED' : 'DISABLED');
+            }
+            
+            /**
+             * Cycle through quantization strength levels
+             */
+            cycleQuantizeStrength() {
+                const strengths = [0.0, 0.25, 0.5, 0.75, 1.0];
+                const currentIndex = strengths.indexOf(this.quantizeStrength);
+                const nextIndex = (currentIndex + 1) % strengths.length;
+                this.quantizeStrength = strengths[nextIndex];
+                
+                const btn = document.getElementById('quantize-strength');
+                const percentage = Math.round(this.quantizeStrength * 100);
+                btn.textContent = `Strength: ${percentage}%`;
+                
+                let strengthDesc = '';
+                if (this.quantizeStrength === 0.0) strengthDesc = 'No quantization';
+                else if (this.quantizeStrength === 0.25) strengthDesc = 'Light quantization';
+                else if (this.quantizeStrength === 0.5) strengthDesc = 'Medium quantization';
+                else if (this.quantizeStrength === 0.75) strengthDesc = 'Strong quantization';
+                else if (this.quantizeStrength === 1.0) strengthDesc = 'Full quantization';
+                
+                this.logToTerminal(`Quantization strength: ${percentage}% - ${strengthDesc}`, 'info');
+                console.log('[QUANTIZE] Strength:', this.quantizeStrength, strengthDesc);
+            }
+            
+            /**
+             * Show grid information in terminal
+             */
+            showGridInfo() {
+                const beatDuration = 60 / this.bpm;
+                const stepDuration = beatDuration / this.gridStepsPerBeat;
+                
+                this.logToTerminal(`Grid Info: ${this.gridResolution} steps per bar, ${this.gridStepsPerBeat} steps per beat`, 'info');
+                this.logToTerminal(`Step duration: ${(stepDuration * 1000).toFixed(1)}ms, Beat duration: ${(beatDuration * 1000).toFixed(1)}ms`, 'info');
+                
+                // Show grid visualization
+                let gridVisual = 'Grid: ';
+                for (let beat = 0; beat < BEATS_PER_BAR; beat++) {
+                    gridVisual += '|';
+                    for (let step = 0; step < this.gridStepsPerBeat; step++) {
+                        gridVisual += step === 0 ? '1' : '&';
+                    }
+                }
+                gridVisual += '|';
+                
+                this.logToTerminal(gridVisual, 'info');
+            }
+            
+            // AUDIO VISUALIZER - OPTIMIZED FOR LATENCY
+            visualize(padNumber, analyser, canvas) {
+                if (!canvas || this.performanceMode) return;
+                
+                const canvasCtx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+                const bufferLength = analyser.frequencyBinCount;
+                
+                // OPTIMIZATION: Reuse arrays to avoid garbage collection
+                if (!this.waveformDataArrays) {
+                    this.waveformDataArrays = {};
+                }
+                if (!this.waveformDataArrays[padNumber]) {
+                    this.waveformDataArrays[padNumber] = new Uint8Array(bufferLength);
+                }
+                const waveformDataArray = this.waveformDataArrays[padNumber];
+                
+                if (this.visualizers[padNumber]) {
+                    cancelAnimationFrame(this.visualizers[padNumber]);
+                }
+                
+                const padColors = this.getPadColors(padNumber);
+                const self = this;
+                
+                function draw() {
+                    self.visualizers[padNumber] = requestAnimationFrame(draw);
+                    
+                    // OPTIMIZATION: Use more efficient getByteTimeDomainData
+                    analyser.getByteTimeDomainData(waveformDataArray);
+                    
+                    // OPTIMIZATION: Simplified energy calculation
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i += 4) { // Sample every 4 samples
+                        sum += Math.abs(waveformDataArray[i] - 128);
+                    }
+                    const energy = (sum / (bufferLength / 4)) / 128;
+                    
+                    // OPTIMIZATION: Clear only the necessary area
+                    canvasCtx.clearRect(0, 0, width, height);
+                    
+                    // OPTIMIZATION: Draw only if there is significant energy
+                    if (energy > 0.01) {
+                        self.drawWaveform(canvasCtx, waveformDataArray, width, height, padColors, energy);
+                    }
+                }
+                
+                draw();
+            }
+            
+            drawWaveform(ctx, dataArray, width, height, colors, energy) {
+                const bufferLength = dataArray.length;
+                const sliceWidth = width / bufferLength;
+                
+                // Center line
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+                
+                // Configure main line
+                ctx.lineWidth = 2 + energy * 5;
+                ctx.strokeStyle = colors.primary;
+                ctx.shadowColor = colors.primary;
+                ctx.shadowBlur = 10 * energy;
+                
+                // Draw main waveform
+                ctx.beginPath();
+                
+                let x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * height / 2;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        const prevX = x - sliceWidth;
+                        const prevY = dataArray[i - 1] / 128.0 * height / 2;
+                        const cpx1 = prevX + sliceWidth / 3;
+                        const cpx2 = x - sliceWidth / 3;
+                        
+                        if (Math.abs(y - prevY) > height * 0.1) {
+                            ctx.lineTo(x, y);
+                        } else {
+                            ctx.bezierCurveTo(cpx1, prevY, cpx2, y, x, y);
+                        }
+                    }
+                    
+                    x += sliceWidth;
+                }
+                
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Reflection line
+                ctx.lineWidth = 1 + energy * 2;
+                ctx.strokeStyle = colors.secondary;
+                ctx.globalAlpha = 0.3;
+                
+                ctx.beginPath();
+                x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = height - (v * height / 2);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    x += sliceWidth;
+                }
+                
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+            
+            getPadColors(padNumber) {
+                return {
+                    primary: 'var(--shadow-color-dark)',    // Dark GameBoy green
+                    secondary: 'var(--shadow-color-light)'  // Light GameBoy green
+                };
+            }
+            
+            resizeCanvases() {
+                const pads = document.querySelectorAll('.pad');
+                pads.forEach(function(pad) {
+                    const canvas = pad.querySelector('.visualizer');
+                    if (canvas) {
+                        canvas.width = pad.offsetWidth;
+                        canvas.height = pad.offsetHeight;
+                    }
+                });
+            }
+            
+            // SAMPLE SLICER
+            openSlicerModal(padNumber, maxAvailableSlices = null) {
+                if (!this.samples[padNumber]) {
+                    this.logToTerminal('No sample in this pad to slice', 'error');
+                    return;
+                }
+                
+                const duration = this.samples[padNumber].duration;
+                if (duration < 1) {
+                    this.logToTerminal('Sample is too short to slice', 'error');
+                    return;
+                }
+                
+                this.slicerSourcePad = padNumber;
+                this.slicerSourceBuffer = this.samples[padNumber];
+                
+                const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
+                const durationText = duration.toFixed(2) + 's';
+                
+                // Use provided maxSlices or calculate based on available space
+                const maxSlices = maxAvailableSlices || this.calculateAvailablePadsForSlicing(padNumber).length;
+                let infoText = 'Slice "' + sampleName + '" (' + durationText + ')';
+                infoText += '\nSlices from Pad ' + padNumber;
+                infoText += '\nAvailable space: ' + maxSlices + ' slices';
+                
+                document.getElementById('slicer-info').textContent = infoText;
+                this.updateSlicerButtons(maxSlices);
+                document.getElementById('slicer-modal').style.display = 'flex';
+                
+                this.logToTerminal('Slicer opened for Pad ' + padNumber + ' with ' + maxSlices + ' available slices', 'info');
+            }
+            
+            updateSlicerButtons(maxSlices) {
+                const buttonsContainer = document.getElementById('slicer-buttons');
+                buttonsContainer.innerHTML = '';
+                
+                const sliceOptions = [
+                    { count: 4, label: '4 Slices' },
+                    { count: 8, label: '8 Slices' },
+                    { count: 16, label: '16 Slices' }
+                ];
+                
+                const self = this;
+                sliceOptions.forEach(function(option) {
+                    const button = document.createElement('button');
+                    button.className = 'slicer-btn';
+                    button.textContent = option.label;
+                    
+                    if (option.count <= maxSlices) {
+                        button.onclick = function() { self.applySlicer(option.count); };
+                    } else {
+                        button.disabled = true;
+                        button.style.opacity = '0.5';
+                        button.style.cursor = 'not-allowed';
+                        button.textContent = option.label + ' (no space)';
+                    }
+                    
+                    buttonsContainer.appendChild(button);
+                });
+            }
+            
+            closeSlicerModal() {
+                document.getElementById('slicer-modal').style.display = 'none';
+                this.slicerSourcePad = null;
+                this.slicerSourceBuffer = null;
+                this.logToTerminal('Slicer cancelled', 'info');
+            }
+            
+            applySlicer(numSlices) {
+                if (!this.slicerSourceBuffer || !this.slicerSourcePad) {
+                    this.logToTerminal('Error: No sample to slice', 'error');
+                    return;
+                }
+                
+                try {
+                    this.logToTerminal('Slicing into ' + numSlices + ' parts...', 'info');
+                    
+                    const slices = this.createSlices(this.slicerSourceBuffer, numSlices);
+                    this.distributeSlices(slices, this.slicerSourcePad);
+                    
+                    this.closeSlicerModal();
+                    
+                    const endPad = this.slicerSourcePad + numSlices - 1;
+                    
+                    // NEW: Tactile feedback when creating slices
+
+                    
+                    this.logToTerminal(numSlices + ' slices: Pads ' + this.slicerSourcePad + '-' + Math.min(endPad, 16), 'info');
+                    
+                } catch (error) {
+                    console.error('Error in slicer:', error);
+                    this.logToTerminal('Error creating slices', 'error');
+                }
+            }
+            
+            createSlices(sourceBuffer, numSlices) {
+                const slices = [];
+                const totalFrames = sourceBuffer.length;
+                const framesPerSlice = Math.floor(totalFrames / numSlices);
+                const sampleRate = sourceBuffer.sampleRate;
+                const numberOfChannels = sourceBuffer.numberOfChannels;
+                
+                for (let i = 0; i < numSlices; i++) {
+                    const startFrame = i * framesPerSlice;
+                    const endFrame = Math.min(startFrame + framesPerSlice, totalFrames);
+                    const sliceLength = endFrame - startFrame;
+                    
+                    const sliceBuffer = this.audioContext.createBuffer(
+                        numberOfChannels, 
+                        sliceLength, 
+                        sampleRate
+                    );
+                    
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        const sourceData = sourceBuffer.getChannelData(channel);
+                        const sliceData = sliceBuffer.getChannelData(channel);
+                        
+                        for (let frame = 0; frame < sliceLength; frame++) {
+                            sliceData[frame] = sourceData[startFrame + frame];
+                        }
+                    }
+                    
+                    slices.push(sliceBuffer);
+                }
+                
+                return slices;
+            }
+            
+            distributeSlices(slices, startPadNumber) {
+                const sourcePadName = this.sampleNames[this.currentBank][this.slicerSourcePad] || 
+                                     ('Sample ' + this.slicerSourcePad);
+                
+                // NEW: Find available empty pads starting from the next available pad
+                const availablePads = this.findAvailablePadsForSlicing(startPadNumber);
+                
+                if (availablePads.length < slices.length) {
+                    this.logToTerminal('Warning: Only ' + availablePads.length + ' empty pads available for ' + slices.length + ' slices', 'warning');
+                }
+                
+                const self = this;
+                slices.forEach(function(slice, index) {
+                    if (index < availablePads.length) {
+                        const targetPad = availablePads[index];
+                        
+                        self.bankSamples[self.currentBank][targetPad] = slice;
+                        self.samples[targetPad] = slice;
+                        
+                        const sliceNumber = (index + 1).toString().padStart(2, '0');
+                        const sliceName = sourcePadName + '-Slice' + sliceNumber;
+                        self.sampleNames[self.currentBank][targetPad] = sliceName;
+                        
+                        const pad = document.querySelector('.pad[data-number="' + targetPad + '"]');
+                        if (pad) {
+                            pad.classList.add('loaded');
+                            
+                            const sliceIndicator = pad.querySelector('.slice-indicator');
+                            if (sliceIndicator) {
+                                sliceIndicator.textContent = sliceNumber + '/' + slices.length.toString().padStart(2, '0');
+                                sliceIndicator.style.display = 'block';
+                            }
+                        }
+                    }
+                });
+                
+                this.updatePadBankIndicators();
+                this.saveSampleInfo();
+                
+                const usedPads = Math.min(slices.length, availablePads.length);
+                this.logToTerminal(usedPads + ' slices distributed in pads: ' + availablePads.slice(0, usedPads).join(', '), 'info');
+            }
+            
+            // NEW: Find available empty pads for slicing (excluding the source pad)
+            findAvailablePadsForSlicing(sourcePad) {
+                const availablePads = [];
+                
+                // Start from the next pad after the source pad
+                for (let i = sourcePad + 1; i <= 16; i++) {
+                    if (!this.samples[i]) {
+                        availablePads.push(i);
+                    }
+                }
+                
+                // If we don't have enough pads after the source, look for any empty pads
+                if (availablePads.length === 0) {
+                    for (let i = 1; i <= 16; i++) {
+                        if (i !== sourcePad && !this.samples[i]) {
+                            availablePads.push(i);
+                        }
+                    }
+                }
+                
+                return availablePads;
+            }
+            
+            // SECUENCIADOR
+            createMetronomeSound(isAccented) {
+                isAccented = isAccented || false;
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                oscillator.type = 'sine';
+                
+                oscillator.frequency.setValueAtTime(
+                    isAccented ? 880 : 440, 
+                    this.audioContext.currentTime
+                );
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.setValueAtTime(
+                    isAccented ? 0.2 : 0.1, 
+                    this.audioContext.currentTime
+                );
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001, 
+                    this.audioContext.currentTime + 0.1
+                );
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + 0.1);
+            }
+            
+            createAccentedMetronomeSound() {
+                this.createMetronomeSound(true);
+            }
+            
+            startMetronome() {
+                if (this.metronomeInterval) {
+                    clearInterval(this.metronomeInterval);
+                }
+                
+                const beatDuration = 60000 / this.bpm;
+                let tickCount = 0;
+                
+                this.currentBeat = 1;
+                this.currentBar = 0; // Aseguramos que empezamos en el compás 1
+                this.updateBarBeatDisplay();
+                
+                this.createAccentedMetronomeSound();
+                
+                const self = this;
+                this.metronomeInterval = setInterval(function() {
+                    tickCount++;
+                    
+                    // Actualizar el pulso basado en el tick
+                    self.currentBeat = (tickCount % BEATS_PER_BAR) + 1;
+                    
+                    // Actualizar el compás cuando completamos un ciclo de pulsos
+                    if (self.currentBeat === 1) {
+                        self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                    }
+                    
+                    // Actualizar la UI
+                    self.updateBarBeatDisplay();
+                    
+                    // Reproducir sonido del metrónomo
+                    if (self.currentBeat === 1) {
+                        self.createAccentedMetronomeSound();
+                    } else {
+                        self.createMetronomeSound();
+                    }
+                }, beatDuration);
+            }
+            
+            stopMetronome() {
+                if (this.metronomeInterval) {
+                    clearInterval(this.metronomeInterval);
+                    this.metronomeInterval = null;
+                }
+            }
+            
+            updateBarBeatDisplay() {
+                document.getElementById('current-bar').textContent = this.currentBar + 1;
+                document.getElementById('current-beat').textContent = this.currentBeat;
+            }
+            
+            startBarAdvancement() {
+                if (this.beatInterval) {
+                    clearInterval(this.beatInterval);
+                }
+                
+                let totalBarsRecorded = 0;
+                let tickCount = 0;
+                const self = this;
+                const beatDuration = 60000 / this.bpm;
+                
+                // Inicializar contadores
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                this.updateBarBeatDisplay();
+                
+                this.beatInterval = setInterval(function() {
+                    if (self.isRecording || self.isPlaying) {
+                        tickCount++;
+                        
+                        // Actualizar el pulso basado en el tick
+                        self.currentBeat = (tickCount % BEATS_PER_BAR) + 1;
+                        document.getElementById('current-beat').textContent = self.currentBeat;
+                        
+                        // Si completamos un compás
+                        if (self.currentBeat === 1) {
+                            self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                            document.getElementById('current-bar').textContent = self.currentBar + 1;
+                            
+                            if (self.isRecording) {
+                                totalBarsRecorded++;
+                                
+                                if (totalBarsRecorded >= BAR_COUNT) {
+                                    self.isRecording = false;
+                                    self.isPlaying = true;
+                                    
+                                    self.stopMetronome();
+                                    
+                                    document.getElementById('record-sequence').textContent = "REC";
+                                    document.getElementById('record-sequence').classList.remove('active');
+                                    self.logToTerminal('Recording completed. Playing in loop (without metronome)...', 'info');
+                                }
+                                else {
+                                    const statusMsg = 'Recording bar ' + (self.currentBar + 1) + '... (' + totalBarsRecorded + '/' + BAR_COUNT + ')';
+                                    self.logToTerminal(statusMsg, 'info');
+                                }
+                            }
+                            else if (self.isPlaying) {
+                                const statusMsg = 'Playing bar ' + (self.currentBar + 1) + '...';
+                                self.logToTerminal(statusMsg, 'info');
+                                
+                                self.playCurrentBar();
+                            }
+                        }
+                    } else {
+                        self.stopTimers();
+                    }
+                }, beatDuration);
+            }
+            
+            // NEW: Show quantization statistics after recording
+            showQuantizationStats() {
+                if (!this.quantizeMode) return;
+                
+                let totalHits = 0;
+                let quantizedHits = 0;
+                let totalQuantizationError = 0;
+                
+                this.sequence.forEach((bar, barIndex) => {
+                    bar.forEach(event => {
+                        if (event.quantized && event.originalTime !== undefined) {
+                            totalHits++;
+                            quantizedHits++;
+                            const error = Math.abs(event.time - event.originalTime);
+                            totalQuantizationError += error;
+                        }
+                    });
+                });
+                
+                if (quantizedHits > 0) {
+                    const avgError = totalQuantizationError / quantizedHits;
+                    const avgErrorMs = avgError * 1000;
+                    
+                    this.logToTerminal(`Quantization Stats: ${quantizedHits} hits quantized`, 'info');
+                    this.logToTerminal(`Average timing error: ${avgErrorMs.toFixed(1)}ms`, 'info');
+                    
+                    if (avgErrorMs < 10) {
+                        this.logToTerminal('Excellent timing precision!', 'info');
+                    } else if (avgErrorMs < 25) {
+                        this.logToTerminal('Good timing precision', 'info');
+                    } else {
+                        this.logToTerminal('Consider increasing quantization strength', 'warning');
+                    }
+                }
+            }
+            
+            toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    this.startRecording();
+                }
+            }
+            
+            /**
+             * Inicia la grabación
+             * @method startRecording
+             * @description Comienza a grabar una secuencia
+             * @throws {Error} Si el audio no está inicializado
+             */
+            startRecording() {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before recording.', 'warning');
+                    return;
+                }
+                
+                if (this.isPlaying) {
+                    this.isPlaying = false;
+                    document.getElementById('play-sequence').classList.remove('active');
+                }
+                
+                this.isRecording = true;
+                this.sequence = Array(BAR_COUNT).fill().map(function() { return []; });
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                
+                const recordBtn = document.getElementById('record-sequence');
+                recordBtn.textContent = "STOP";
+                recordBtn.classList.add('active');
+                this.updateBarBeatDisplay();
+                
+                // NEW: Show quantization and grid information
+                if (this.quantizeMode) {
+                    this.logToTerminal('Preparing to record with QUANTIZATION...', 'info');
+                    this.showGridInfo();
+                } else {
+                    this.logToTerminal('Preparing to record (FREE TIMING)...', 'info');
+                }
+                
+                this.startPrecount();
+            }
+            
+            startPrecount() {
+                let preCountRemaining = PRE_COUNT_BARS * BEATS_PER_BAR;
+                this.startMetronome();
+                
+                const self = this;
+                function preCount() {
+                    if (preCountRemaining > 0) {
+                        self.logToTerminal('Pre-count: ' + Math.ceil(preCountRemaining / BEATS_PER_BAR), 'info');
+                        preCountRemaining--;
+                        setTimeout(preCount, 60000 / self.bpm);
+                    } else {
+                        self.sequenceStartTime = self.audioContext.currentTime;
+                        self.logToTerminal('Recording sequence...', 'info');
+                        self.startBarAdvancement();
+                    }
+                }
+                
+                preCount();
+            }
+            
+            stopRecording() {
+                this.isRecording = false;
+                this.stopTimers();
+                const recordBtn = document.getElementById('record-sequence');
+                recordBtn.textContent = "REC";
+                recordBtn.classList.remove('active');
+                        this.logToTerminal('Recording stopped', 'info');
+            }
+            
+            playSequence() {
+                if (this.isPlaying) return;
+                
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before playing.', 'warning');
+                    return;
+                }
+                
+                const hasSequenceData = this.sequence.some(function(bar) { return bar.length > 0; });
+                if (!hasSequenceData) {
+                    this.logToTerminal('No recorded sequence to play.', 'warning');
+                    return;
+                }
+                
+                this.isPlaying = true;
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                this.updateBarBeatDisplay();
+                
+                document.getElementById('play-sequence').classList.add('active');
+                this.sequenceStartTime = this.audioContext.currentTime;
+                        this.logToTerminal('Playing sequence (without metronome)', 'info');
+                
+                this.startBarAdvancement();
+                this.playCurrentBar();
+            }
+            
+            playCurrentBar() {
+                if (!this.isPlaying) return;
+                
+                const self = this;
+                this.sequence[this.currentBar].forEach(function(event) {
+                    setTimeout(function() {
+                        if (self.isPlaying) {
+                            if (event.bank && event.bank !== self.currentBank) {
+                                const originalBank = self.currentBank;
+                                self.selectBank(event.bank);
+                                
+                                self.playPad(event.pad);
+                                
+                                setTimeout(function() {
+                                    self.selectBank(originalBank);
+                                }, 100);
+                            } else {
+                                self.playPad(event.pad);
+                            }
+                        }
+                    }, event.time * 1000);
+                });
+            }
+            
+            stopSequence() {
+                this.logToTerminal('Stopping sequence playback...', 'info');
+                
+                this.isPlaying = false;
+                this.isRecording = false; // Also stop recording if active
+                
+                this.stopTimers();
+                
+                // Reset UI buttons
+                const playBtn = document.getElementById('play-sequence');
+                const recordBtn = document.getElementById('record-sequence');
+                
+                if (playBtn) playBtn.classList.remove('active');
+                if (recordBtn) {
+                    recordBtn.classList.remove('active');
+                    recordBtn.textContent = 'REC';
+                }
+                
+                // Reset counters
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                this.updateBarBeatDisplay();
+                
+                this.logToTerminal('Sequence playback stopped and reset', 'info');
+            }
+            
+            // NEW: Stop all audio and sequences
+            async stopAll() {
+                this.logToTerminal('Stopping all audio and sequences...', 'info');
+                
+                // Stop sequence playback
+                this.stopSequence();
+                
+                // Stop all active audio samples
+                let stoppedSamples = 0;
+                const activeSourceKeys = Object.keys(this.activeSources);
+                
+                if (activeSourceKeys.length === 0) {
+                    this.logToTerminal('No active audio sources to stop', 'info');
+                } else {
+                    this.logToTerminal('Stopping ' + activeSourceKeys.length + ' active audio sources...', 'info');
+                    
+                    activeSourceKeys.forEach(padNumber => {
+                        if (this.activeSources[padNumber]) {
+                            try {
+                                this.activeSources[padNumber].stop();
+                                this.activeSources[padNumber].disconnect();
+                                delete this.activeSources[padNumber];
+                                stoppedSamples++;
+                                
+                                // Remove playing state from pad UI
+                                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                                if (pad) {
+                                    pad.classList.remove('playing');
+                                    pad.classList.remove('pad-active');
+                                }
+                                
+                                this.logToTerminal('Stopped audio source for Pad ' + padNumber, 'info');
+                            } catch (e) {
+                                console.warn('Error stopping audio source for pad ' + padNumber + ':', e);
+                                this.logToTerminal('Error stopping Pad ' + padNumber + ': ' + e.message, 'warning');
+                            }
+                        }
+                    });
+                }
+                
+                // Clear any active visualizers
+                if (this.visualizers) {
+                    const visualizerKeys = Object.keys(this.visualizers);
+                    if (visualizerKeys.length > 0) {
+                        this.logToTerminal('Clearing ' + visualizerKeys.length + ' active visualizers...', 'info');
+                        
+                        visualizerKeys.forEach(padNumber => {
+                            if (this.visualizers[padNumber]) {
+                                cancelAnimationFrame(this.visualizers[padNumber]);
+                                delete this.visualizers[padNumber];
+                            }
+                        });
+                    }
+                }
+                
+                // Note: Audio context remains active for new samples
+                if (this.audioContext && this.audioContext.state === 'running') {
+                    this.logToTerminal('Audio context remains active for new samples', 'info');
+                }
+                
+                // Reset all pad states
+                document.querySelectorAll('.pad').forEach(pad => {
+                    pad.classList.remove('playing', 'pad-active');
+                });
+                
+                // Ensure audio context is ready for new samples
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    try {
+                        await this.audioContext.resume();
+                        this.logToTerminal('Audio context resumed for new samples', 'info');
+                    } catch (e) {
+                        console.warn('Error resuming audio context:', e);
+                    }
+                }
+                
+                this.logToTerminal(`STOP ALL completed: ${stoppedSamples} samples stopped + sequence stopped`, 'info');
+                this.logToTerminal('Audio context remains active - new samples can be played', 'info');
+            }
+            
+            // NEW: Force stop individual pad
+            forceStopPad(padNumber) {
+                if (this.activeSources[padNumber]) {
+                    try {
+                        this.activeSources[padNumber].stop();
+                        this.activeSources[padNumber].disconnect();
+                        delete this.activeSources[padNumber];
+                        
+                        const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                        if (pad) {
+                            pad.classList.remove('playing', 'pad-active');
+                        }
+                        
+                        this.logToTerminal('Force stopped Pad ' + padNumber, 'info');
+                        return true;
+                    } catch (e) {
+                        console.warn('Error force stopping pad ' + padNumber + ':', e);
+                        return false;
+                    }
+                }
+                return false;
+            }
+            
+            clearSequence() {
+                this.sequence = Array(BAR_COUNT).fill().map(function() { return []; });
+                this.currentBar = 0;
+                this.updateBarBeatDisplay();
+                this.logToTerminal('Sequence cleared', 'info');
+            }
+            
+            // NEW: Toggle perf mode (visualization vs latency)
+            togglePerformanceMode() {
+                this.performanceMode = !this.performanceMode;
+                
+                const btn = document.getElementById('toggle-performance-mode');
+                if (this.performanceMode) {
+                    // Perf mode: low latency, no visualization
+                    btn.textContent = '[PERF] Viz Mode';
+                    btn.classList.add('performance-mode');
+                            this.logToTerminal('Perf mode activated (minimum latency, no visualization)', 'info');
+                    
+                    // Clear active visualizers
+                    if (this.visualizers) {
+                        Object.keys(this.visualizers).forEach(padNumber => {
+                            if (this.visualizers[padNumber]) {
+                                cancelAnimationFrame(this.visualizers[padNumber]);
+                                delete this.visualizers[padNumber];
+                            }
+                        });
+                    }
+                } else {
+                    // Viz mode: normal latency, with visualization
+                    btn.textContent = '[PERF] Perf Mode';
+                    btn.classList.remove('performance-mode');
+                            this.logToTerminal('Viz mode activated (normal latency, with visualization)', 'info');
+                }
+                
+                console.log('[PERF] Perf mode:', this.performanceMode ? 'ACTIVATED (low latency)' : 'DEACTIVATED (visualization)');
+                
+                // Show latency statistics
+                this.showLatencyStats();
+            }
+            
+            // NEW: Show latency statistics
+            showLatencyStats() {
+                const stats = this.getLatencyStats();
+                console.log('[STATS] Latency Statistics:');
+                console.log('   - Estimated minimum latency:', stats.minLatency + 'ms');
+                console.log('   - Average latency:', stats.avgLatency + 'ms');
+                console.log('   - Perf mode:', this.performanceMode ? 'ACTIVATED (low latency)' : 'DEACTIVATED (visualization)');
+                console.log('   - Pre-created nodes:', Object.keys(this.preCreatedAnalysers).length);
+            }
+            
+
+            
+            // NEW: Get latency statistics
+            getLatencyStats() {
+                const baseLatency = 5; // Web Audio API base latency
+                const visualLatency = this.performanceMode ? 0 : 15; // Additional visualization latency
+                const nodeLatency = 2; // Pre-created nodes latency
+                
+                return {
+                    minLatency: baseLatency + nodeLatency,
+                    avgLatency: baseLatency + nodeLatency + visualLatency,
+                    maxLatency: baseLatency + nodeLatency + visualLatency + 10
+                };
+            }
+            
+            // NEW: Measure real-time latency
+            measureRealTimeLatency() {
+                if (!this.audioContext) return;
+                
+                const startTime = performance.now();
+                const audioStartTime = this.audioContext.currentTime;
+                
+                // Create a test beep
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + 0.1);
+                
+                // Measure latency
+                const endTime = performance.now();
+                const latency = endTime - startTime;
+                
+                console.log('[LATENCY] Real measured latency:', latency.toFixed(2) + 'ms');
+                return latency;
+            }
+            
+            // NEW: Show pad selector for slicer
+            showPadSelectorForSlicer() {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before using the slicer.', 'error');
+                    return;
+                }
+                
+                // Check if any samples are loaded
+                let hasSamples = false;
+                for (let i = 1; i <= 16; i++) {
+                    if (this.samples[i]) {
+                        hasSamples = true;
+                        break;
+                    }
+                }
+                
+                if (!hasSamples) {
+                    this.logToTerminal('No samples loaded to use the slicer.', 'error');
+                    return;
+                }
+                
+                // Activate slicer mode
+                this.activateSlicerMode();
+                this.logToTerminal('Slicer mode activated! Click on any pad with a sample to select it for slicing.', 'info');
+                this.logToTerminal('Available pads: ' + this.getLoadedPadsList(), 'info');
+            }
+            
+            // NEW: Activate slicer mode
+            activateSlicerMode() {
+                this.slicerMode = true;
+                
+                // Add visual feedback to pads with samples
+                for (let i = 1; i <= 16; i++) {
+                    const pad = document.querySelector('.pad[data-number="' + i + '"]');
+                    if (pad && this.samples[i]) {
+                        pad.classList.add('slicer-selectable');
+                        pad.style.cursor = 'pointer';
+                    }
+                }
+                
+                // Change button appearance
+                const slicerBtn = document.getElementById('mobile-slicer');
+                slicerBtn.classList.add('slicer-active');
+                slicerBtn.textContent = '[SLICE] Cancel';
+            }
+            
+            // NEW: Deactivate slicer mode
+            deactivateSlicerMode() {
+                this.slicerMode = false;
+                
+                // Remove visual feedback from all pads
+                document.querySelectorAll('.pad.slicer-selectable').forEach(pad => {
+                    pad.classList.remove('slicer-selectable');
+                    pad.style.cursor = '';
+                });
+                
+                // Restore button appearance
+                const slicerBtn = document.getElementById('mobile-slicer');
+                slicerBtn.classList.remove('slicer-active');
+                slicerBtn.textContent = '[SLICE] Slicer Help';
+            }
+            
+            // NEW: Get list of loaded pads for slicer
+            getLoadedPadsList() {
+                const loadedPads = [];
+                for (let i = 1; i <= 16; i++) {
+                    if (this.samples[i]) {
+                        loadedPads.push(i);
+                    }
+                }
+                return loadedPads.join(', ');
+            }
+            
+            // NEW: Select pad for slicing
+            selectPadForSlicing(padNumber) {
+                if (!this.samples[padNumber]) {
+                    this.logToTerminal('Pad ' + padNumber + ' has no sample to slice', 'warning');
+                    return;
+                }
+                
+                // Calculate available space for slices
+                const availablePads = this.calculateAvailablePadsForSlicing(padNumber);
+                
+                if (availablePads.length === 0) {
+                    this.logToTerminal('No space available for slicing. Need at least 1 empty pad after Pad ' + padNumber, 'warning');
+                    return;
+                }
+                
+                // Deactivate slicer mode
+                this.deactivateSlicerMode();
+                
+                // Open slicer with calculated options
+                this.openSlicerModal(padNumber, availablePads.length);
+                
+                this.logToTerminal('Pad ' + padNumber + ' selected for slicing. Available slices: ' + availablePads.length, 'info');
+            }
+            
+            // NEW: Calculate available pads for slicing
+            calculateAvailablePadsForSlicing(startPad) {
+                const availablePads = [];
+                
+                // Check pads from startPad + 1 to 16 (preferred order)
+                for (let i = startPad + 1; i <= 16; i++) {
+                    if (!this.samples[i]) {
+                        availablePads.push(i);
+                    }
+                }
+                
+                // If we don't have enough pads after the source, look for any empty pads
+                if (availablePads.length === 0) {
+                    for (let i = 1; i <= 16; i++) {
+                        if (i !== startPad && !this.samples[i]) {
+                            availablePads.push(i);
+                        }
+                    }
+                }
+                
+                return availablePads;
+            }
+
+            // TERMINAL METHODS
+            updateTerminal(message, type = 'info') {
+                const terminalText = document.getElementById('terminal-text');
+                const terminalFooter = document.getElementById('terminal-footer');
+                
+                if (terminalText && terminalFooter) {
+                    // Remove previous type classes
+                    terminalFooter.classList.remove('info', 'warning', 'error');
+                    
+                    // Add new type class
+                    if (type !== 'info') {
+                        terminalFooter.classList.add(type);
+                    }
+                    
+                    // Update text with timestamp
+                    const timestamp = new Date().toLocaleTimeString();
+                    terminalText.textContent = `[${timestamp}] ${message}`;
+                    
+                    // Auto-clear after 5 seconds for info messages
+                    if (type === 'info') {
+                        setTimeout(() => {
+                            if (terminalText.textContent.includes(message)) {
+                                terminalText.textContent = 'Waiting Input...';
+                                terminalFooter.classList.remove('info', 'warning', 'error');
+                            }
+                        }, 5000);
+                    }
+                }
+            }
+            
+            logToTerminal(message, type = 'info') {
+                this.updateTerminal(message, type);
+                console.log(`[TERMINAL] ${message}`);
+            }
+
+        }
+        
+        // APPLICATION INITIALIZATION
+        document.addEventListener('DOMContentLoaded', function() {
+            window.embryoPlayer = new EmbrioPlayer();
+            
+            // Welcome message in terminal
+            setTimeout(() => {
+                if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
+                    window.embryoPlayer.logToTerminal('Embrio Player v3.0 - Enhanced Version Started', 'info');
+                    window.embryoPlayer.logToTerminal('No samples precargados - Use "Load Samples" para agregar tus archivos', 'info');
+                }
+            }, 100);
+            
+            // INITIALIZATION LOG
+            console.log('[INIT] Embrio Player v3.0 - Enhanced Version Started');
+            console.log('[FEATURES] New features:');
+            console.log('   - Long Press BPM (rapid changes every 200ms)');
+        console.log('   - Tap Tempo button (click to set BPM)');
+            console.log('   - Multiple input system (Mouse + Touch + Keyboard + MIDI)');
+            console.log('   - Keyboard mapping: QWER/ASDF/ZXCV/1234 → Pads 1-16');
+            console.log('   - Active input method indicators');
+            console.log('   - Enhanced visual feedback');
+            console.log('   - Unified pad control system');
+            console.log('   - Touch button for mobile slicer');
+                            console.log('[LATENCY] LATENCY OPTIMIZATIONS:');
+            console.log('   - AudioContext configured for minimum latency');
+            console.log('   - Pre-created audio nodes');
+            console.log('   - Unified perf mode button (visualization vs latency)');
+            console.log('   - Asynchronous DOM operations');
+                            console.log('[READY] Ready to use - Start audio to begin (no samples precargados)');
+        });
+    </script>
+</body>
+</html>
