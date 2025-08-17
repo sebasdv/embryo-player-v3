@@ -211,8 +211,7 @@
             height: 40px;
             display: flex;
             align-items: center;
-            overflow: visible;
-            position: relative;
+            overflow: hidden;
         }
         
         .terminal-content {
@@ -250,8 +249,6 @@
             background: var(--error-color);
             border-color: var(--error-color);
         }
-        
-
         
         /* Estilos para el botón de ayuda y su modal */
         .help-button {
@@ -1104,30 +1101,6 @@
             background-color: var(--shadow-color-dark);
         }
         
-        /* Estilos para el modo slicer */
-        .btn-slicer.slicer-active {
-            background-color: var(--shadow-color-dark);
-            color: var(--bg-color) !important;
-            font-weight: bold;
-        }
-        
-        .pad.slicer-selectable {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 15px var(--accent-color);
-            animation: slicerPulse 1s ease-in-out infinite alternate;
-        }
-        
-        @keyframes slicerPulse {
-            0% { 
-                box-shadow: 0 0 15px var(--accent-color);
-                transform: scale(1);
-            }
-            100% { 
-                box-shadow: 0 0 25px var(--accent-color);
-                transform: scale(1.02);
-            }
-        }
-        
         /* Responsive para el botón slicer */
         @media (max-width: 768px) {
             .btn-slicer {
@@ -1164,8 +1137,6 @@
         .sequencer-row .header-button:hover:not(.active) {
             background-color: var(--shadow-color-light);
         }
-        
-
     </style>
 </head>
 <body>
@@ -1227,11 +1198,9 @@
         <div class="header-row">
                     <button id="load-samples" class="header-button btn-load">Load Samples</button>
         <button id="clear-bank" class="header-button">Clear Bank</button>
-                            <button id="mobile-slicer" class="header-button btn-slicer">[SLICE] Slicer Help</button>
+                            <button id="mobile-slicer" class="header-button btn-slicer">[SLICE] Slicer</button>
                                         <button id="toggle-performance-mode" class="header-button btn-performance" title="Toggle between viz mode (high latency) and perf mode (low latency)">[PERF] Perf Mode</button>
         </div>
-        
-
         
 
     </div>
@@ -1240,9 +1209,8 @@
     <footer id="terminal-footer" class="terminal-footer">
         <div class="terminal-content">
             <span class="terminal-prompt">></span>
-            <span class="terminal-text" id="terminal-text">Waiting Input...</span>
+                            <span class="terminal-text" id="terminal-text">Waiting Input...</span>
         </div>
-
     </footer>
 
     <main>
@@ -1296,7 +1264,7 @@
          */
         
         // CONSTANTS & CONFIGURATION
-        const GITHUB_REPO_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/169a0a75db1d0af6149bdced5f3af7cefff5f23a/Bank%20A/';
+        const GITHUB_REPO_URL = 'https://raw.githubusercontent.com/sebasdv/sampleplayer/main/samples/';
         const FFT_SIZE = 256;
         const BEATS_PER_BAR = 4;
         const MIN_BPM = 60;
@@ -1306,10 +1274,12 @@
         const BPM_LONG_PRESS_DELAY = 200; // Delay para iniciar cambios rápidos de BPM (reducido de 300ms)
         const BPM_RAPID_INTERVAL = 200; // Intervalo para cambios rápidos de BPM (aumentado de 150ms para mejor control)
 
-        // Lista de archivos de audio personalizados desde Bank A
+        // Lista de archivos de audio predeterminados
         const audioFiles = [
-            '01-Pad 88 BPM.wav', '02-Bass 88 BPM.wav', '03-Arp 88 BPM.wav', '04-BD SN HH OH Slice .wav',
-            '05-Kick 88.wav', '06-Snare 88.wav', '07-HH 88.wav', '08-Shaker 88.wav'
+            '01-11Stringsjura78bpm.WAV', '02-Harpjura78bpm.WAV', '03-CHCleanVinyl01.WAV', '04-OHCleanVinyl08.WAV',
+            '05-BDDegradedVinyl11.WAV', '06-SDTubeVinyl01.WAV', '07-CHCleanVinyl02.WAV', '08-OHCleanVinyl09.WAV',
+            '09-BDDegradedVinyl13.WAV', '10-SDTubeVinyl02.WAV', '11-CHCleanVinyl03.WAV', '12-OHCleanVinyl10.WAV',
+            '13-BDDegradedVinyl14.WAV', '14-SDTubeVinyl03.WAV', '15-CHCleanVinyl04.WAV', '16-OHCleanVinyl11.WAV'
         ];
 
         // PAD CONTROLLER CLASS - Sistema Unificado de Control
@@ -1630,8 +1600,6 @@
             }
         }
 
-
-
         /**
          * Main player class
          * @class EmbrioPlayer
@@ -1696,13 +1664,11 @@
                 this.slicerSourcePad = null;
                 this.slicerSourceBuffer = null;
                 this.slices = {};
-                this.slicerMode = false; // NEW: Slicer mode state
                 
                 // OPTIMIZATION: Latency configuration
                 this.performanceMode = false; // false = viz mode (high latency), true = perf mode (low latency)
                 this.preCreatedAnalysers = {};
                 this.preCreatedGains = {};
-
 
 
                 
@@ -1771,20 +1737,13 @@
                 
                 // NEW: Touch button for slicer
                 document.getElementById('mobile-slicer').addEventListener('click', function() { 
-                    if (self.slicerMode) {
-                        self.deactivateSlicerMode();
-                        self.logToTerminal('Slicer mode deactivated', 'info');
-                    } else {
-                        self.showPadSelectorForSlicer(); 
-                    }
+                    self.showPadSelectorForSlicer(); 
                 });
                 
                 // NEW: Button to toggle perf mode
                 document.getElementById('toggle-performance-mode').addEventListener('click', function() { 
                     self.togglePerformanceMode(); 
                 });
-                
-
                 
 
                 
@@ -1837,8 +1796,6 @@
                     // OPTIMIZATION: Pre-create audio nodes to reduce latency
                     this.preCreateAudioNodes();
                     
-
-                    
                     this.isAudioInitialized = true;
                     
                     // Show latency statistics on startup
@@ -1850,15 +1807,14 @@
                     document.getElementById('start-audio').disabled = true;
 
                     
-                            this.logToTerminal('Audio started. No samples loaded. Use "Load Samples" to add your own.', 'info');
+                            this.logToTerminal('Audio started. Loading samples...', 'info');
                     
                     // Initialize components
                     this.createPadGrid();
                     this.initMIDI();
-                    // REMOVED: Auto-load samples - will be loaded manually
-                    // this.loadAllSamples().then(function() {
-                    //     self.logToTerminal('All samples loaded. Ready to play.', 'info');
-                    // });
+                    this.loadAllSamples().then(function() {
+                                self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                    });
                     
                 } catch (error) {
                     console.error('Error starting audio:', error);
@@ -1984,16 +1940,8 @@
                 pad.addEventListener('mouseup', function(e) {
                     e.preventDefault();
                     if (e.detail === 2) return; // Avoid double click
-                    
-                    // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[padNumber]) {
-                        self.selectPadForSlicing(padNumber);
-                    } else {
-                        self.padController.triggerPad(padNumber, 127, 'mouse');
-                    }
+                    self.padController.triggerPad(padNumber, 127, 'mouse');
                 });
-                
-
                 
                 // Touch events
                 pad.addEventListener('touchstart', function(e) {
@@ -2005,22 +1953,14 @@
                 
                 pad.addEventListener('touchend', function(e) {
                     e.preventDefault();
-                    
-                    // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[padNumber]) {
-                        self.selectPadForSlicing(padNumber);
-                    } else {
-                        self.padController.triggerPad(padNumber, 127, 'touch');
-                        self.touchedPads.add(padNumber);
-                        self.touchedPads.delete(padNumber);
-                    }
+                    self.padController.triggerPad(padNumber, 127, 'touch');
+                    self.touchedPads.add(padNumber);
+                    self.touchedPads.delete(padNumber);
                 });
                 
                 pad.addEventListener('touchcancel', function(e) {
                     self.touchedPads.delete(padNumber);
                 });
-                
-
                 
 
             }
@@ -2034,7 +1974,7 @@
                 const analyser = this.preCreatedAnalysers[padNumber];
                 const gain = this.preCreatedGains[padNumber];
                 
-                // Connect audio directly to destination
+                // OPTIMIZATION: Direct connection without creating new nodes
                 source.connect(gain);
                 gain.connect(analyser);
                 analyser.connect(this.audioContext.destination);
@@ -2221,28 +2161,19 @@
             }
             
             stopTimers() {
-                let timersStopped = 0;
-                
                 if (this.metronomeInterval) {
                     clearInterval(this.metronomeInterval);
                     this.metronomeInterval = null;
-                    timersStopped++;
                 }
                 
                 if (this.beatInterval) {
                     clearInterval(this.beatInterval);
                     this.beatInterval = null;
-                    timersStopped++;
                 }
                 
                 if (this.barAdvancementInterval) {
                     clearInterval(this.barAdvancementInterval);
                     this.barAdvancementInterval = null;
-                    timersStopped++;
-                }
-                
-                if (timersStopped > 0) {
-                    this.logToTerminal('Stopped ' + timersStopped + ' active timers', 'info');
                 }
             }
             
@@ -2802,26 +2733,38 @@
             }
             }
             
-            // DISABLED: Auto-load samples function (commented out for manual loading)
-            /*
             loadAllSamples() {
-                this.logToTerminal('Loading 8 custom samples from Bank A (88 BPM)...', 'info');
+                        this.logToTerminal('Loading samples from Bank A...', 'info');
                 
-                // FORCE LOAD: Clear Bank A first to ensure clean loading
-                this.bankSamples['A'] = {};
-                this.sampleNames['A'] = {};
+                // NEW: Show current bank status first
+                const bankStatus = this.showBankStatus();
+                
+                if (bankStatus.emptyPads.length === 0) {
+                    this.showFullBankError('load samples in Bank A');
+                    return Promise.resolve();
+                }
                 
                 const loadPromises = [];
                 const self = this;
                 
-                // FORCE LOAD: Use first 8 pads (1-8) for the 8 samples
-                const targetPads = [1, 2, 3, 4, 5, 6, 7, 8];
-                const samplesToLoad = audioFiles;
+                // NEW: Find empty pads first
+                const emptyPads = this.findEmptyPads();
                 
-                this.logToTerminal('Loading 8 samples into pads: ' + targetPads.join(', '), 'info');
+                if (emptyPads.length === 0) {
+                    this.showFullBankError('load samples in Bank A');
+                    return Promise.resolve();
+                }
+                
+                const samplesToLoad = audioFiles.slice(0, emptyPads.length);
+                
+                if (emptyPads.length < audioFiles.length) {
+                    this.logToTerminal('Only ' + emptyPads.length + ' empty pads available. Loading ' + emptyPads.length + ' samples.', 'warning');
+                }
+                
+                this.logToTerminal('Loading samples into pads: ' + emptyPads.slice(0, samplesToLoad.length).join(', '), 'info');
                 
                 samplesToLoad.forEach(function(file, index) {
-                    const padNumber = targetPads[index];
+                    const padNumber = emptyPads[index];
                     const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
                     
                     if (pad) {
@@ -2853,12 +2796,10 @@
                 
                 return Promise.allSettled(loadPromises).then(function() {
                     self.saveSampleInfo();
-                    self.updatePadBankIndicators(); // Update UI after all samples loaded
-                    self.logToTerminal('8 custom samples loaded successfully from Bank A', 'info');
+                    self.logToTerminal('All samples loaded successfully', 'info');
                     return loadPromises;
                 });
             }
-            */
             
             loadAudioForPad(padNumber, audioName, bank) {
                 const self = this;
@@ -3051,7 +2992,7 @@
             }
             
             // SAMPLE SLICER
-            openSlicerModal(padNumber, maxAvailableSlices = null) {
+            openSlicerModal(padNumber) {
                 if (!this.samples[padNumber]) {
                     this.logToTerminal('No sample in this pad to slice', 'error');
                     return;
@@ -3069,17 +3010,19 @@
                 const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
                 const durationText = duration.toFixed(2) + 's';
                 
-                // Use provided maxSlices or calculate based on available space
-                const maxSlices = maxAvailableSlices || this.calculateAvailablePadsForSlicing(padNumber).length;
+                const maxSlices = 16 - padNumber + 1;
                 let infoText = 'Slice "' + sampleName + '" (' + durationText + ')';
                 infoText += '\nSlices from Pad ' + padNumber;
-                infoText += '\nAvailable space: ' + maxSlices + ' slices';
+                
+                if (maxSlices < 16) {
+                    infoText += ' (max. ' + maxSlices + ' slices)';
+                }
                 
                 document.getElementById('slicer-info').textContent = infoText;
                 this.updateSlicerButtons(maxSlices);
                 document.getElementById('slicer-modal').style.display = 'flex';
                 
-                this.logToTerminal('Slicer opened for Pad ' + padNumber + ' with ' + maxSlices + ' available slices', 'info');
+                this.logToTerminal('Slicer opened for Pad ' + padNumber, 'info');
             }
             
             updateSlicerButtons(maxSlices) {
@@ -3182,23 +3125,16 @@
                 const sourcePadName = this.sampleNames[this.currentBank][this.slicerSourcePad] || 
                                      ('Sample ' + this.slicerSourcePad);
                 
-                // NEW: Find available empty pads starting from the next available pad
-                const availablePads = this.findAvailablePadsForSlicing(startPadNumber);
-                
-                if (availablePads.length < slices.length) {
-                    this.logToTerminal('Warning: Only ' + availablePads.length + ' empty pads available for ' + slices.length + ' slices', 'warning');
-                }
-                
                 const self = this;
                 slices.forEach(function(slice, index) {
-                    if (index < availablePads.length) {
-                        const targetPad = availablePads[index];
-                        
+                    const targetPad = startPadNumber + index;
+                    
+                    if (targetPad >= 1 && targetPad <= 16) {
                         self.bankSamples[self.currentBank][targetPad] = slice;
                         self.samples[targetPad] = slice;
                         
                         const sliceNumber = (index + 1).toString().padStart(2, '0');
-                        const sliceName = sourcePadName + '-Slice' + sliceNumber;
+                        const sliceName = sourcePadName + '-' + sliceNumber;
                         self.sampleNames[self.currentBank][targetPad] = sliceName;
                         
                         const pad = document.querySelector('.pad[data-number="' + targetPad + '"]');
@@ -3217,31 +3153,10 @@
                 this.updatePadBankIndicators();
                 this.saveSampleInfo();
                 
-                const usedPads = Math.min(slices.length, availablePads.length);
-                this.logToTerminal(usedPads + ' slices distributed in pads: ' + availablePads.slice(0, usedPads).join(', '), 'info');
-            }
-            
-            // NEW: Find available empty pads for slicing (excluding the source pad)
-            findAvailablePadsForSlicing(sourcePad) {
-                const availablePads = [];
-                
-                // Start from the next pad after the source pad
-                for (let i = sourcePad + 1; i <= 16; i++) {
-                    if (!this.samples[i]) {
-                        availablePads.push(i);
-                    }
+                const usedPads = Math.min(slices.length, 16 - startPadNumber + 1);
+                if (usedPads < slices.length) {
+                    this.logToTerminal('Only ' + usedPads + '/' + slices.length + ' slices could be assigned (not enough pads)', 'warning');
                 }
-                
-                // If we don't have enough pads after the source, look for any empty pads
-                if (availablePads.length === 0) {
-                    for (let i = 1; i <= 16; i++) {
-                        if (i !== sourcePad && !this.samples[i]) {
-                            availablePads.push(i);
-                        }
-                    }
-                }
-                
-                return availablePads;
             }
             
             // SECUENCIADOR
@@ -3507,131 +3422,50 @@
             }
             
             stopSequence() {
-                this.logToTerminal('Stopping sequence playback...', 'info');
-                
                 this.isPlaying = false;
-                this.isRecording = false; // Also stop recording if active
-                
                 this.stopTimers();
                 
-                // Reset UI buttons
-                const playBtn = document.getElementById('play-sequence');
-                const recordBtn = document.getElementById('record-sequence');
-                
-                if (playBtn) playBtn.classList.remove('active');
-                if (recordBtn) {
-                    recordBtn.classList.remove('active');
-                    recordBtn.textContent = 'REC';
-                }
-                
-                // Reset counters
-                this.currentBar = 0;
-                this.currentBeat = 1;
-                this.updateBarBeatDisplay();
-                
-                this.logToTerminal('Sequence playback stopped and reset', 'info');
+                document.getElementById('play-sequence').classList.remove('active');
+                this.logToTerminal('Sequence stopped', 'info');
             }
             
             // NEW: Stop all audio and sequences
-            async stopAll() {
-                this.logToTerminal('Stopping all audio and sequences...', 'info');
-                
+            stopAll() {
                 // Stop sequence playback
                 this.stopSequence();
                 
                 // Stop all active audio samples
                 let stoppedSamples = 0;
-                const activeSourceKeys = Object.keys(this.activeSources);
-                
-                if (activeSourceKeys.length === 0) {
-                    this.logToTerminal('No active audio sources to stop', 'info');
-                } else {
-                    this.logToTerminal('Stopping ' + activeSourceKeys.length + ' active audio sources...', 'info');
-                    
-                    activeSourceKeys.forEach(padNumber => {
-                        if (this.activeSources[padNumber]) {
-                            try {
-                                this.activeSources[padNumber].stop();
-                                this.activeSources[padNumber].disconnect();
-                                delete this.activeSources[padNumber];
-                                stoppedSamples++;
-                                
-                                // Remove playing state from pad UI
-                                const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
-                                if (pad) {
-                                    pad.classList.remove('playing');
-                                    pad.classList.remove('pad-active');
-                                }
-                                
-                                this.logToTerminal('Stopped audio source for Pad ' + padNumber, 'info');
-                            } catch (e) {
-                                console.warn('Error stopping audio source for pad ' + padNumber + ':', e);
-                                this.logToTerminal('Error stopping Pad ' + padNumber + ': ' + e.message, 'warning');
+                Object.keys(this.activeSources).forEach(padNumber => {
+                    if (this.activeSources[padNumber]) {
+                        try {
+                            this.activeSources[padNumber].stop();
+                            this.activeSources[padNumber].disconnect();
+                            delete this.activeSources[padNumber];
+                            stoppedSamples++;
+                            
+                            // Remove playing state from pad UI
+                            const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                            if (pad) {
+                                pad.classList.remove('playing');
                             }
+                        } catch (e) {
+                            console.warn('Error stopping audio source for pad ' + padNumber + ':', e);
+                        }
+                    }
+                });
+                
+                // Clear any active visualizers
+                if (this.visualizers) {
+                    Object.keys(this.visualizers).forEach(padNumber => {
+                        if (this.visualizers[padNumber]) {
+                            cancelAnimationFrame(this.visualizers[padNumber]);
+                            delete this.visualizers[padNumber];
                         }
                     });
                 }
                 
-                // Clear any active visualizers
-                if (this.visualizers) {
-                    const visualizerKeys = Object.keys(this.visualizers);
-                    if (visualizerKeys.length > 0) {
-                        this.logToTerminal('Clearing ' + visualizerKeys.length + ' active visualizers...', 'info');
-                        
-                        visualizerKeys.forEach(padNumber => {
-                            if (this.visualizers[padNumber]) {
-                                cancelAnimationFrame(this.visualizers[padNumber]);
-                                delete this.visualizers[padNumber];
-                            }
-                        });
-                    }
-                }
-                
-                // Note: Audio context remains active for new samples
-                if (this.audioContext && this.audioContext.state === 'running') {
-                    this.logToTerminal('Audio context remains active for new samples', 'info');
-                }
-                
-                // Reset all pad states
-                document.querySelectorAll('.pad').forEach(pad => {
-                    pad.classList.remove('playing', 'pad-active');
-                });
-                
-                // Ensure audio context is ready for new samples
-                if (this.audioContext && this.audioContext.state === 'suspended') {
-                    try {
-                        await this.audioContext.resume();
-                        this.logToTerminal('Audio context resumed for new samples', 'info');
-                    } catch (e) {
-                        console.warn('Error resuming audio context:', e);
-                    }
-                }
-                
-                this.logToTerminal(`STOP ALL completed: ${stoppedSamples} samples stopped + sequence stopped`, 'info');
-                this.logToTerminal('Audio context remains active - new samples can be played', 'info');
-            }
-            
-            // NEW: Force stop individual pad
-            forceStopPad(padNumber) {
-                if (this.activeSources[padNumber]) {
-                    try {
-                        this.activeSources[padNumber].stop();
-                        this.activeSources[padNumber].disconnect();
-                        delete this.activeSources[padNumber];
-                        
-                        const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
-                        if (pad) {
-                            pad.classList.remove('playing', 'pad-active');
-                        }
-                        
-                        this.logToTerminal('Force stopped Pad ' + padNumber, 'info');
-                        return true;
-                    } catch (e) {
-                        console.warn('Error force stopping pad ' + padNumber + ':', e);
-                        return false;
-                    }
-                }
-                return false;
+                this.logToTerminal(`All stopped: ${stoppedSamples} samples + sequence`, 'info');
             }
             
             clearSequence() {
@@ -3684,8 +3518,6 @@
                 console.log('   - Pre-created nodes:', Object.keys(this.preCreatedAnalysers).length);
             }
             
-
-            
             // NEW: Get latency statistics
             getLatencyStats() {
                 const baseLatency = 5; // Web Audio API base latency
@@ -3735,117 +3567,24 @@
                     return;
                 }
                 
-                // Check if any samples are loaded
-                let hasSamples = false;
+                // Find first pad with sample
+                let firstPadWithSample = null;
                 for (let i = 1; i <= 16; i++) {
                     if (this.samples[i]) {
-                        hasSamples = true;
+                        firstPadWithSample = i;
                         break;
                     }
                 }
                 
-                if (!hasSamples) {
+                if (!firstPadWithSample) {
                     this.logToTerminal('No samples loaded to use the slicer.', 'error');
                     return;
                 }
                 
-                // Activate slicer mode
-                this.activateSlicerMode();
-                this.logToTerminal('Slicer mode activated! Click on any pad with a sample to select it for slicing.', 'info');
-                this.logToTerminal('Available pads: ' + this.getLoadedPadsList(), 'info');
-            }
-            
-            // NEW: Activate slicer mode
-            activateSlicerMode() {
-                this.slicerMode = true;
+                // Open slicer in the first available pad
+                this.openSlicerModal(firstPadWithSample);
                 
-                // Add visual feedback to pads with samples
-                for (let i = 1; i <= 16; i++) {
-                    const pad = document.querySelector('.pad[data-number="' + i + '"]');
-                    if (pad && this.samples[i]) {
-                        pad.classList.add('slicer-selectable');
-                        pad.style.cursor = 'pointer';
-                    }
-                }
-                
-                // Change button appearance
-                const slicerBtn = document.getElementById('mobile-slicer');
-                slicerBtn.classList.add('slicer-active');
-                slicerBtn.textContent = '[SLICE] Cancel';
-            }
-            
-            // NEW: Deactivate slicer mode
-            deactivateSlicerMode() {
-                this.slicerMode = false;
-                
-                // Remove visual feedback from all pads
-                document.querySelectorAll('.pad.slicer-selectable').forEach(pad => {
-                    pad.classList.remove('slicer-selectable');
-                    pad.style.cursor = '';
-                });
-                
-                // Restore button appearance
-                const slicerBtn = document.getElementById('mobile-slicer');
-                slicerBtn.classList.remove('slicer-active');
-                slicerBtn.textContent = '[SLICE] Slicer Help';
-            }
-            
-            // NEW: Get list of loaded pads for slicer
-            getLoadedPadsList() {
-                const loadedPads = [];
-                for (let i = 1; i <= 16; i++) {
-                    if (this.samples[i]) {
-                        loadedPads.push(i);
-                    }
-                }
-                return loadedPads.join(', ');
-            }
-            
-            // NEW: Select pad for slicing
-            selectPadForSlicing(padNumber) {
-                if (!this.samples[padNumber]) {
-                    this.logToTerminal('Pad ' + padNumber + ' has no sample to slice', 'warning');
-                    return;
-                }
-                
-                // Calculate available space for slices
-                const availablePads = this.calculateAvailablePadsForSlicing(padNumber);
-                
-                if (availablePads.length === 0) {
-                    this.logToTerminal('No space available for slicing. Need at least 1 empty pad after Pad ' + padNumber, 'warning');
-                    return;
-                }
-                
-                // Deactivate slicer mode
-                this.deactivateSlicerMode();
-                
-                // Open slicer with calculated options
-                this.openSlicerModal(padNumber, availablePads.length);
-                
-                this.logToTerminal('Pad ' + padNumber + ' selected for slicing. Available slices: ' + availablePads.length, 'info');
-            }
-            
-            // NEW: Calculate available pads for slicing
-            calculateAvailablePadsForSlicing(startPad) {
-                const availablePads = [];
-                
-                // Check pads from startPad + 1 to 16 (preferred order)
-                for (let i = startPad + 1; i <= 16; i++) {
-                    if (!this.samples[i]) {
-                        availablePads.push(i);
-                    }
-                }
-                
-                // If we don't have enough pads after the source, look for any empty pads
-                if (availablePads.length === 0) {
-                    for (let i = 1; i <= 16; i++) {
-                        if (i !== startPad && !this.samples[i]) {
-                            availablePads.push(i);
-                        }
-                    }
-                }
-                
-                return availablePads;
+                this.logToTerminal('Slicer opened for Pad ' + firstPadWithSample + '. Double click on any pad to change.', 'info');
             }
 
             // TERMINAL METHODS
@@ -3893,7 +3632,7 @@
             setTimeout(() => {
                 if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
                     window.embryoPlayer.logToTerminal('Embrio Player v3.0 - Enhanced Version Started', 'info');
-                    window.embryoPlayer.logToTerminal('No samples precargados - Use "Load Samples" para agregar tus archivos', 'info');
+                    window.embryoPlayer.logToTerminal('Ready to use - Start audio to begin', 'info');
                 }
             }, 100);
             
@@ -3913,7 +3652,7 @@
             console.log('   - Pre-created audio nodes');
             console.log('   - Unified perf mode button (visualization vs latency)');
             console.log('   - Asynchronous DOM operations');
-                            console.log('[READY] Ready to use - Start audio to begin (no samples precargados)');
+                            console.log('[READY] Ready to use - Start audio to begin');
         });
     </script>
 </body>

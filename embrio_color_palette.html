@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paleta de Colores - Embrio Player v3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1em;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .color-palette {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .color-palette h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-align: center;
+        }
+        
+        .color-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+        
+        .color-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            margin-right: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .color-preview:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-preview::after {
+            content: "Copiar";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.7em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .color-preview:hover::after {
+            opacity: 1;
+        }
+        
+        .color-info {
+            flex: 1;
+        }
+        
+        .color-name {
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+        
+        .color-hex {
+            font-size: 0.8em;
+            color: #00d4ff;
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+        
+        .color-description {
+            font-size: 0.7em;
+            color: #cccccc;
+            line-height: 1.4;
+        }
+        
+        .color-usage {
+            font-size: 0.7em;
+            color: #ff6b6b;
+            font-style: italic;
+        }
+        
+        .color-customizer {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .color-customizer h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-align: center;
+        }
+        
+        .custom-color-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .custom-color-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .custom-color-label {
+            font-size: 0.9em;
+            color: #ffffff;
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .custom-color-input {
+            width: 80px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: none;
+        }
+        
+        .custom-color-input::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        
+        .custom-color-input::-webkit-color-swatch {
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .custom-color-hex {
+            font-family: monospace;
+            font-size: 0.8em;
+            color: #00d4ff;
+            margin-left: 15px;
+            min-width: 80px;
+        }
+        
+        .preview-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+        
+        .preview-section h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-align: center;
+        }
+        
+        .preview-container {
+            background: var(--bg-color);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preview-container::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .preview-title {
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-color);
+            font-size: 18px;
+            text-shadow: 2px 2px 0 var(--shadow-color-dark);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .preview-pads {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .preview-pad {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            position: relative;
+        }
+        
+        .preview-pad:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .preview-pad:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .preview-pad.active {
+            background: var(--shadow-color-dark) !important;
+            color: var(--bg-color) !important;
+        }
+        
+        .preview-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .preview-button {
+            padding: 12px 24px;
+            background: var(--shadow-color-dark);
+            color: var(--bg-color);
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            border-radius: 0;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        
+        .preview-button:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .preview-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .control-button {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+        
+        .control-button.secondary {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+        }
+        
+        .control-button.secondary:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .export-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .export-section h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+        
+        .export-textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 0.8em;
+            padding: 15px;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00d4ff;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8em;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-pads {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-palette"></i> Paleta de Colores</h1>
+            <p>Embrio Player v3 - Intercambiador y Previsualizador de Colores</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="color-palette">
+                <h2><i class="fas fa-swatchbook"></i> Paleta Actual</h2>
+                
+                <div class="color-item" style="border-left-color: #9bbc0f;">
+                    <div class="color-preview" style="background-color: #9bbc0f;" data-color="#9bbc0f"></div>
+                    <div class="color-info">
+                        <div class="color-name">--bg-color</div>
+                        <div class="color-hex">#9bbc0f</div>
+                        <div class="color-description">Color principal de fondo (Verde GameBoy)</div>
+                        <div class="color-usage">Fondo principal, botones, elementos base</div>
+                    </div>
+                </div>
+                
+                <div class="color-item" style="border-left-color: #0f380f;">
+                    <div class="color-preview" style="background-color: #0f380f;" data-color="#0f380f"></div>
+                    <div class="color-info">
+                        <div class="color-name">--shadow-color-dark</div>
+                        <div class="color-hex">#0f380f</div>
+                        <div class="color-description">Verde oscuro GameBoy para sombras</div>
+                        <div class="color-usage">Bordes, sombras, texto principal, botones activos</div>
+                    </div>
+                </div>
+                
+                <div class="color-item" style="border-left-color: #8bac0f;">
+                    <div class="color-preview" style="background-color: #8bac0f;" data-color="#8bac0f"></div>
+                    <div class="color-info">
+                        <div class="color-name">--shadow-color-light</div>
+                        <div class="color-hex">#8bac0f</div>
+                        <div class="color-description">Verde claro GameBoy para elementos secundarios</div>
+                        <div class="color-usage">Botones hover, elementos destacados, fondos secundarios</div>
+                    </div>
+                </div>
+                
+                <div class="color-item" style="border-left-color: #306230;">
+                    <div class="color-preview" style="background-color: #306230;" data-color="#306230"></div>
+                    <div class="color-info">
+                        <div class="color-name">--accent-color</div>
+                        <div class="color-hex">#306230</div>
+                        <div class="color-description">Verde medio para acentos y elementos especiales</div>
+                        <div class="color-usage">Acentos, alertas, acciones especiales</div>
+                    </div>
+                </div>
+                
+                <div class="color-item" style="border-left-color: #0f380f;">
+                    <div class="color-preview" style="background-color: #0f380f;" data-color="#0f380f"></div>
+                    <div class="color-info">
+                        <div class="color-name">--text-color</div>
+                        <div class="color-hex">#0f380f</div>
+                        <div class="color-description">Color principal para texto</div>
+                        <div class="color-usage">Títulos, texto principal, etiquetas</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-customizer">
+                <h2><i class="fas fa-edit"></i> Personalizar Colores</h2>
+                
+                <div class="custom-color-item">
+                    <div class="custom-color-header">
+                        <div class="custom-color-label">Fondo Principal:</div>
+                        <input type="color" class="custom-color-input" id="bg-color" value="#9bbc0f">
+                        <div class="custom-color-hex" id="bg-color-hex">#9bbc0f</div>
+                    </div>
+                </div>
+                
+                <div class="custom-color-item">
+                    <div class="custom-color-header">
+                        <div class="custom-color-label">Sombra Oscura:</div>
+                        <input type="color" class="custom-color-input" id="shadow-dark" value="#0f380f">
+                        <div class="custom-color-hex" id="shadow-dark-hex">#0f380f</div>
+                    </div>
+                </div>
+                
+                <div class="custom-color-item">
+                    <div class="custom-color-header">
+                        <div class="custom-color-label">Sombra Clara:</div>
+                        <input type="color" class="custom-color-input" id="shadow-light" value="#8bac0f">
+                        <div class="custom-color-hex" id="shadow-light-hex">#8bac0f</div>
+                    </div>
+                </div>
+                
+                <div class="custom-color-item">
+                    <div class="custom-color-header">
+                        <div class="custom-color-label">Color de Acento:</div>
+                        <input type="color" class="custom-color-input" id="accent-color" value="#306230">
+                        <div class="custom-color-hex" id="accent-color-hex">#306230</div>
+                    </div>
+                </div>
+                
+                <div class="custom-color-item">
+                    <div class="custom-color-header">
+                        <div class="custom-color-label">Color de Texto:</div>
+                        <input type="color" class="custom-color-input" id="text-color" value="#0f380f">
+                        <div class="custom-color-hex" id="text-color-hex">#0f380f</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="control-button" id="reset-colors">
+                        <i class="fas fa-undo"></i> Restaurar Originales
+                    </button>
+                    <button class="control-button secondary" id="random-colors">
+                        <i class="fas fa-palette"></i> Colores Coherentes
+                    </button>
+                    <button class="control-button secondary" id="crazy-colors">
+                        <i class="fas fa-random"></i> Colores Locos
+                    </button>
+                    <button class="control-button secondary" id="theme-colors">
+                        <i class="fas fa-magic"></i> Temas Predefinidos
+                    </button>
+                </div>
+                
+                <div class="controls" style="margin-top: 15px;">
+                    <button class="control-button secondary" id="save-colors">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                    <button class="control-button secondary" id="load-colors">
+                        <i class="fas fa-folder-open"></i> Cargar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <h2><i class="fas fa-eye"></i> Previsualización en Tiempo Real</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #cccccc; font-size: 0.8em;">
+                Los cambios se aplican en tiempo real. Haz clic en los pads para ver la interacción.
+            </p>
+            
+            <div class="preview-container" id="preview-container">
+                <div class="preview-title">Embrio Player v3</div>
+                
+                <div class="preview-pads">
+                    <div class="preview-pad" data-pad="1">1</div>
+                    <div class="preview-pad" data-pad="2">2</div>
+                    <div class="preview-pad" data-pad="3">3</div>
+                    <div class="preview-pad" data-pad="4">4</div>
+                    <div class="preview-pad" data-pad="5">5</div>
+                    <div class="preview-pad" data-pad="6">6</div>
+                    <div class="preview-pad" data-pad="7">7</div>
+                    <div class="preview-pad" data-pad="8">8</div>
+                    <div class="preview-pad" data-pad="9">9</div>
+                    <div class="preview-pad" data-pad="10">10</div>
+                    <div class="preview-pad" data-pad="11">11</div>
+                    <div class="preview-pad" data-pad="12">12</div>
+                    <div class="preview-pad" data-pad="13">13</div>
+                    <div class="preview-pad" data-pad="14">14</div>
+                    <div class="preview-pad" data-pad="15">15</div>
+                    <div class="preview-pad" data-pad="16">16</div>
+                </div>
+                
+                <div class="preview-buttons">
+                    <button class="preview-button" id="preview-start">START</button>
+                    <button class="preview-button" id="preview-stop">STOP</button>
+                    <button class="preview-button" id="preview-record">REC</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="export-section">
+            <h2><i class="fas fa-download"></i> Exportar CSS Personalizado</h2>
+            <p style="margin-bottom: 20px; color: #cccccc; font-size: 0.8em;">
+                Copia este CSS y reemplaza la sección :root en tu archivo embrio_player_v3_nochoke.html
+            </p>
+            <textarea class="export-textarea" id="export-css" readonly></textarea>
+            <button class="control-button" id="copy-css">
+                <i class="fas fa-copy"></i> Copiar CSS
+            </button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Colores originales
+        const originalColors = {
+            '--bg-color': '#9bbc0f',
+            '--shadow-color-dark': '#0f380f',
+            '--shadow-color-light': '#8bac0f',
+            '--accent-color': '#306230',
+            '--text-color': '#0f380f'
+        };
+        
+        // Variables CSS personalizables
+        let customColors = { ...originalColors };
+        
+        // Elementos del DOM
+        const colorInputs = {
+            'bg-color': document.getElementById('bg-color'),
+            'shadow-dark': document.getElementById('shadow-dark'),
+            'shadow-light': document.getElementById('shadow-light'),
+            'accent-color': document.getElementById('accent-color'),
+            'text-color': document.getElementById('text-color')
+        };
+        
+        const hexDisplays = {
+            'bg-color': document.getElementById('bg-color-hex'),
+            'shadow-dark': document.getElementById('shadow-dark-hex'),
+            'shadow-light': document.getElementById('shadow-light-hex'),
+            'accent-color': document.getElementById('accent-color-hex'),
+            'text-color': document.getElementById('text-color-hex')
+        };
+        
+        const previewContainer = document.getElementById('preview-container');
+        const exportCss = document.getElementById('export-css');
+        
+        // Función para actualizar colores
+        function updateColors() {
+            // Actualizar variables CSS
+            Object.keys(customColors).forEach(cssVar => {
+                document.documentElement.style.setProperty(cssVar, customColors[cssVar]);
+            });
+            
+            // Actualizar previsualización
+            updatePreview();
+            
+            // Actualizar CSS exportable
+            updateExportCSS();
+        }
+        
+        // Función para generar colores aleatorios coherentes
+        function generateRandomColors() {
+            // Generar un color base aleatorio
+            const baseHue = Math.random() * 360;
+            const baseSaturation = 0.3 + Math.random() * 0.4; // 30% - 70%
+            const baseLightness = 0.4 + Math.random() * 0.3; // 40% - 70%
+            
+            // Convertir HSL a RGB
+            function hslToHex(h, s, l) {
+                l /= 100;
+                const a = s * Math.min(l, 1 - l) / 100;
+                const f = n => {
+                    const k = (n + h / 30) % 12;
+                    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                    return Math.round(255 * color).toString(16).padStart(2, '0');
+                };
+                return `#${f(0)}${f(8)}${f(4)}`;
+            }
+            
+            // Generar variaciones del color base
+            const randomColors = {
+                '--bg-color': hslToHex(baseHue, baseSaturation * 100, baseLightness * 100),
+                '--shadow-color-dark': hslToHex(baseHue, baseSaturation * 100, (baseLightness - 0.2) * 100),
+                '--shadow-color-light': hslToHex(baseHue, baseSaturation * 100, (baseLightness + 0.1) * 100),
+                '--accent-color': hslToHex((baseHue + 30) % 360, baseSaturation * 100, (baseLightness - 0.1) * 100),
+                '--text-color': hslToHex(baseHue, baseSaturation * 100, (baseLightness - 0.3) * 100)
+            };
+            
+            return randomColors;
+        }
+        
+        // Función para generar colores aleatorios completamente aleatorios
+        function generateCrazyColors() {
+            const crazyColors = {};
+            
+            Object.keys(originalColors).forEach(cssVar => {
+                // Generar color completamente aleatorio
+                const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                crazyColors[cssVar] = randomColor;
+            });
+            
+            return crazyColors;
+        }
+        
+        // Función para generar temas predefinidos
+        function generateThemeColors() {
+            const themes = [
+                {
+                    name: 'Retro GameBoy',
+                    colors: {
+                        '--bg-color': '#9bbc0f',
+                        '--shadow-color-dark': '#0f380f',
+                        '--shadow-color-light': '#8bac0f',
+                        '--accent-color': '#306230',
+                        '--text-color': '#0f380f'
+                    }
+                },
+                {
+                    name: 'Retro NES',
+                    colors: {
+                        '--bg-color': '#f4f4f4',
+                        '--shadow-color-dark': '#212121',
+                        '--shadow-color-light': '#d0d0d0',
+                        '--accent-color': '#ff6b6b',
+                        '--text-color': '#212121'
+                    }
+                },
+                {
+                    name: 'Retro SNES',
+                    colors: {
+                        '--bg-color': '#e0e0e0',
+                        '--shadow-color-dark': '#404040',
+                        '--shadow-color-light': '#c0c0c0',
+                        '--accent-color': '#ff8c00',
+                        '--text-color': '#404040'
+                    }
+                },
+                {
+                    name: 'Cyberpunk',
+                    colors: {
+                        '--bg-color': '#0a0a0a',
+                        '--shadow-color-dark': '#00ff41',
+                        '--shadow-color-light': '#1a1a1a',
+                        '--accent-color': '#ff0080',
+                        '--text-color': '#00ff41'
+                    }
+                },
+                {
+                    name: 'Sunset',
+                    colors: {
+                        '--bg-color': '#ff6b6b',
+                        '--shadow-color-dark': '#4a4a4a',
+                        '--shadow-color-light': '#ffd93d',
+                        '--accent-color': '#6bcf7f',
+                        '--text-color': '#4a4a4a'
+                    }
+                }
+            ];
+            
+            // Seleccionar un tema aleatorio
+            const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+            return randomTheme;
+        }
+        
+        // Función para actualizar previsualización
+        function updatePreview() {
+            previewContainer.style.setProperty('--bg-color', customColors['--bg-color']);
+            previewContainer.style.setProperty('--shadow-color-dark', customColors['--shadow-color-dark']);
+            previewContainer.style.setProperty('--shadow-color-light', customColors['--shadow-color-light']);
+            previewContainer.style.setProperty('--accent-color', customColors['--accent-color']);
+            previewContainer.style.setProperty('--text-color', customColors['--text-color']);
+        }
+        
+        // Función para actualizar CSS exportable
+        function updateExportCSS() {
+            const css = `:root {
+    --bg-color: ${customColors['--bg-color']};  /* Verde GameBoy */
+    --shadow-color-dark: ${customColors['--shadow-color-dark']};  /* Verde oscuro GameBoy */
+    --shadow-color-light: ${customColors['--shadow-color-light']};  /* Verde claro GameBoy */
+    --text-color: ${customColors['--text-color']};  /* Verde oscuro para texto */
+    --accent-color: ${customColors['--accent-color']};  /* Verde medio para acentos */
+    --braun-yellow: ${customColors['--shadow-color-light']};  /* Verde claro para botones */
+    --braun-red: ${customColors['--accent-color']};  /* Verde medio para alertas */
+    --braun-orange: ${customColors['--accent-color']};  /* Verde medio para acciones */
+    --braun-grey: ${customColors['--shadow-color-dark']};  /* Verde oscuro para elementos secundarios */
+    --braun-darkgrey: ${customColors['--shadow-color-dark']};  /* Verde oscuro para elementos terciarios */
+    --braun-black: ${customColors['--shadow-color-dark']};  /* Verde oscuro para texto principal */
+}`;
+            
+            exportCss.value = css;
+        }
+        
+        // Event listeners para inputs de color
+        Object.keys(colorInputs).forEach(key => {
+            const input = colorInputs[key];
+            const hexDisplay = hexDisplays[key];
+            
+            input.addEventListener('input', function() {
+                const color = this.value;
+                const cssVar = '--' + key.replace('-', '-');
+                
+                customColors[cssVar] = color;
+                hexDisplay.textContent = color;
+                
+                updateColors();
+            });
+        });
+        
+        // Botón para restaurar colores originales
+        document.getElementById('reset-colors').addEventListener('click', function() {
+            customColors = { ...originalColors };
+            
+            // Actualizar inputs
+            Object.keys(colorInputs).forEach(key => {
+                const cssVar = '--' + key.replace('-', '-');
+                colorInputs[key].value = customColors[cssVar];
+                hexDisplays[key].textContent = customColors[cssVar];
+            });
+            
+            updateColors();
+            showNotification('Colores restaurados a los originales');
+        });
+        
+        // Botón para colores aleatorios coherentes
+        document.getElementById('random-colors').addEventListener('click', function() {
+            const randomColors = generateRandomColors();
+            
+            customColors = randomColors;
+            
+            // Actualizar inputs
+            Object.keys(colorInputs).forEach(key => {
+                const cssVar = '--' + key.replace('-', '-');
+                colorInputs[key].value = customColors[cssVar];
+                hexDisplays[key].textContent = customColors[cssVar];
+            });
+            
+            updateColors();
+            showNotification('Colores aleatorios coherentes aplicados');
+        });
+        
+        // Botón para colores completamente aleatorios
+        document.getElementById('crazy-colors').addEventListener('click', function() {
+            const crazyColors = generateCrazyColors();
+            
+            customColors = crazyColors;
+            
+            // Actualizar inputs
+            Object.keys(colorInputs).forEach(key => {
+                const cssVar = '--' + key.replace('-', '-');
+                colorInputs[key].value = customColors[cssVar];
+                hexDisplays[key].textContent = customColors[cssVar];
+            });
+            
+            updateColors();
+            showNotification('Colores completamente aleatorios aplicados');
+        });
+        
+        // Botón para temas predefinidos
+        document.getElementById('theme-colors').addEventListener('click', function() {
+            const theme = generateThemeColors();
+            
+            customColors = theme.colors;
+            
+            // Actualizar inputs
+            Object.keys(colorInputs).forEach(key => {
+                const cssVar = '--' + key.replace('-', '-');
+                colorInputs[key].value = customColors[cssVar];
+                hexDisplays[key].textContent = customColors[cssVar];
+            });
+            
+            updateColors();
+            showNotification(`Tema "${theme.name}" aplicado`);
+        });
+        
+        // Botón para guardar configuración
+        document.getElementById('save-colors').addEventListener('click', function() {
+            const config = {
+                name: prompt('Nombre para la configuración:'),
+                colors: customColors,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (config.name) {
+                const savedConfigs = JSON.parse(localStorage.getItem('embrioColorConfigs') || '[]');
+                savedConfigs.push(config);
+                localStorage.setItem('embrioColorConfigs', JSON.stringify(savedConfigs));
+                showNotification(`Configuración "${config.name}" guardada`);
+            }
+        });
+        
+        // Botón para cargar configuración
+        document.getElementById('load-colors').addEventListener('click', function() {
+            const savedConfigs = JSON.parse(localStorage.getItem('embrioColorConfigs') || '[]');
+            
+            if (savedConfigs.length === 0) {
+                showNotification('No hay configuraciones guardadas');
+                return;
+            }
+            
+            const configNames = savedConfigs.map(config => config.name);
+            const selectedName = prompt('Selecciona una configuración:\n' + configNames.join('\n'));
+            
+            if (selectedName) {
+                const selectedConfig = savedConfigs.find(config => config.name === selectedName);
+                if (selectedConfig) {
+                    customColors = selectedConfig.colors;
+                    
+                    // Actualizar inputs
+                    Object.keys(colorInputs).forEach(key => {
+                        const cssVar = '--' + key.replace('-', '-');
+                        colorInputs[key].value = customColors[cssVar];
+                        hexDisplays[key].textContent = customColors[cssVar];
+                    });
+                    
+                    updateColors();
+                    showNotification(`Configuración "${selectedName}" cargada`);
+                }
+            }
+        });
+        
+        // Botón para copiar CSS
+        document.getElementById('copy-css').addEventListener('click', function() {
+            exportCss.select();
+            document.execCommand('copy');
+            showNotification('CSS copiado al portapapeles');
+        });
+        
+        // Previsualización de pads
+        const previewPads = document.querySelectorAll('.preview-pad');
+        previewPads.forEach(pad => {
+            pad.addEventListener('click', function() {
+                // Remover clase active de todos los pads
+                previewPads.forEach(p => p.classList.remove('active'));
+                
+                // Agregar clase active al pad clickeado
+                this.classList.add('active');
+                
+                // Remover clase active después de 200ms
+                setTimeout(() => {
+                    this.classList.remove('active');
+                }, 200);
+            });
+        });
+        
+        // Previsualización de botones
+        const previewButtons = document.querySelectorAll('.preview-button');
+        previewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Efecto de click
+                this.style.transform = 'translate(4px, 4px)';
+                this.style.boxShadow = '0 0 0 var(--shadow-color-dark)';
+                
+                setTimeout(() => {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                }, 100);
+            });
+        });
+        
+        // Función para mostrar notificaciones
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Copiar colores al hacer clic en previews
+        document.querySelectorAll('.color-preview').forEach(preview => {
+            preview.addEventListener('click', function() {
+                const color = this.dataset.color;
+                navigator.clipboard.writeText(color).then(() => {
+                    showNotification(`Color ${color} copiado al portapapeles`);
+                }).catch(() => {
+                    // Fallback para navegadores que no soportan clipboard API
+                    const textArea = document.createElement('textarea');
+                    textArea.value = color;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification(`Color ${color} copiado al portapapeles`);
+                });
+            });
+        });
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            updateColors();
+            showNotification('Paleta de colores cargada correctamente');
+        });
+    </script>
+</body>
+</html>

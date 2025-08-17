@@ -1104,6 +1104,36 @@
             background-color: var(--shadow-color-dark);
         }
         
+        /* NEW: Estilos para el sistema de cuantización */
+        .btn-quantize {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: normal;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-quantize:hover {
+            background-color: var(--shadow-color-light);
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+        
+        .btn-quantize:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+        
+        .btn-quantize.quantize-active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        
+        .btn-quantize.quantize-active:hover {
+            background-color: var(--shadow-color-dark);
+        }
+        
+
+        
         /* Estilos para el modo slicer */
         .btn-slicer.slicer-active {
             background-color: var(--shadow-color-dark);
@@ -1231,6 +1261,12 @@
                                         <button id="toggle-performance-mode" class="header-button btn-performance" title="Toggle between viz mode (high latency) and perf mode (low latency)">[PERF] Perf Mode</button>
         </div>
         
+        <div class="header-row">
+            <button id="toggle-quantize" class="header-button btn-quantize" title="Toggle quantization on/off">[QUANT] Quantize ON</button>
+            <button id="quantize-strength" class="header-button" title="Click to cycle through quantization strength">Strength: 50%</button>
+            
+        </div>
+        
 
         
 
@@ -1305,6 +1341,12 @@
         const BAR_COUNT = 4;
         const BPM_LONG_PRESS_DELAY = 200; // Delay para iniciar cambios rápidos de BPM (reducido de 300ms)
         const BPM_RAPID_INTERVAL = 200; // Intervalo para cambios rápidos de BPM (aumentado de 150ms para mejor control)
+        
+        // NEW: QUANTIZATION SYSTEM CONSTANTS
+        const GRID_RESOLUTION = 16; // 16th notes per bar (4 beats × 4 subdivisions)
+        const GRID_STEPS_PER_BEAT = 4; // 4 steps per beat (16th notes)
+        const QUANTIZE_STRENGTH = 0.5; // 0.0 = no quantization, 1.0 = full quantization
+        const QUANTIZE_THRESHOLD = 0.125; // Threshold for quantization (in beats)
 
         // Lista de archivos de audio personalizados desde Bank A
         const audioFiles = [
@@ -1698,6 +1740,12 @@
                 this.slices = {};
                 this.slicerMode = false; // NEW: Slicer mode state
                 
+                // NEW: QUANTIZATION SYSTEM
+                this.quantizeMode = true; // Enable quantization by default
+                this.quantizeStrength = QUANTIZE_STRENGTH;
+                this.gridResolution = GRID_RESOLUTION;
+                this.gridStepsPerBeat = GRID_STEPS_PER_BEAT;
+                
                 // OPTIMIZATION: Latency configuration
                 this.performanceMode = false; // false = viz mode (high latency), true = perf mode (low latency)
                 this.preCreatedAnalysers = {};
@@ -1782,6 +1830,15 @@
                 // NEW: Button to toggle perf mode
                 document.getElementById('toggle-performance-mode').addEventListener('click', function() { 
                     self.togglePerformanceMode(); 
+                });
+                
+                // NEW: Quantization system buttons
+                document.getElementById('toggle-quantize').addEventListener('click', function() { 
+                    self.toggleQuantizeMode(); 
+                });
+                
+                document.getElementById('quantize-strength').addEventListener('click', function() { 
+                    self.cycleQuantizeStrength(); 
                 });
                 
 
@@ -2901,13 +2958,137 @@
                 const currentTime = this.audioContext.currentTime;
                 const relativeTime = (currentTime - this.sequenceStartTime) % (60 / this.bpm * BEATS_PER_BAR);
                 
+                // NEW: Apply quantization if enabled
+                let quantizedTime = relativeTime;
+                if (this.quantizeMode) {
+                    quantizedTime = this.quantizeTime(relativeTime);
+                }
+                
                 this.sequence[this.currentBar].push({
                     pad: padNumber,
-                    time: relativeTime,
-                    bank: this.currentBank
+                    time: quantizedTime,
+                    bank: this.currentBank,
+                    originalTime: relativeTime, // Keep original timing for reference
+                    quantized: this.quantizeMode
                 });
                 
-                console.log('Recorded in bar ' + (this.currentBar+1) + ', time: ' + relativeTime.toFixed(2) + 's, bank: ' + this.currentBank);
+                const timingInfo = this.quantizeMode ? 
+                    `(Original: ${relativeTime.toFixed(3)}s → Quantized: ${quantizedTime.toFixed(3)}s)` :
+                    `(Time: ${relativeTime.toFixed(3)}s)`;
+                
+                console.log('Recorded in bar ' + (this.currentBar+1) + ', ' + timingInfo + ', bank: ' + this.currentBank);
+            }
+            
+            // NEW: QUANTIZATION SYSTEM FUNCTIONS
+            
+            /**
+             * Quantize time to the nearest grid step
+             * @param {number} time - Time in seconds
+             * @returns {number} Quantized time in seconds
+             */
+            quantizeTime(time) {
+                const beatDuration = 60 / this.bpm; // Duration of one beat in seconds
+                const stepDuration = beatDuration / this.gridStepsPerBeat; // Duration of one grid step
+                
+                // Calculate which grid step this time falls into
+                const stepIndex = Math.round(time / stepDuration);
+                
+                // Calculate the quantized time
+                const quantizedTime = stepIndex * stepDuration;
+                
+                // Apply quantization strength (blend between original and quantized)
+                const finalTime = time + (quantizedTime - time) * this.quantizeStrength;
+                
+                // Ensure time stays within the bar
+                return finalTime % (beatDuration * BEATS_PER_BAR);
+            }
+            
+            /**
+             * Get grid step information for a given time
+             * @param {number} time - Time in seconds
+             * @returns {Object} Grid step info
+             */
+            getGridStepInfo(time) {
+                const beatDuration = 60 / this.bpm;
+                const stepDuration = beatDuration / this.gridStepsPerBeat;
+                const stepIndex = Math.round(time / stepDuration);
+                const beatIndex = Math.floor(time / beatDuration);
+                const stepInBeat = stepIndex % this.gridStepsPerBeat;
+                
+                return {
+                    stepIndex: stepIndex,
+                    beatIndex: beatIndex,
+                    stepInBeat: stepInBeat,
+                    stepDuration: stepDuration,
+                    quantizedTime: stepIndex * stepDuration
+                };
+            }
+            
+            /**
+             * Toggle quantization mode on/off
+             */
+            toggleQuantizeMode() {
+                this.quantizeMode = !this.quantizeMode;
+                
+                const btn = document.getElementById('toggle-quantize');
+                if (this.quantizeMode) {
+                    btn.textContent = '[QUANT] Quantize ON';
+                    btn.classList.add('quantize-active');
+                    this.logToTerminal('Quantization ENABLED - Hits will snap to 16th note grid', 'info');
+                } else {
+                    btn.textContent = '[QUANT] Quantize OFF';
+                    btn.classList.remove('quantize-active');
+                    this.logToTerminal('Quantization DISABLED - Free timing recording', 'info');
+                }
+                
+                console.log('[QUANTIZE] Mode:', this.quantizeMode ? 'ENABLED' : 'DISABLED');
+            }
+            
+            /**
+             * Cycle through quantization strength levels
+             */
+            cycleQuantizeStrength() {
+                const strengths = [0.0, 0.25, 0.5, 0.75, 1.0];
+                const currentIndex = strengths.indexOf(this.quantizeStrength);
+                const nextIndex = (currentIndex + 1) % strengths.length;
+                this.quantizeStrength = strengths[nextIndex];
+                
+                const btn = document.getElementById('quantize-strength');
+                const percentage = Math.round(this.quantizeStrength * 100);
+                btn.textContent = `Strength: ${percentage}%`;
+                
+                let strengthDesc = '';
+                if (this.quantizeStrength === 0.0) strengthDesc = 'No quantization';
+                else if (this.quantizeStrength === 0.25) strengthDesc = 'Light quantization';
+                else if (this.quantizeStrength === 0.5) strengthDesc = 'Medium quantization';
+                else if (this.quantizeStrength === 0.75) strengthDesc = 'Strong quantization';
+                else if (this.quantizeStrength === 1.0) strengthDesc = 'Full quantization';
+                
+                this.logToTerminal(`Quantization strength: ${percentage}% - ${strengthDesc}`, 'info');
+                console.log('[QUANTIZE] Strength:', this.quantizeStrength, strengthDesc);
+            }
+            
+            /**
+             * Show grid information in terminal
+             */
+            showGridInfo() {
+                const beatDuration = 60 / this.bpm;
+                const stepDuration = beatDuration / this.gridStepsPerBeat;
+                
+                this.logToTerminal(`Grid Info: ${this.gridResolution} steps per bar, ${this.gridStepsPerBeat} steps per beat`, 'info');
+                this.logToTerminal(`Step duration: ${(stepDuration * 1000).toFixed(1)}ms, Beat duration: ${(beatDuration * 1000).toFixed(1)}ms`, 'info');
+                
+                // Show grid visualization
+                let gridVisual = 'Grid: ';
+                for (let beat = 0; beat < BEATS_PER_BAR; beat++) {
+                    gridVisual += '|';
+                    for (let step = 0; step < this.gridStepsPerBeat; step++) {
+                        gridVisual += step === 0 ? '1' : '&';
+                    }
+                }
+                gridVisual += '|';
+                
+                this.logToTerminal(gridVisual, 'info');
             }
             
             // AUDIO VISUALIZER - OPTIMIZED FOR LATENCY
@@ -3387,6 +3568,42 @@
                 }, beatDuration);
             }
             
+            // NEW: Show quantization statistics after recording
+            showQuantizationStats() {
+                if (!this.quantizeMode) return;
+                
+                let totalHits = 0;
+                let quantizedHits = 0;
+                let totalQuantizationError = 0;
+                
+                this.sequence.forEach((bar, barIndex) => {
+                    bar.forEach(event => {
+                        if (event.quantized && event.originalTime !== undefined) {
+                            totalHits++;
+                            quantizedHits++;
+                            const error = Math.abs(event.time - event.originalTime);
+                            totalQuantizationError += error;
+                        }
+                    });
+                });
+                
+                if (quantizedHits > 0) {
+                    const avgError = totalQuantizationError / quantizedHits;
+                    const avgErrorMs = avgError * 1000;
+                    
+                    this.logToTerminal(`Quantization Stats: ${quantizedHits} hits quantized`, 'info');
+                    this.logToTerminal(`Average timing error: ${avgErrorMs.toFixed(1)}ms`, 'info');
+                    
+                    if (avgErrorMs < 10) {
+                        this.logToTerminal('Excellent timing precision!', 'info');
+                    } else if (avgErrorMs < 25) {
+                        this.logToTerminal('Good timing precision', 'info');
+                    } else {
+                        this.logToTerminal('Consider increasing quantization strength', 'warning');
+                    }
+                }
+            }
+            
             toggleRecording() {
                 if (this.isRecording) {
                     this.stopRecording();
@@ -3421,7 +3638,14 @@
                 recordBtn.textContent = "STOP";
                 recordBtn.classList.add('active');
                 this.updateBarBeatDisplay();
-                        this.logToTerminal('Preparing to record...', 'info');
+                
+                // NEW: Show quantization and grid information
+                if (this.quantizeMode) {
+                    this.logToTerminal('Preparing to record with QUANTIZATION...', 'info');
+                    this.showGridInfo();
+                } else {
+                    this.logToTerminal('Preparing to record (FREE TIMING)...', 'info');
+                }
                 
                 this.startPrecount();
             }
