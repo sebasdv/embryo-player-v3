@@ -1253,16 +1253,12 @@
             <button id="bank-c" class="header-button bank-btn">C</button>
             <button id="bank-d" class="header-button bank-btn">D</button>
             <button id="bank-e" class="header-button bank-btn">QT</button>
-            <button id="bank-f" class="header-button bank-btn">F</button>
-            <button id="bank-g" class="header-button bank-btn">G</button>
-            <button id="bank-h" class="header-button bank-btn">H</button>
+            <button id="bank-f" class="header-button bank-btn">L/S</button>
+            <button id="bank-g" class="header-button bank-btn">CL/B</button>
+            <button id="bank-h" class="header-button bank-btn">SLCR</button>
         </div>
         
-        <div class="header-row">
-                    <button id="load-samples" class="header-button btn-load">Load Samples</button>
-        <button id="clear-bank" class="header-button">Clear Bank</button>
-                            <button id="mobile-slicer" class="header-button btn-slicer">[SLICE] Slicer Help</button>
-        </div>
+
         
 
         
@@ -1725,12 +1721,12 @@
                 // Bancos de sonidos
                 this.currentBank = 'A';
                 this.bankSamples = {
-                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}, 'F': {}, 'G': {}, 'H': {}
+                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}
                 };
 
                 // Nombres de los samples
                 this.sampleNames = {
-                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}, 'F': {}, 'G': {}, 'H': {}
+                    'A': {}, 'B': {}, 'C': {}, 'D': {}, 'E': {}
                 };
 
                 // Sample Slicer
@@ -1817,16 +1813,9 @@
                 document.getElementById('bank-c').addEventListener('click', function() { self.selectBank('C'); });
                 document.getElementById('bank-d').addEventListener('click', function() { self.selectBank('D'); });
                 document.getElementById('bank-e').addEventListener('click', function() { self.cycleQuantizeConsolidated(); });
-                document.getElementById('bank-f').addEventListener('click', function() { self.selectBank('F'); });
-                document.getElementById('bank-g').addEventListener('click', function() { self.selectBank('G'); });
-                document.getElementById('bank-h').addEventListener('click', function() { self.selectBank('H'); });
-                
-                // Batch loading buttons
-                document.getElementById('load-samples').addEventListener('click', function() { self.loadMultipleSamples(); });
-                document.getElementById('clear-bank').addEventListener('click', function() { self.clearCurrentBank(); });
-                
-                // NEW: Touch button for slicer
-                document.getElementById('mobile-slicer').addEventListener('click', function() { 
+                document.getElementById('bank-f').addEventListener('click', function() { self.loadMultipleSamples(); });
+                document.getElementById('bank-g').addEventListener('click', function() { self.clearCurrentBank(); });
+                document.getElementById('bank-h').addEventListener('click', function() { 
                     if (self.slicerMode) {
                         self.deactivateSlicerMode();
                         self.logToTerminal('Slicer mode deactivated', 'info');
@@ -1834,6 +1823,8 @@
                         self.showPadSelectorForSlicer(); 
                     }
                 });
+                
+
                 
 
                 
@@ -3991,9 +3982,9 @@
                 }
                 
                 // Change button appearance
-                const slicerBtn = document.getElementById('mobile-slicer');
+                const slicerBtn = document.getElementById('bank-h');
                 slicerBtn.classList.add('slicer-active');
-                slicerBtn.textContent = '[SLICE] Cancel';
+                slicerBtn.textContent = 'CANCEL';
             }
             
             // NEW: Deactivate slicer mode
@@ -4007,9 +3998,9 @@
                 });
                 
                 // Restore button appearance
-                const slicerBtn = document.getElementById('mobile-slicer');
+                const slicerBtn = document.getElementById('bank-h');
                 slicerBtn.classList.remove('slicer-active');
-                slicerBtn.textContent = '[SLICE] Slicer Help';
+                slicerBtn.textContent = 'SLCR';
             }
             
             // NEW: Get list of loaded pads for slicer
