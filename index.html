@@ -276,13 +276,13 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: var(--bg-color);
-            padding: 25px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             border: 2px solid var(--shadow-color-dark);
-            max-width: 500px;
-            max-height: 80vh;
+            max-width: 480px;
+            max-height: 75vh;
             overflow-y: auto;
         }
 
@@ -293,23 +293,23 @@
 
         .help-content h3 {
             margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 18px;
+            margin-bottom: 15px;
+            font-size: 16px;
             text-align: center;
             color: var(--accent-color);
         }
 
         .help-section {
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 12px;
+            padding: 10px;
             background: var(--shadow-color-light);
             border-radius: 6px;
             border-left: 4px solid var(--accent-color);
         }
 
         .help-section h4 {
-            margin: 0 0 10px 0;
-            font-size: 14px;
+            margin: 0 0 8px 0;
+            font-size: 13px;
             color: var(--accent-color);
             font-weight: bold;
         }
@@ -318,13 +318,14 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            margin-bottom: 0;
         }
 
         .help-content li {
-            margin: 8px 0;
-            font-size: 12px;
-            line-height: 1.4;
-            padding-left: 10px;
+            margin: 5px 0;
+            font-size: 11px;
+            line-height: 1.3;
+            padding-left: 8px;
             border-left: 2px solid var(--shadow-color-dark);
         }
 
@@ -1237,15 +1238,16 @@
                     </ul>
                 </div>
 
-                <div class="help-section">
-                    <h4>Sequencer Controls</h4>
-                    <ul>
-                        <li><strong>REC</strong> - Start recording a sequence</li>
-                        <li><strong>PLAY</strong> - Play the recorded sequence</li>
-                        <li><strong>STOP ALL</strong> - Stop all audio and sequences</li>
-                        <li><strong>CLEAR</strong> - Clear the recorded sequence</li>
-                    </ul>
-                </div>
+                                    <div class="help-section">
+                        <h4>Sequencer Controls</h4>
+                        <ul>
+                            <li><strong>REC</strong> - Start recording a sequence</li>
+                            <li><strong>PLAY</strong> - Play the recorded sequence</li>
+                            <li><strong>STOP ALL</strong> - Stop all audio and sequences</li>
+                            <li><strong>CLEAR</strong> - Clear the recorded sequence</li>
+                            <li><strong>QT</strong> - Quantize control (cycles: 0%, 25%, 50%, 75%, 100%)</li>
+                        </ul>
+                    </div>
 
                 <div class="help-section">
                     <h4>Tempo & Timing</h4>
@@ -1256,16 +1258,15 @@
                     </ul>
                 </div>
 
-                <div class="help-section">
-                    <h4>Bank Functions</h4>
-                    <ul>
-                        <li><strong>A, B, C, D</strong> - Sample banks (switch between different sample sets)</li>
-                        <li><strong>QT</strong> - Quantize control (cycles: 0%, 25%, 50%, 75%, 100%)</li>
-                        <li><strong>L/S</strong> - Load Samples (load multiple audio files)</li>
-                        <li><strong>CL/B</strong> - Clear Bank (clear current bank samples)</li>
-                        <li><strong>SLCR</strong> - Slicer (slice samples into parts)</li>
-                    </ul>
-                </div>
+                                    <div class="help-section">
+                        <h4>Bank Functions</h4>
+                        <ul>
+                            <li><strong>A, B, C, D</strong> - Sample banks (switch between different sample sets)</li>
+                            <li><strong>L/S</strong> - Load Samples (load multiple audio files)</li>
+                            <li><strong>CL/B</strong> - Clear Bank (clear current bank samples)</li>
+                            <li><strong>SLCR</strong> - Slicer (slice samples into parts)</li>
+                        </ul>
+                    </div>
 
                 <div class="help-section">
                     <h4>Input Methods</h4>
@@ -2092,11 +2093,6 @@
                 pad.addEventListener('mousedown', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
-                });
-                
-                pad.addEventListener('mouseup', function(e) {
-                    e.preventDefault();
-                    if (e.detail === 2) return; // Avoid double click
                     
                     // Check if slicer mode is active
                     if (self.slicerMode && self.samples[padNumber]) {
@@ -2106,17 +2102,9 @@
                     }
                 });
                 
-
-                
                 // Touch events
                 pad.addEventListener('touchstart', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
-                    e.preventDefault();
-                    
-                    
-                });
-                
-                pad.addEventListener('touchend', function(e) {
                     e.preventDefault();
                     
                     // Check if slicer mode is active
@@ -2132,10 +2120,6 @@
                 pad.addEventListener('touchcancel', function(e) {
                     self.touchedPads.delete(padNumber);
                 });
-                
-
-                
-
             }
             
             // AUDIO PLAYBACK AND CONTROL - OPTIMIZED FOR MINIMUM LATENCY
