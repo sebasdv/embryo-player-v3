@@ -1106,31 +1106,7 @@
             transform: none !important;
         }
         
-        /* Estilos para el botón de rendimiento */
-        .btn-performance {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-weight: normal;
-            transition: all 0.2s ease;
-        }
-        .btn-performance:hover {
-            background-color: var(--shadow-color-light);
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0 var(--shadow-color-dark);
-        }
-        .btn-performance:active {
-            transform: translate(4px, 4px);
-            box-shadow: 0 0 0 var(--shadow-color-dark);
-        }
-        
-        .btn-performance.performance-mode {
-            background-color: var(--accent-color);
-            color: var(--bg-color);
-        }
-        
-        .btn-performance.performance-mode:hover {
-            background-color: var(--shadow-color-dark);
-        }
+
         
         /* NEW: Estilos para el sistema de cuantización */
         .btn-quantize {
@@ -1200,10 +1176,6 @@
         
         @media (max-width: 480px) {
             .btn-slicer {
-                font-size: 8px;
-                padding: 0 2px;
-            }
-            .btn-performance {
                 font-size: 8px;
                 padding: 0 2px;
             }
@@ -1290,7 +1262,6 @@
                     <button id="load-samples" class="header-button btn-load">Load Samples</button>
         <button id="clear-bank" class="header-button">Clear Bank</button>
                             <button id="mobile-slicer" class="header-button btn-slicer">[SLICE] Slicer Help</button>
-                                        <button id="toggle-performance-mode" class="header-button btn-performance" title="Toggle between viz mode (high latency) and perf mode (low latency)">[PERF] Perf Mode</button>
         </div>
         
 
@@ -1780,7 +1751,7 @@
                 }, 100);
                 
                 // OPTIMIZATION: Latency configuration
-                this.performanceMode = false; // false = viz mode (high latency), true = perf mode (low latency)
+                this.performanceMode = true; // true = perf mode (low latency) by default, visualization only when sequence is playing
                 this.preCreatedAnalysers = {};
                 this.preCreatedGains = {};
 
@@ -1864,10 +1835,7 @@
                     }
                 });
                 
-                // NEW: Button to toggle perf mode
-                document.getElementById('toggle-performance-mode').addEventListener('click', function() { 
-                    self.togglePerformanceMode(); 
-                });
+
                 
 
                 
@@ -1928,10 +1896,7 @@
                     
                     this.isAudioInitialized = true;
                     
-                    // Show latency statistics on startup
-                    setTimeout(() => {
-                        this.showLatencyStats();
-                    }, 1000);
+
                     
                     // Update UI
                     document.getElementById('start-audio').disabled = true;
@@ -3714,13 +3679,20 @@
                 preCount();
             }
             
-            stopRecording() {
+                        stopRecording() {
                 this.isRecording = false;
                 this.stopTimers();
                 const recordBtn = document.getElementById('record-sequence');
                 recordBtn.textContent = "REC";
                 recordBtn.classList.remove('active');
-                        this.logToTerminal('Recording stopped', 'info');
+                
+                // AUTO: Return to performance mode when recording stops
+                if (!this.performanceMode) {
+                    this.performanceMode = true;
+                    this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
+                }
+                
+                this.logToTerminal('Recording stopped', 'info');
             }
             
             playSequence() {
@@ -3744,7 +3716,14 @@
                 
                 document.getElementById('play-sequence').classList.add('active');
                 this.sequenceStartTime = this.audioContext.currentTime;
-                        this.logToTerminal('Playing sequence (without metronome)', 'info');
+                
+                // AUTO: Activate visualization mode when sequence starts playing
+                if (this.performanceMode) {
+                    this.performanceMode = false;
+                    this.logToTerminal('Auto-switched to visualization mode for sequence playback', 'info');
+                }
+                
+                this.logToTerminal('Playing sequence (without metronome)', 'info');
                 
                 this.startBarAdvancement();
                 this.playCurrentBar();
@@ -3796,6 +3775,12 @@
                 this.currentBar = 0;
                 this.currentBeat = 1;
                 this.updateBarBeatDisplay();
+                
+                // AUTO: Return to performance mode when sequence stops
+                if (!this.performanceMode) {
+                    this.performanceMode = true;
+                    this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
+                }
                 
                 this.logToTerminal('Sequence playback stopped and reset', 'info');
             }
@@ -3909,38 +3894,7 @@
                 this.logToTerminal('Sequence cleared', 'info');
             }
             
-            // NEW: Toggle perf mode (visualization vs latency)
-            togglePerformanceMode() {
-                this.performanceMode = !this.performanceMode;
-                
-                const btn = document.getElementById('toggle-performance-mode');
-                if (this.performanceMode) {
-                    // Perf mode: low latency, no visualization
-                    btn.textContent = '[PERF] Viz Mode';
-                    btn.classList.add('performance-mode');
-                            this.logToTerminal('Perf mode activated (minimum latency, no visualization)', 'info');
-                    
-                    // Clear active visualizers
-                    if (this.visualizers) {
-                        Object.keys(this.visualizers).forEach(padNumber => {
-                            if (this.visualizers[padNumber]) {
-                                cancelAnimationFrame(this.visualizers[padNumber]);
-                                delete this.visualizers[padNumber];
-                            }
-                        });
-                    }
-                } else {
-                    // Viz mode: normal latency, with visualization
-                    btn.textContent = '[PERF] Perf Mode';
-                    btn.classList.remove('performance-mode');
-                            this.logToTerminal('Viz mode activated (normal latency, with visualization)', 'info');
-                }
-                
-                console.log('[PERF] Perf mode:', this.performanceMode ? 'ACTIVATED (low latency)' : 'DEACTIVATED (visualization)');
-                
-                // Show latency statistics
-                this.showLatencyStats();
-            }
+
             
             // NEW: Show latency statistics
             showLatencyStats() {
@@ -4179,7 +4133,7 @@
                             console.log('[LATENCY] LATENCY OPTIMIZATIONS:');
             console.log('   - AudioContext configured for minimum latency');
             console.log('   - Pre-created audio nodes');
-            console.log('   - Unified perf mode button (visualization vs latency)');
+            console.log('   - Auto performance mode (visualization only during sequence playback)');
             console.log('   - Asynchronous DOM operations');
                             console.log('[READY] Ready to use - Start audio to begin (no samples precargados)');
         });
