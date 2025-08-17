@@ -1276,14 +1276,14 @@
         
         <div class="section-title">Bank Selection</div>
         <div class="header-row bank-selector-row">
-            <button id="bank-a" class="header-button bank-btn bank-active">Bank A</button>
-            <button id="bank-b" class="header-button bank-btn">Bank B</button>
-            <button id="bank-c" class="header-button bank-btn">Bank C</button>
-            <button id="bank-d" class="header-button bank-btn">Bank D</button>
-            <button id="bank-e" class="header-button bank-btn">Bank E</button>
-            <button id="bank-f" class="header-button bank-btn">Bank F</button>
-            <button id="bank-g" class="header-button bank-btn">Bank G</button>
-            <button id="bank-h" class="header-button bank-btn">Bank H</button>
+            <button id="bank-a" class="header-button bank-btn bank-active">A</button>
+            <button id="bank-b" class="header-button bank-btn">B</button>
+            <button id="bank-c" class="header-button bank-btn">C</button>
+            <button id="bank-d" class="header-button bank-btn">D</button>
+            <button id="bank-e" class="header-button bank-btn">QT</button>
+            <button id="bank-f" class="header-button bank-btn">F</button>
+            <button id="bank-g" class="header-button bank-btn">G</button>
+            <button id="bank-h" class="header-button bank-btn">H</button>
         </div>
         
         <div class="header-row">
@@ -1293,11 +1293,7 @@
                                         <button id="toggle-performance-mode" class="header-button btn-performance" title="Toggle between viz mode (high latency) and perf mode (low latency)">[PERF] Perf Mode</button>
         </div>
         
-        <div class="header-row">
-            <button id="toggle-quantize" class="header-button btn-quantize" title="Toggle quantization on/off">[QUANT] Quantize ON</button>
-            <button id="quantize-strength" class="header-button" title="Click to cycle through quantization strength">Strength: 50%</button>
-            
-        </div>
+
         
 
         
@@ -1778,6 +1774,11 @@
                 this.gridResolution = GRID_RESOLUTION;
                 this.gridStepsPerBeat = GRID_STEPS_PER_BEAT;
                 
+                // Initialize QT button state after DOM is ready
+                setTimeout(() => {
+                    this.initializeQTButton();
+                }, 100);
+                
                 // OPTIMIZATION: Latency configuration
                 this.performanceMode = false; // false = viz mode (high latency), true = perf mode (low latency)
                 this.preCreatedAnalysers = {};
@@ -1844,7 +1845,7 @@
                 document.getElementById('bank-b').addEventListener('click', function() { self.selectBank('B'); });
                 document.getElementById('bank-c').addEventListener('click', function() { self.selectBank('C'); });
                 document.getElementById('bank-d').addEventListener('click', function() { self.selectBank('D'); });
-                document.getElementById('bank-e').addEventListener('click', function() { self.selectBank('E'); });
+                document.getElementById('bank-e').addEventListener('click', function() { self.cycleQuantizeConsolidated(); });
                 document.getElementById('bank-f').addEventListener('click', function() { self.selectBank('F'); });
                 document.getElementById('bank-g').addEventListener('click', function() { self.selectBank('G'); });
                 document.getElementById('bank-h').addEventListener('click', function() { self.selectBank('H'); });
@@ -1868,14 +1869,7 @@
                     self.togglePerformanceMode(); 
                 });
                 
-                // NEW: Quantization system buttons
-                document.getElementById('toggle-quantize').addEventListener('click', function() { 
-                    self.toggleQuantizeMode(); 
-                });
-                
-                document.getElementById('quantize-strength').addEventListener('click', function() { 
-                    self.cycleQuantizeStrength(); 
-                });
+
                 
 
                 
@@ -3061,47 +3055,61 @@
             }
             
             /**
-             * Toggle quantization mode on/off
+             * NEW: Consolidated quantization control - cycles through OFF (0%) and strength levels
              */
-            toggleQuantizeMode() {
-                this.quantizeMode = !this.quantizeMode;
-                
-                const btn = document.getElementById('toggle-quantize');
-                if (this.quantizeMode) {
-                    btn.textContent = '[QUANT] Quantize ON';
-                    btn.classList.add('quantize-active');
-                    this.logToTerminal('Quantization ENABLED - Hits will snap to 16th note grid', 'info');
-                } else {
-                    btn.textContent = '[QUANT] Quantize OFF';
-                    btn.classList.remove('quantize-active');
-                    this.logToTerminal('Quantization DISABLED - Free timing recording', 'info');
-                }
-                
-                console.log('[QUANTIZE] Mode:', this.quantizeMode ? 'ENABLED' : 'DISABLED');
-            }
-            
-            /**
-             * Cycle through quantization strength levels
-             */
-            cycleQuantizeStrength() {
+            cycleQuantizeConsolidated() {
                 const strengths = [0.0, 0.25, 0.5, 0.75, 1.0];
                 const currentIndex = strengths.indexOf(this.quantizeStrength);
                 const nextIndex = (currentIndex + 1) % strengths.length;
                 this.quantizeStrength = strengths[nextIndex];
                 
-                const btn = document.getElementById('quantize-strength');
+                // Update quantizeMode based on strength (0.0 = OFF, any other value = ON)
+                this.quantizeMode = this.quantizeStrength > 0.0;
+                
+                // Update the QT button text and styling
+                const qtBtn = document.getElementById('bank-e');
                 const percentage = Math.round(this.quantizeStrength * 100);
-                btn.textContent = `Strength: ${percentage}%`;
                 
-                let strengthDesc = '';
-                if (this.quantizeStrength === 0.0) strengthDesc = 'No quantization';
-                else if (this.quantizeStrength === 0.25) strengthDesc = 'Light quantization';
-                else if (this.quantizeStrength === 0.5) strengthDesc = 'Medium quantization';
-                else if (this.quantizeStrength === 0.75) strengthDesc = 'Strong quantization';
-                else if (this.quantizeStrength === 1.0) strengthDesc = 'Full quantization';
+                if (this.quantizeStrength === 0.0) {
+                    qtBtn.textContent = 'QT OFF';
+                    qtBtn.classList.remove('quantize-active');
+                    qtBtn.classList.add('btn-quantize');
+                    this.logToTerminal('Quantization DISABLED - Free timing recording', 'info');
+                } else {
+                    qtBtn.textContent = `QT ${percentage}%`;
+                    qtBtn.classList.add('quantize-active');
+                    qtBtn.classList.add('btn-quantize');
+                    
+                    let strengthDesc = '';
+                    if (this.quantizeStrength === 0.25) strengthDesc = 'Light quantization';
+                    else if (this.quantizeStrength === 0.5) strengthDesc = 'Medium quantization';
+                    else if (this.quantizeStrength === 0.75) strengthDesc = 'Strong quantization';
+                    else if (this.quantizeStrength === 1.0) strengthDesc = 'Full quantization';
+                    
+                    this.logToTerminal(`Quantization ENABLED - ${percentage}% - ${strengthDesc}`, 'info');
+                }
                 
-                this.logToTerminal(`Quantization strength: ${percentage}% - ${strengthDesc}`, 'info');
-                console.log('[QUANTIZE] Strength:', this.quantizeStrength, strengthDesc);
+                console.log('[QUANTIZE] Mode:', this.quantizeMode ? 'ENABLED' : 'DISABLED', 'Strength:', this.quantizeStrength);
+            }
+            
+            /**
+             * Initialize the QT button with the current quantization state
+             */
+            initializeQTButton() {
+                const qtBtn = document.getElementById('bank-e');
+                if (!qtBtn) return;
+                
+                const percentage = Math.round(this.quantizeStrength * 100);
+                
+                if (this.quantizeStrength === 0.0) {
+                    qtBtn.textContent = 'QT OFF';
+                    qtBtn.classList.remove('quantize-active');
+                    qtBtn.classList.add('btn-quantize');
+                } else {
+                    qtBtn.textContent = `QT ${percentage}%`;
+                    qtBtn.classList.add('quantize-active');
+                    qtBtn.classList.add('btn-quantize');
+                }
             }
             
             /**
