@@ -203,7 +203,7 @@
             background: var(--shadow-color-dark);
             border: 2px solid var(--shadow-color-light);
             border-radius: 4px;
-            margin: 0 0 15px 0;
+            margin: 0 0 0 0;
             padding: 10px;
             font-family: 'Press Start 2P', monospace;
             font-size: 10px;
@@ -533,6 +533,8 @@
             height: 4px;
         }
         
+        
+        
         /* Responsive adjustments for sliders */
         @media (max-width: 768px) {
             .slider-row {
@@ -542,6 +544,8 @@
             .audio-slider {
                 height: 40px;
             }
+            
+
         }
         
         @media (max-width: 480px) {
@@ -552,6 +556,8 @@
             .audio-slider {
                 height: 40px;
             }
+            
+
         }
 
         /* Input Status Indicator */
@@ -1322,7 +1328,7 @@
                     <ul>
                         <li><strong>Start</strong> - Initialize audio context and start the player</li>
                         <li><strong>VOL</strong> - Master volume control (0-100%)</li>
-                        <li><strong>DRIVE</strong> - Audio saturation/drive effect (0-100%)</li>
+                        <li><strong>DISTORTION</strong> - Audio saturation/distortion effect (0-100%)</li>
                         <li><strong>FILT</strong> - Low-pass filter cutoff (0-100%)</li>
                         <li><strong>RES</strong> - Filter resonance control (0-100%)</li>
                     </ul>
@@ -1434,6 +1440,8 @@
                 <input type="range" id="slider-4" class="audio-slider" min="0" max="100" value="25">
             </div>
         </div>
+        
+        
         
 
         
@@ -1932,14 +1940,14 @@
                 this.masterOutput = null;        // Nodo principal de salida para efectos
                 this.masterGain = null;          // Control de volumen master
                 this.masterFilter = null;        // Filtro low-pass master
-                this.masterDrive = null;         // Saturador/distorsión master
+                this.masterDistortion = null;   // Distortion/Saturation master
                 this.masterResonance = null;     // Control de resonancia del filtro
                 
                 // Estado de efectos master
                 this.effectsEnabled = {
                     volume: true,
                     filter: false,
-                    drive: false,
+                    distortion: false,
                     resonance: false
                 };
                 
@@ -1947,7 +1955,7 @@
                 this.effectsValues = {
                     volume: 100,
                     filter: 50,
-                    drive: 0,
+                    distortion: 0,
                     resonance: 25
                 };
 
@@ -2140,37 +2148,72 @@
                 this.masterOutput = this.audioContext.createGain();
                 this.masterGain = this.audioContext.createGain();
                 this.masterFilter = this.audioContext.createBiquadFilter();
-                this.masterDrive = this.audioContext.createWaveShaper();
+                this.masterDistortion = this.audioContext.createWaveShaper(); // Nodo principal para Distortion
                 
                 // Configurar filtro inicial
                 this.masterFilter.type = 'lowpass';
                 this.masterFilter.frequency.value = 20000; // Frecuencia máxima inicial
                 this.masterFilter.Q.value = 1.0;
                 
-                // Configurar drive con curva personalizada
-                this.setupDriveCurve();
+                // Configurar Distortion con curvas dinámicas
+                this.setupDistortionChain();
                 
-                // Conectar cadena de efectos: Master Output → Master Gain → Master Filter → Master Drive → Destination
+                // Conectar cadena de efectos: Master Output → Master Gain → Master Filter → PreGain → Master Distortion → PostGain → Destination
                 this.masterOutput.connect(this.masterGain);
                 this.masterGain.connect(this.masterFilter);
-                this.masterFilter.connect(this.masterDrive);
-                this.masterDrive.connect(this.audioContext.destination);
+                this.masterFilter.connect(this.distortionPreGain);
+                this.distortionPreGain.connect(this.masterDistortion);
+                this.masterDistortion.connect(this.distortionPostGain);
+                this.distortionPostGain.connect(this.audioContext.destination);
                 
                 // Aplicar valores iniciales de efectos
                 this.applyInitialEffectsValues();
                 
-                console.log('[EFFECTS] Master effects chain initialized and connected');
+                console.log('[EFFECTS] Master effects chain initialized with Distortion');
             }
             
-            // NEW: Setup drive curve for saturation effect
-            setupDriveCurve() {
-                const driveCurve = new Float32Array(4096);
-                for (let i = 0; i < 4096; i++) {
-                    const x = (i * 2) / 4096 - 1;
-                    driveCurve[i] = (Math.PI + x) * x / (Math.PI + x * x);
+            // NEW: Setup Distortion chain with dynamic curves
+            setupDistortionChain() {
+                // Configurar WaveShaper inicial
+                this.masterDistortion.curve = this.createDistortionCurve(0);
+                
+                // Pre-gain para control de entrada
+                this.distortionPreGain = this.audioContext.createGain();
+                this.distortionPreGain.gain.value = 1.0;
+                
+                // Post-gain para control de salida
+                this.distortionPostGain = this.audioContext.createGain();
+                this.distortionPostGain.gain.value = 1.0;
+                
+                // Conectar pre-gain y post-gain
+                this.masterDistortion.connect(this.distortionPostGain);
+                
+                // Aplicar configuración inicial
+                this.updateDistortionIntensity(0);
+
+                console.log('[DISTORTION] Distortion chain initialized with dynamic curves');
+            }
+            
+            // NEW: Create dynamic distortion curve for WaveShaper
+            createDistortionCurve(amount) {
+                const k = typeof amount === 'number' ? amount : 50;
+                const n_samples = 44100;
+                const curve = new Float32Array(n_samples);
+                const deg = Math.PI / 180;
+                
+                for (let i = 0; i < n_samples; ++i) {
+                    const x = (i * 2) / n_samples - 1;
+                    
+                    if (amount === 0) {
+                        // Sin distorsión - curva lineal
+                        curve[i] = x;
+                    } else {
+                        // Curva de distorsión suave que se intensifica con el valor
+                        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                    }
                 }
-                this.masterDrive.curve = driveCurve;
-                this.masterDrive.oversample = '2x'; // Optimización de calidad
+                
+                return curve;
             }
             
             // NEW: Apply initial effects values
@@ -2183,24 +2226,41 @@
                     this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
                     this.masterFilter.Q.setValueAtTime(this.effectsValues.resonance / 10, this.audioContext.currentTime);
                 }
-                if (this.masterDrive) {
-                    this.updateDriveIntensity(this.effectsValues.drive);
+                if (this.masterDistortion) {
+                    this.updateDistortionIntensity(this.effectsValues.distortion);
                 }
             }
             
-            // NEW: Update drive intensity for saturation effect
-            updateDriveIntensity(value) {
-                if (!this.masterDrive) return;
-                
-                // Ajustar oversample basado en la intensidad
-                if (value > 50) {
-                    this.masterDrive.oversample = '4x';
+            // NEW: Update Distortion intensity for saturation effect
+            updateDistortionIntensity(value) {
+                if (!this.masterDistortion) return;
+
+                // Clamp para evitar valores fuera de rango
+                const distortionIntensity = Math.min(Math.max(value / 100, 0), 1);
+
+                if (distortionIntensity === 0) {
+                    // Sin distorsión - curva lineal (paso directo)
+                    this.masterDistortion.curve = this.createDistortionCurve(0);
+                    console.log('[DISTORTION] Bypass mode - clean signal');
                 } else {
-                    this.masterDrive.oversample = '2x';
+                    // Con distorsión - curva dinámica basada en intensidad
+                    const curveAmount = Math.floor(distortionIntensity * 100);
+                    this.masterDistortion.curve = this.createDistortionCurve(curveAmount);
+                    
+                    // Control de pre-gain para saturación
+                    if (this.distortionPreGain) {
+                        const preGain = 1.0 + (distortionIntensity * 2); // 1x a 3x
+                        this.distortionPreGain.gain.setValueAtTime(preGain, this.audioContext.currentTime);
+                    }
+                    
+                    // Control de post-gain para compensar
+                    if (this.distortionPostGain) {
+                        const postGain = 1.0 / (1.0 + (distortionIntensity * 0.5)); // 1x a 0.67x
+                        this.distortionPostGain.gain.setValueAtTime(postGain, this.audioContext.currentTime);
+                    }
+                    
+                    console.log(`[DISTORTION] Active mode: ${value}% | Curve: ${curveAmount} | PreGain: ${(1.0 + (distortionIntensity * 2)).toFixed(1)}x | PostGain: ${(1.0 / (1.0 + (distortionIntensity * 0.5))).toFixed(2)}x`);
                 }
-                
-                // Opcional: ajustar la curva de drive basada en la intensidad
-                // Por ahora mantenemos la curva estática para mejor rendimiento
             }
             
             // NEW: Main method to apply master effects from sliders
@@ -2214,11 +2274,11 @@
                         }
                         break;
                         
-                    case 'slider-2': // DRIVE
-                        if (this.masterDrive) {
-                            this.effectsValues.drive = value;
-                            this.updateDriveIntensity(value);
-                            this.logToTerminal(`DRIVE ${value}%`, 'info');
+                    case 'slider-2': // DISTORTION
+                        if (this.masterDistortion) {
+                            this.effectsValues.distortion = value;
+                            this.updateDistortionIntensity(value);
+                            this.logToTerminal(`DISTORTION ${value}%`, 'info');
                         }
                         break;
                         
@@ -2251,7 +2311,7 @@
                         masterOutput: !!this.masterOutput,
                         masterGain: !!this.masterGain,
                         masterFilter: !!this.masterFilter,
-                        masterDrive: !!this.masterDrive
+                        masterDistortion: !!this.masterDistortion
                     }
                 };
             }
@@ -2260,7 +2320,7 @@
             logEffectsStatus() {
                 const status = this.getEffectsStatus();
                 console.log('[EFFECTS] Current effects status:', status);
-                this.logToTerminal('Effects system ready - VOL: ' + status.values.volume + '%, DRIVE: ' + status.values.drive + '%, FILT: ' + status.values.filter + '%, RES: ' + status.values.resonance + '%', 'info');
+                this.logToTerminal('Effects system ready - VOL: ' + status.values.volume + '%, DISTORTION: ' + status.values.distortion + '%, FILT: ' + status.values.filter + '%, RES: ' + status.values.resonance + '%', 'info');
             }
             
             // IMPROVED PAD SYSTEM
