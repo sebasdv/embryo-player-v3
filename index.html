@@ -1316,6 +1316,10 @@
                     <h4>Audio Controls</h4>
                     <ul>
                         <li><strong>Start</strong> - Initialize audio context and start the player</li>
+                        <li><strong>VOL</strong> - Master volume control (0-100%)</li>
+                        <li><strong>DRIVE</strong> - Audio saturation/drive effect (0-100%)</li>
+                        <li><strong>FILT</strong> - Low-pass filter cutoff (0-100%)</li>
+                        <li><strong>RES</strong> - Filter resonance control (0-100%)</li>
                     </ul>
                 </div>
 
@@ -1416,7 +1420,7 @@
                 <input type="range" id="slider-1" class="audio-slider" min="0" max="100" value="100">
             </div>
             <div class="slider-container">
-                <input type="range" id="slider-2" class="audio-slider" min="-50" max="50" value="0">
+                <input type="range" id="slider-2" class="audio-slider" min="0" max="100" value="0">
             </div>
             <div class="slider-container">
                 <input type="range" id="slider-3" class="audio-slider" min="0" max="100" value="50">
@@ -1919,7 +1923,28 @@
                 this.preCreatedAnalysers = {};
                 this.preCreatedGains = {};
 
-
+                // NEW: MASTER AUDIO EFFECTS ARCHITECTURE
+                this.masterOutput = null;        // Nodo principal de salida para efectos
+                this.masterGain = null;          // Control de volumen master
+                this.masterFilter = null;        // Filtro low-pass master
+                this.masterDrive = null;         // Saturador/distorsión master
+                this.masterResonance = null;     // Control de resonancia del filtro
+                
+                // Estado de efectos master
+                this.effectsEnabled = {
+                    volume: true,
+                    filter: false,
+                    drive: false,
+                    resonance: false
+                };
+                
+                // Valores actuales de efectos
+                this.effectsValues = {
+                    volume: 100,
+                    filter: 50,
+                    drive: 0,
+                    resonance: 25
+                };
 
                 
                 // NEW: Specialized controllers
@@ -2063,6 +2088,9 @@
                     
                             this.logToTerminal('Audio started. No samples loaded. Use "Load Samples" to add your own.', 'info');
                     
+                    // NEW: Log effects system status
+                    this.logEffectsStatus();
+                    
                     // Initialize components
                     this.createPadGrid();
                     this.initMIDI();
@@ -2094,7 +2122,140 @@
                     this.preCreatedGains[i].gain.setValueAtTime(1.0, this.audioContext.currentTime);
                 }
                 
+                // NEW: Create master effects chain
+                this.createMasterEffectsChain();
+                
                 console.log('[AUDIO] Audio nodes pre-created for minimum latency');
+                console.log('[AUDIO] Master effects chain created');
+            }
+            
+            // NEW: Create master audio effects chain
+            createMasterEffectsChain() {
+                // Crear nodos de efectos en orden de procesamiento
+                this.masterOutput = this.audioContext.createGain();
+                this.masterGain = this.audioContext.createGain();
+                this.masterFilter = this.audioContext.createBiquadFilter();
+                this.masterDrive = this.audioContext.createWaveShaper();
+                
+                // Configurar filtro inicial
+                this.masterFilter.type = 'lowpass';
+                this.masterFilter.frequency.value = 20000; // Frecuencia máxima inicial
+                this.masterFilter.Q.value = 1.0;
+                
+                // Configurar drive con curva personalizada
+                this.setupDriveCurve();
+                
+                // Conectar cadena de efectos: Master Output → Master Gain → Master Filter → Master Drive → Destination
+                this.masterOutput.connect(this.masterGain);
+                this.masterGain.connect(this.masterFilter);
+                this.masterFilter.connect(this.masterDrive);
+                this.masterDrive.connect(this.audioContext.destination);
+                
+                // Aplicar valores iniciales de efectos
+                this.applyInitialEffectsValues();
+                
+                console.log('[EFFECTS] Master effects chain initialized and connected');
+            }
+            
+            // NEW: Setup drive curve for saturation effect
+            setupDriveCurve() {
+                const driveCurve = new Float32Array(4096);
+                for (let i = 0; i < 4096; i++) {
+                    const x = (i * 2) / 4096 - 1;
+                    driveCurve[i] = (Math.PI + x) * x / (Math.PI + x * x);
+                }
+                this.masterDrive.curve = driveCurve;
+                this.masterDrive.oversample = '2x'; // Optimización de calidad
+            }
+            
+            // NEW: Apply initial effects values
+            applyInitialEffectsValues() {
+                if (this.masterGain) {
+                    this.masterGain.gain.setValueAtTime(this.effectsValues.volume / 100, this.audioContext.currentTime);
+                }
+                if (this.masterFilter) {
+                    const freq = Math.exp(Math.log(20) + (this.effectsValues.filter / 100) * Math.log(20000/20));
+                    this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    this.masterFilter.Q.setValueAtTime(this.effectsValues.resonance / 10, this.audioContext.currentTime);
+                }
+                if (this.masterDrive) {
+                    this.updateDriveIntensity(this.effectsValues.drive);
+                }
+            }
+            
+            // NEW: Update drive intensity for saturation effect
+            updateDriveIntensity(value) {
+                if (!this.masterDrive) return;
+                
+                // Ajustar oversample basado en la intensidad
+                if (value > 50) {
+                    this.masterDrive.oversample = '4x';
+                } else {
+                    this.masterDrive.oversample = '2x';
+                }
+                
+                // Opcional: ajustar la curva de drive basada en la intensidad
+                // Por ahora mantenemos la curva estática para mejor rendimiento
+            }
+            
+            // NEW: Main method to apply master effects from sliders
+            applyMasterEffect(sliderId, value) {
+                switch(sliderId) {
+                    case 'slider-1': // VOL
+                        if (this.masterGain) {
+                            this.effectsValues.volume = value;
+                            this.masterGain.gain.setValueAtTime(value / 100, this.audioContext.currentTime);
+                            this.logToTerminal(`VOL ${value}%`, 'info');
+                        }
+                        break;
+                        
+                    case 'slider-2': // DRIVE
+                        if (this.masterDrive) {
+                            this.effectsValues.drive = value;
+                            this.updateDriveIntensity(value);
+                            this.logToTerminal(`DRIVE ${value}%`, 'info');
+                        }
+                        break;
+                        
+                    case 'slider-3': // FILT
+                        if (this.masterFilter) {
+                            this.effectsValues.filter = value;
+                            // Mapeo logarítmico para mejor control (20Hz - 20kHz)
+                            const freq = Math.exp(Math.log(20) + (value / 100) * Math.log(20000/20));
+                            this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                            this.logToTerminal(`FILT ${value}%`, 'info');
+                        }
+                        break;
+                        
+                    case 'slider-4': // RES
+                        if (this.masterFilter) {
+                            this.effectsValues.resonance = value;
+                            this.masterFilter.Q.setValueAtTime(value / 10, this.audioContext.currentTime);
+                            this.logToTerminal(`RES ${value}%`, 'info');
+                        }
+                        break;
+                }
+            }
+            
+            // NEW: Get current effects status for debugging
+            getEffectsStatus() {
+                return {
+                    enabled: this.effectsEnabled,
+                    values: this.effectsValues,
+                    nodes: {
+                        masterOutput: !!this.masterOutput,
+                        masterGain: !!this.masterGain,
+                        masterFilter: !!this.masterFilter,
+                        masterDrive: !!this.masterDrive
+                    }
+                };
+            }
+            
+            // NEW: Log effects status for debugging
+            logEffectsStatus() {
+                const status = this.getEffectsStatus();
+                console.log('[EFFECTS] Current effects status:', status);
+                this.logToTerminal('Effects system ready - VOL: ' + status.values.volume + '%, DRIVE: ' + status.values.drive + '%, FILT: ' + status.values.filter + '%, RES: ' + status.values.resonance + '%', 'info');
             }
             
             // IMPROVED PAD SYSTEM
@@ -2228,10 +2389,15 @@
                 const analyser = this.preCreatedAnalysers[padNumber];
                 const gain = this.preCreatedGains[padNumber];
                 
-                // Connect audio directly to destination
+                // NEW: Connect audio through master effects chain instead of directly to destination
                 source.connect(gain);
                 gain.connect(analyser);
-                analyser.connect(this.audioContext.destination);
+                if (this.masterOutput) {
+                    analyser.connect(this.masterOutput);
+                } else {
+                    // Fallback: connect directly if effects chain is not ready
+                    analyser.connect(this.audioContext.destination);
+                }
                 
                 // OPTIMIZATION: Start audio immediately without delay
                 source.start();
@@ -4259,28 +4425,23 @@
                     const sliderId = this.id;
                     const value = parseFloat(this.value);
                     
-                    switch(sliderId) {
-                        case 'slider-1': // Volume
-                            // TODO: Implement volume control
-                            console.log('Volume slider:', value);
-                            break;
-                        case 'slider-2': // Pan
-                            // TODO: Implement pan control
-                            console.log('Pan slider:', value);
-                            break;
-                        case 'slider-3': // Filter
-                            // TODO: Implement filter control
-                            console.log('Filter slider:', value);
-                            break;
-                        case 'slider-4': // Resonance
-                            // TODO: Implement resonance control
-                            console.log('Resonance slider:', value);
-                            break;
+                    // NEW: Use the master effects system
+                    if (window.embryoPlayer && window.embryoPlayer.applyMasterEffect) {
+                        window.embryoPlayer.applyMasterEffect(sliderId, value);
                     }
+                });
+                
+                // Clear terminal footer when slider is no longer being used
+                slider.addEventListener('change', function() {
+                    setTimeout(() => {
+                        if (window.embryoPlayer && window.embryoPlayer.updateTerminal) {
+                            window.embryoPlayer.updateTerminal('Waiting Input...', 'info');
+                        }
+                    }, 1000);
                 });
             });
             
-            console.log('[SLIDERS] Audio control sliders initialized');
+            console.log('[SLIDERS] Audio control sliders initialized with master effects system');
         }
         
         // APPLICATION INITIALIZATION
