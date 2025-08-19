@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Embrio Player v3.0</title>
+    <title>Embrio Player v3.0 - Enhanced (Cuellos de botella fix)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -1313,7 +1313,7 @@
 </head>
 <body>
     <div class="title-container">
-        <h1>Embrio Player v3.0</h1>
+        <h1>Embrio Player v3.0 - Enhanced</h1>
     </div>
 
     <div class="header-row">
@@ -1498,7 +1498,7 @@
          */
         
         /**
-         * EMBRIO PLAYER v3.0 - ENHANCED VERSION
+         * EMBRIO PLAYER v3.0 - ENHANCED VERSION (Cuellos de botella fix)
          * Reproductor de samples con secuenciador y funcionalidades avanzadas
          * 
          * NUEVAS CARACTERÍSTICAS v3.0:
@@ -1509,10 +1509,21 @@
          * - Indicadores de método de entrada activo
          * - Feedback visual mejorado para todas las interacciones
          * - Sistema unificado de control de pads
+         * 
+         * OPTIMIZACIONES DE CUELLOS DE BOTELLA IMPLEMENTADAS:
+         * ✅ Scheduler musical determinista (look-ahead + horizon)
+         * ✅ PlayPad con timeline (source.start(when, offset, duration))
+         * ✅ Metrónomo en timeline (sin setTimeout)
+         * ✅ Throttle del terminal en performance mode
+         * ✅ Slicing no destructivo (sin copiar buffers)
+         * ✅ Compatibilidad de formatos con canPlayType()
+         * ✅ Recursos y limpieza mejorada
          */
         
         // CONSTANTS & CONFIGURATION
-        const GITHUB_REPO_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/169a0a75db1d0af6149bdced5f3af7cefff5f23a/Bank%20A/';
+            // GitHub repository configuration - Single samples folder with bank prefixes
+            const GITHUB_SAMPLES_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/master/samples/';
+            const GITHUB_VERSION = '?v=' + Date.now(); // Force cache refresh
         const FFT_SIZE = 256;
         const BEATS_PER_BAR = 4;
         const MIN_BPM = 60;
@@ -1527,13 +1538,31 @@
         const GRID_STEPS_PER_BEAT = 4; // 4 steps per beat (16th notes)
         const QUANTIZE_STRENGTH = 0.5; // 0.0 = no quantization, 1.0 = full quantization
         const QUANTIZE_THRESHOLD = 0.125; // Threshold for quantization (in beats)
+        
+        // NEW: SCHEDULER DETERMINISTA CONSTANTS (Cuellos de botella fix)
+        const SCHEDULE_AHEAD_TIME = 0.12; // s de horizonte
+        const LOOKAHEAD = 0.025;          // s de tick del scheduler
 
-        // Lista de archivos de audio personalizados desde Bank A
-        const audioFiles = [
-            '01-Pad 88 BPM.wav', '02-Bass 88 BPM.wav', '03-Arp 88 BPM.wav', '04-BD SN HH OH Slice .wav',
-            '05-Kick 88.wav', '06-Snare 88.wav', '07-HH 88.wav', '08-Shaker 88.wav'
+        // Lista unificada de archivos de audio con prefijos de banco
+        const allSampleFiles = [
+            // Bank A (88 BPM) - 8 samples
+            'A_01-Pad_88_BPM.wav', 'A_02-Bass_88_BPM.wav', 'A_03-Arp_88_BPM.wav', 
+            'A_04-BD_SN_HH_OH_Slice.wav', 'A_05-Kick_88.wav', 'A_06-Snare_88.wav', 
+            'A_07-HH_88.wav', 'A_08-Shaker_88.wav',
+            // Bank B (135 BPM) - 7 samples  
+            'B_01-FM_Pads_135_BPM.wav', 'B_02-Reese_Bass_135_BPM.wav', 'B_03-You_are_135_BPM.wav',
+            'B_04-Multi_Drum_135_BPM.wav', 'B_05-Kick_4-4_135_BPM.wav', 'B_06-Hi_Hats_135_BPM.wav',
+            'B_07-Claps_135_BPM.wav'
         ];
 
+        // Utility function to detect bank from filename prefix
+        function getBankFromFileName(fileName) {
+            const firstChar = fileName.charAt(0).toUpperCase();
+            if (firstChar === 'A') return 'A';
+            if (firstChar === 'B') return 'B';
+            return null; // Invalid bank prefix
+        }
+        
         // PAD CONTROLLER CLASS - Sistema Unificado de Control
         class PadController {
             constructor(embryoPlayer) {
@@ -1900,6 +1929,10 @@
                 this.beatInterval = null;
                 this.barAdvancementInterval = null;
                 
+                // NEW: SCHEDULER DETERMINISTA (Cuellos de botella fix)
+                this.nextNoteTime = 0;
+                this.schedulerTimer = null;
+                
                 // MIDI
                 this.midiAccess = null;
                 
@@ -1935,6 +1968,10 @@
                 this.performanceMode = true; // true = perf mode (low latency) by default, visualization only when sequence is playing
                 this.preCreatedAnalysers = {};
                 this.preCreatedGains = {};
+                
+                // NEW: Terminal throttle system (Cuellos de botella fix)
+                this.lastLogAt = 0;
+                this.logThrottleInterval = 250; // ms entre logs en performance mode
 
                 // MASTER AUDIO EFFECTS ARCHITECTURE
                 this.masterGain = null;          // Control de volumen master
@@ -1952,17 +1989,32 @@
                 this.effectsValues = {
                     volume: 100,
                     filter: 50,
-                    distortion: 0
+                    distortion: 0,
+                    resonance: 5
                 };
 
                 
                 // Specialized controllers
+                console.log('Creating PadController...');
                 this.padController = new PadController(this);
+                console.log('Creating BPMController...');
                 this.bpmController = new BPMController(this);
                 
                 // Initialize
+                console.log('Initializing event listeners...');
                 this.initEventListeners();
+                console.log('Loading sample info from storage...');
                 this.loadSampleInfoFromStorage();
+                
+                // Initialize MIDI immediately (should work before audio starts)
+                console.log('Initializing MIDI...');
+                this.initMIDI();
+                
+                // Create pads after controllers are fully initialized
+                console.log('Creating pad grid...');
+                this.createPadGrid();
+                
+                console.log('EmbrioPlayer constructor completed');
                 
 
             }
@@ -2095,18 +2147,17 @@
                     document.getElementById('start-audio').disabled = true;
 
                     
-                            this.logToTerminal('Audio started. No samples loaded. Use "Load Samples" to add your own.', 'info');
+                            this.logToTerminal('Audio started. Loading GitHub samples automatically...', 'info');
                     
                     // NEW: Log effects system status
                     this.logEffectsStatus();
                     
                     // Initialize components
                     this.createPadGrid();
-                    this.initMIDI();
-                    // REMOVED: Auto-load samples - will be loaded manually
-                    // this.loadAllSamples().then(function() {
-                    //     self.logToTerminal('All samples loaded. Ready to play.', 'info');
-                    // });
+                    // AUTO-LOAD: Load GitHub samples into banks A and B
+                    this.loadAllSamples().then(function() {
+                        self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                    });
                     
                 } catch (error) {
                     console.error('Error starting audio:', error);
@@ -2214,16 +2265,26 @@
             
                             // Apply initial effects values
             applyInitialEffectsValues() {
-                if (this.masterGain) {
-                    this.masterGain.gain.setValueAtTime(this.effectsValues.volume / 100, this.audioContext.currentTime);
-                }
-                if (this.masterFilter) {
-                    const freq = Math.exp(Math.log(20) + (this.effectsValues.filter / 100) * Math.log(20000/20));
-                    this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                    this.masterFilter.Q.setValueAtTime(this.effectsValues.resonance / 10, this.audioContext.currentTime);
-                }
-                if (this.masterDistortion) {
-                    this.updateDistortionIntensity(this.effectsValues.distortion);
+                try {
+                    if (this.masterGain && typeof this.effectsValues.volume === 'number' && isFinite(this.effectsValues.volume)) {
+                        const volumeValue = Math.max(0, Math.min(100, this.effectsValues.volume)) / 100;
+                        this.masterGain.gain.setValueAtTime(volumeValue, this.audioContext.currentTime);
+                    }
+                    if (this.masterFilter && typeof this.effectsValues.filter === 'number' && isFinite(this.effectsValues.filter)) {
+                        const filterValue = Math.max(0, Math.min(100, this.effectsValues.filter));
+                        const freq = Math.exp(Math.log(20) + (filterValue / 100) * Math.log(20000/20));
+                        this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                        
+                        if (typeof this.effectsValues.resonance === 'number' && isFinite(this.effectsValues.resonance)) {
+                            const resonanceValue = Math.max(0, Math.min(100, this.effectsValues.resonance)) / 10;
+                            this.masterFilter.Q.setValueAtTime(resonanceValue, this.audioContext.currentTime);
+                        }
+                    }
+                    if (this.masterDistortion && typeof this.effectsValues.distortion === 'number' && isFinite(this.effectsValues.distortion)) {
+                        this.updateDistortionIntensity(this.effectsValues.distortion);
+                    }
+                } catch (error) {
+                    console.error('Error applying initial effects values:', error);
                 }
             }
             
@@ -2261,40 +2322,53 @@
             
                             // Main method to apply master effects from sliders
             applyMasterEffect(sliderId, value) {
-                switch(sliderId) {
-                    case 'slider-1': // VOL
-                        if (this.masterGain) {
-                            this.effectsValues.volume = value;
-                            this.masterGain.gain.setValueAtTime(value / 100, this.audioContext.currentTime);
-                            this.logToTerminal(`VOL ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-2': // DISTORTION
-                        if (this.masterDistortion) {
-                            this.effectsValues.distortion = value;
-                            this.updateDistortionIntensity(value);
-                            this.logToTerminal(`DISTORTION ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-3': // FILT
-                        if (this.masterFilter) {
-                            this.effectsValues.filter = value;
-                            // Mapeo logarítmico para mejor control (20Hz - 20kHz)
-                            const freq = Math.exp(Math.log(20) + (value / 100) * Math.log(20000/20));
-                            this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                            this.logToTerminal(`FILT ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-4': // RES
-                        if (this.masterFilter) {
-                            this.effectsValues.resonance = value;
-                            this.masterFilter.Q.setValueAtTime(value / 10, this.audioContext.currentTime);
-                            this.logToTerminal(`RES ${value}%`, 'info');
-                        }
-                        break;
+                try {
+                    // Validate input value
+                    if (typeof value !== 'number' || !isFinite(value)) {
+                        console.error('Invalid effect value:', value);
+                        return;
+                    }
+                    
+                    // Clamp value to valid range
+                    const clampedValue = Math.max(0, Math.min(100, value));
+                    
+                    switch(sliderId) {
+                        case 'slider-1': // VOL
+                            if (this.masterGain) {
+                                this.effectsValues.volume = clampedValue;
+                                this.masterGain.gain.setValueAtTime(clampedValue / 100, this.audioContext.currentTime);
+                                this.logToTerminal(`VOL ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-2': // DISTORTION
+                            if (this.masterDistortion) {
+                                this.effectsValues.distortion = clampedValue;
+                                this.updateDistortionIntensity(clampedValue);
+                                this.logToTerminal(`DISTORTION ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-3': // FILT
+                            if (this.masterFilter) {
+                                this.effectsValues.filter = clampedValue;
+                                // Mapeo logarítmico para mejor control (20Hz - 20kHz)
+                                const freq = Math.exp(Math.log(20) + (clampedValue / 100) * Math.log(20000/20));
+                                this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                                this.logToTerminal(`FILT ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-4': // RES
+                            if (this.masterFilter) {
+                                this.effectsValues.resonance = clampedValue;
+                                this.masterFilter.Q.setValueAtTime(clampedValue / 10, this.audioContext.currentTime);
+                                this.logToTerminal(`RES ${clampedValue}%`, 'info');
+                            }
+                            break;
+                    }
+                } catch (error) {
+                    console.error('Error applying master effect:', error);
                 }
             }
             
@@ -2321,87 +2395,98 @@
             
             // IMPROVED PAD SYSTEM
             createPadGrid() {
-                const grid = document.getElementById('pad-grid');
-                grid.innerHTML = '';
-                
-                for (let i = 1; i <= 16; i++) {
-                    const pad = document.createElement('div');
-                    pad.className = 'pad';
-                    pad.dataset.number = i;
+                try {
+                    const grid = document.getElementById('pad-grid');
+                    if (!grid) {
+                        console.error('Pad grid element not found!');
+                        return;
+                    }
                     
-                    // Create canvas for visualizer
-                    const visualizer = document.createElement('canvas');
-                    visualizer.className = 'visualizer';
-                    pad.appendChild(visualizer);
+                    console.log('Creating pad grid...');
+                    grid.innerHTML = '';
                     
-                    // Create drop indicator
-                    const dropIndicator = document.createElement('div');
-                    dropIndicator.className = 'drop-indicator';
-                    dropIndicator.textContent = 'Drop here';
-                    pad.appendChild(dropIndicator);
+                    for (let i = 1; i <= 16; i++) {
+                        const pad = document.createElement('div');
+                        pad.className = 'pad';
+                        pad.dataset.number = i;
+                        
+                        // Create canvas for visualizer
+                        const visualizer = document.createElement('canvas');
+                        visualizer.className = 'visualizer';
+                        pad.appendChild(visualizer);
+                        
+                        // Create drop indicator
+                        const dropIndicator = document.createElement('div');
+                        dropIndicator.className = 'drop-indicator';
+                        dropIndicator.textContent = 'Drop here';
+                        pad.appendChild(dropIndicator);
+                        
+                        // Create bank indicator
+                        const sampleIndicator = document.createElement('div');
+                        sampleIndicator.className = 'sample-indicator';
+                        sampleIndicator.style.display = 'none';
+                        pad.appendChild(sampleIndicator);
+                        
+                        // Create label for sample name
+                        const nameLabel = document.createElement('div');
+                        nameLabel.className = 'sample-name';
+                        nameLabel.style.display = 'none';
+                        pad.appendChild(nameLabel);
+                        
+                        // Create slice indicator
+                        const sliceIndicator = document.createElement('div');
+                        sliceIndicator.className = 'slice-indicator';
+                        sliceIndicator.style.display = 'none';
+                        pad.appendChild(sliceIndicator);
+                        
+                        // Create keyboard indicator
+                        const keyboardIndicator = document.createElement('div');
+                        keyboardIndicator.className = 'keyboard-indicator';
+                        keyboardIndicator.textContent = this.padController.getKeyForPad(i);
+                        keyboardIndicator.style.display = 'none';
+                        pad.appendChild(keyboardIndicator);
+                        
+                        // Create button to delete sample
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-pad-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.title = 'Delete sample';
+                        
+                        // Event listeners for delete
+                        const self = this;
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            self.deletePadSample(i);
+                        });
+                        
+                        deleteBtn.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        deleteBtn.addEventListener('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        pad.appendChild(deleteBtn);
+                        
+                        // NEW IMPROVED EVENT LISTENERS
+                        this.setupPadEventListeners(pad, i);
+                        this.setupDragAndDrop(pad, i);
+                        
+                        grid.appendChild(pad);
+                    }
                     
-                    // Create bank indicator
-                    const sampleIndicator = document.createElement('div');
-                    sampleIndicator.className = 'sample-indicator';
-                    sampleIndicator.style.display = 'none';
-                    pad.appendChild(sampleIndicator);
-                    
-                    // Create label for sample name
-                    const nameLabel = document.createElement('div');
-                    nameLabel.className = 'sample-name';
-                    nameLabel.style.display = 'none';
-                    pad.appendChild(nameLabel);
-                    
-                    // Create slice indicator
-                    const sliceIndicator = document.createElement('div');
-                    sliceIndicator.className = 'slice-indicator';
-                    sliceIndicator.style.display = 'none';
-                    pad.appendChild(sliceIndicator);
-                    
-                    // Create keyboard indicator
-                    const keyboardIndicator = document.createElement('div');
-                    keyboardIndicator.className = 'keyboard-indicator';
-                    keyboardIndicator.textContent = this.padController.getKeyForPad(i);
-                    keyboardIndicator.style.display = 'none';
-                    pad.appendChild(keyboardIndicator);
-                    
-                    // Create button to delete sample
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-pad-btn';
-                    deleteBtn.innerHTML = '×';
-                    deleteBtn.title = 'Delete sample';
-                    
-                    // Event listeners for delete
-                    const self = this;
-                    deleteBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        self.deletePadSample(i);
-                    });
-                    
-                    deleteBtn.addEventListener('mousedown', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    });
-                    
-                    deleteBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    });
-                    
-                    pad.appendChild(deleteBtn);
-                    
-                    // NEW IMPROVED EVENT LISTENERS
-                    this.setupPadEventListeners(pad, i);
-                    this.setupDragAndDrop(pad, i);
-                    
-                    grid.appendChild(pad);
+                    console.log('Pad grid created successfully with', grid.children.length, 'pads');
+                    this.resizeCanvases();
+                } catch (error) {
+                    console.error('Error creating pad grid:', error);
                 }
-                
-                this.resizeCanvases();
             }
             
             // Setup event listeners for a pad
@@ -2441,8 +2526,8 @@
                 });
             }
             
-            // AUDIO PLAYBACK AND CONTROL - OPTIMIZED FOR MINIMUM LATENCY
-            playPad(padNumber) {
+            // AUDIO PLAYBACK AND CONTROL - OPTIMIZED FOR MINIMUM LATENCY + TIMELINE SUPPORT
+            playPad(padNumber, when = 0, offset = 0, duration = undefined) {
                 if (!this.validatePlayback(padNumber)) return;
                 
                 // Use pre-created nodes to reduce latency
@@ -2455,8 +2540,19 @@
                 gain.connect(analyser);
                 analyser.connect(this.masterGain);
                 
-                // Start audio immediately without delay
-                source.start();
+                // NEW: Timeline-based playback (Cuellos de botella fix)
+                const startAt = when || this.audioContext.currentTime;
+                
+                // NEW: Handle slice parameters if this is a slice
+                const sample = this.samples[padNumber];
+                if (sample && sample.offset !== undefined && sample.duration !== undefined) {
+                    // This is a slice - use slice offset and duration
+                    source.start(startAt, sample.offset, sample.duration);
+                } else {
+                    // This is a regular sample - use provided parameters or defaults
+                    source.start(startAt, offset, duration);
+                }
+                
                 this.activeSources[padNumber] = source;
                 
                 // Update UI asynchronously to not block audio
@@ -2500,20 +2596,36 @@
             }
             
             stopPadIfPlaying(padNumber) {
-                if (this.activeSources[padNumber]) {
-                    try {
-                        this.activeSources[padNumber].stop();
-                        this.activeSources[padNumber].disconnect();
-                    } catch (e) {
+                const source = this.activeSources[padNumber];
+                if (source) {
+                    try { 
+                        source.stop(); 
+                    } catch(e) {
                         console.warn('Error stopping audio source:', e);
                     }
+                    try { 
+                        source.disconnect(); 
+                    } catch(e) {
+                        console.warn('Error disconnecting audio source:', e);
+                    }
+                    delete this.activeSources[padNumber];
                 }
             }
             
             createAudioSource(padNumber) {
                 // Create audio source with optimized configuration
                 const source = this.audioContext.createBufferSource();
-                source.buffer = this.samples[padNumber];
+                
+                // NEW: Handle non-destructive slices (Cuellos de botella fix)
+                const sample = this.samples[padNumber];
+                if (sample && sample.buffer && sample.offset !== undefined) {
+                    // This is a slice - use offset and duration
+                    source.buffer = sample.buffer;
+                    // Note: offset and duration will be used in playPad(when, offset, duration)
+                } else {
+                    // This is a regular sample
+                    source.buffer = sample;
+                }
                 
                 // Configure for minimum latency
                 if (source.playbackRate) {
@@ -2549,14 +2661,27 @@
             
             // MIDI INTEGRATION
             initMIDI() {
-                const self = this;
-                
-                if (navigator.requestMIDIAccess) {
-                    navigator.requestMIDIAccess()
-                        .then(function(midiAccess) { self.onMIDISuccess(midiAccess); })
-                        .catch(function(error) { self.onMIDIFailure(error); });
-                } else {
-                    this.logToTerminal('Web MIDI API not supported in this browser.', 'warning');
+                try {
+                    console.log('Initializing MIDI...');
+                    const self = this;
+                    
+                    if (navigator.requestMIDIAccess) {
+                        console.log('Web MIDI API available, requesting access...');
+                        navigator.requestMIDIAccess()
+                            .then(function(midiAccess) { 
+                                console.log('MIDI access granted');
+                                self.onMIDISuccess(midiAccess); 
+                            })
+                            .catch(function(error) { 
+                                console.error('MIDI access failed:', error);
+                                self.onMIDIFailure(error); 
+                            });
+                    } else {
+                        console.warn('Web MIDI API not supported in this browser');
+                        this.logToTerminal('Web MIDI API not supported in this browser.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error initializing MIDI:', error);
                 }
             }
             
@@ -3086,6 +3211,7 @@
             validateAudioFile(file) {
                 if (!file) return false;
                 
+                // NEW: Enhanced format validation with canPlayType (Cuellos de botella fix)
                 const validTypes = [
                     'audio/wav', 'audio/x-wav', 'audio/mp3', 'audio/mpeg', 
                     'audio/ogg', 'audio/aac', 'audio/m4a', 'audio/flac'
@@ -3095,11 +3221,25 @@
                 const extension = fileName.split('.').pop();
                 const validExtensions = ['wav', 'mp3', 'ogg', 'aac', 'm4a', 'flac'];
                 
+                // Check if browser can actually play this format
+                const el = document.createElement('audio');
+                const canPlay = ext => !!el.canPlayType(`audio/${ext}`);
+                
+                // Validate extension and browser support
                 const isValidType = validTypes.includes(file.type) || 
                                    validExtensions.includes(extension);
                 
                 if (!isValidType) {
                     return false;
+                }
+                
+                // Check browser support for specific formats
+                if (extension === 'flac' && !canPlay('flac')) {
+                    console.warn('FLAC format not supported by browser, but will attempt to load');
+                }
+                
+                if ((extension === 'aac' || extension === 'm4a') && !canPlay('aac')) {
+                    console.warn('AAC/M4A format not supported by browser, but will attempt to load');
                 }
                 
                 if (file.size > 50 * 1024 * 1024) { // 50MB
@@ -3218,33 +3358,37 @@
             }
             }
             
-            // DISABLED: Auto-load samples function (commented out for manual loading)
-            /*
+            // AUTO-LOAD: Load GitHub samples using unified approach with bank prefixes
             loadAllSamples() {
-                this.logToTerminal('Loading 8 custom samples from Bank A (88 BPM)...', 'info');
+                this.logToTerminal('🚀 Loading GitHub samples using unified approach...', 'info');
+                this.logToTerminal('📁 Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
+                this.logToTerminal('📊 Total files to load: ' + allSampleFiles.length, 'info');
+                this.logToTerminal('🎵 Bank A files: ' + allSampleFiles.filter(f => f.startsWith('A_')).length + ' samples', 'info');
+                this.logToTerminal('🎵 Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).length + ' samples', 'info');
                 
-                // FORCE LOAD: Clear Bank A first to ensure clean loading
+                // Clear both banks to ensure clean loading
                 this.bankSamples['A'] = {};
+                this.bankSamples['B'] = {};
                 this.sampleNames['A'] = {};
+                this.sampleNames['B'] = {};
                 
                 const loadPromises = [];
                 const self = this;
                 
-                // FORCE LOAD: Use first 8 pads (1-8) for the 8 samples
-                const targetPads = [1, 2, 3, 4, 5, 6, 7, 8];
-                const samplesToLoad = audioFiles;
+                // Bank A: Load 8 samples (88 BPM) into pads 1-8
+                const bankAPads = [1, 2, 3, 4, 5, 6, 7, 8];
+                this.logToTerminal('Loading Bank A: 8 samples (88 BPM) into pads ' + bankAPads.join(', '), 'info');
+                this.logToTerminal('Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
                 
-                this.logToTerminal('Loading 8 samples into pads: ' + targetPads.join(', '), 'info');
-                
-                samplesToLoad.forEach(function(file, index) {
-                    const padNumber = targetPads[index];
+                allSampleFiles.filter(f => f.startsWith('A_')).forEach(function(file, index) {
+                    const padNumber = bankAPads[index];
                     const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
                     
                     if (pad) {
                         pad.classList.add('loading');
                     }
                     
-                    const promise = self.loadAudioForPad(padNumber, file, 'A')
+                    const promise = self.loadAudioForPad(padNumber, 'A', file)
                         .then(function() {
                             if (pad) {
                                 pad.classList.remove('loading');
@@ -3253,28 +3397,78 @@
                                 const nameWithoutExt = file.split('.').slice(0, -1).join('.');
                                 self.sampleNames['A'][padNumber] = nameWithoutExt;
                                 
-                                self.updatePadBankIndicators();
                                 self.showLoadedEffect(pad);
+                                self.logToTerminal('✅ Bank A: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
                             }
                         })
                         .catch(function(error) {
                             if (pad) {
                                 pad.classList.remove('loading');
                             }
-                            console.error('Error loading sample ' + padNumber + ':', error);
+                            console.error('Error loading Bank A sample ' + padNumber + ':', error);
+                            self.logToTerminal('❌ Bank A: Error loading ' + file + ' in Pad ' + padNumber + ': ' + error.message, 'error');
+                        });
+                    
+                    loadPromises.push(promise);
+                });
+                
+                // Bank B: Load 7 samples (135 BPM) into pads 1-7
+                const bankBPads = [1, 2, 3, 4, 5, 6, 7];
+                this.logToTerminal('Loading Bank B: 7 samples (135 BPM) into pads ' + bankBPads.join(', '), 'info');
+                this.logToTerminal('Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).join(', '), 'info');
+                
+                allSampleFiles.filter(f => f.startsWith('B_')).forEach(function(file, index) {
+                    const padNumber = bankBPads[index];
+                    const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                    
+                    if (pad) {
+                        pad.classList.add('loading');
+                    }
+                    
+                    const promise = self.loadAudioForPad(padNumber, 'B', file)
+                        .then(function() {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                                pad.classList.add('loaded');
+                                
+                                const nameWithoutExt = file.split('.').slice(0, -1).join('.');
+                                self.sampleNames['B'][padNumber] = nameWithoutExt;
+                                
+                                self.showLoadedEffect(pad);
+                                self.logToTerminal('✅ Bank B: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
+                            }
+                        })
+                        .catch(function(error) {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                            }
+                            console.error('Error loading Bank B sample ' + padNumber + ':', error);
+                            self.logToTerminal('❌ Bank B: Error loading ' + file + ' in Pad ' + padNumber + ': ' + error.message, 'error');
                         });
                     
                     loadPromises.push(promise);
                 });
                 
                 return Promise.allSettled(loadPromises).then(function() {
+                    // Update UI for both banks
+                    self.updatePadBankIndicators();
                     self.saveSampleInfo();
-                    self.updatePadBankIndicators(); // Update UI after all samples loaded
-                    self.logToTerminal('8 custom samples loaded successfully from Bank A', 'info');
+                    
+                    // Verify both banks loaded correctly
+                    const bankACount = Object.keys(self.bankSamples['A']).length;
+                    const bankBCount = Object.keys(self.bankSamples['B']).length;
+                    
+                    self.logToTerminal('✅ Bank A: ' + bankACount + ' samples loaded (88 BPM, pads 1-8)', 'info');
+                    self.logToTerminal('✅ Bank B: ' + bankBCount + ' samples loaded (135 BPM, pads 1-7)', 'info');
+                    self.logToTerminal('🎵 Total: ' + (bankACount + bankBCount) + ' samples ready to play!', 'info');
+                    
+                    // Debug info
+                    console.log('[BANK A] Samples:', self.bankSamples['A']);
+                    console.log('[BANK B] Samples:', self.bankSamples['B']);
+                    
                     return loadPromises;
                 });
             }
-            */
             
             loadAudioForPad(padNumber, audioName, bank) {
                 const self = this;
@@ -3282,7 +3476,11 @@
                 
                 if (!this.audioContext) return Promise.reject(new Error('Contexto de audio no inicializado'));
                 
-                const audioUrl = GITHUB_REPO_URL + audioName;
+                // Use unified samples URL with cache busting
+                const audioUrl = GITHUB_SAMPLES_URL + audioName + GITHUB_VERSION;
+                
+                // Debug: Log the generated URL
+                console.log(`Loading Bank ${bank} Pad ${padNumber}: ${audioUrl}`);
                 return fetch(audioUrl)
                     .then(function(response) {
                         if (!response.ok) {
@@ -3700,6 +3898,7 @@
             }
             
             createSlices(sourceBuffer, numSlices) {
+                // NEW: Non-destructive slicing (Cuellos de botella fix)
                 const slices = [];
                 const totalFrames = sourceBuffer.length;
                 const framesPerSlice = Math.floor(totalFrames / numSlices);
@@ -3711,22 +3910,16 @@
                     const endFrame = Math.min(startFrame + framesPerSlice, totalFrames);
                     const sliceLength = endFrame - startFrame;
                     
-                    const sliceBuffer = this.audioContext.createBuffer(
-                        numberOfChannels, 
-                        sliceLength, 
-                        sampleRate
-                    );
+                    // Crear slice como referencia al buffer original + offset + duration
+                    const slice = {
+                        buffer: sourceBuffer,
+                        offset: startFrame / sampleRate,
+                        duration: sliceLength / sampleRate,
+                        startFrame: startFrame,
+                        endFrame: endFrame
+                    };
                     
-                    for (let channel = 0; channel < numberOfChannels; channel++) {
-                        const sourceData = sourceBuffer.getChannelData(channel);
-                        const sliceData = sliceBuffer.getChannelData(channel);
-                        
-                        for (let frame = 0; frame < sliceLength; frame++) {
-                            sliceData[frame] = sourceData[startFrame + frame];
-                        }
-                    }
-                    
-                    slices.push(sliceBuffer);
+                    slices.push(slice);
                 }
                 
                 return slices;
@@ -3748,6 +3941,7 @@
                     if (index < availablePads.length) {
                         const targetPad = availablePads[index];
                         
+                        // NEW: Store slice reference instead of copied buffer
                         self.bankSamples[self.currentBank][targetPad] = slice;
                         self.samples[targetPad] = slice;
                         
@@ -3907,7 +4101,18 @@
                         
                         // Si completamos un compás
                         if (self.currentBeat === 1) {
-                            self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                            if (self.isRecording) {
+                                // Durante la grabación, avanzar secuencialmente (0 a 3)
+                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                            } else if (self.isPlaying) {
+                                // Durante la reproducción, avanzar en bucle continuo
+                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                                
+                                // Log del loop para debugging
+                                if (self.currentBar === 0) {
+                                    self.logToTerminal('Loop: Starting new sequence cycle', 'info');
+                                }
+                            }
                             document.getElementById('current-bar').textContent = self.currentBar + 1;
                             
                             if (self.isRecording) {
@@ -3921,7 +4126,14 @@
                                     
                                     document.getElementById('record-sequence').textContent = "REC";
                                     document.getElementById('record-sequence').classList.remove('active');
-                                    self.logToTerminal('Recording completed. Playing in loop (without metronome)...', 'info');
+                                    
+                                    // AUTO: Activate play button to show sequence is playing
+                                    document.getElementById('play-sequence').classList.add('active');
+                                    
+                                    self.logToTerminal('Recording completed. Starting playback in loop...', 'info');
+                                    
+                                    // AUTO: Start playing the recorded sequence immediately
+                                    self.playCurrentBar();
                                 }
                                 else {
                                     const statusMsg = 'Recording bar ' + (self.currentBar + 1) + '... (' + totalBarsRecorded + '/' + BAR_COUNT + ')';
@@ -3932,7 +4144,13 @@
                                 const statusMsg = 'Playing bar ' + (self.currentBar + 1) + '...';
                                 self.logToTerminal(statusMsg, 'info');
                                 
+                                // Reproducir el compás actual
                                 self.playCurrentBar();
+                                
+                                // Si llegamos al final de la secuencia, reiniciar para el loop
+                                if (self.currentBar === BAR_COUNT - 1) {
+                                    self.logToTerminal('Loop completed, restarting sequence...', 'info');
+                                }
                             }
                         }
                     } else {
@@ -3975,6 +4193,83 @@
                         this.logToTerminal('Consider increasing quantization strength', 'warning');
                     }
                 }
+            }
+            
+            // NEW: SCHEDULER DETERMINISTA FUNCTIONS (Cuellos de botella fix)
+            
+            /**
+             * Start sequence with deterministic scheduler
+             */
+            startSequence() {
+                this.isPlaying = true;
+                this.sequenceStartTime = this.audioContext.currentTime + 0.05; // pequeño offset
+                this.nextNoteTime = this.sequenceStartTime;
+                this.schedulerTimer = setInterval(() => this.schedulerTick(), LOOKAHEAD * 1000);
+                this.queueBar(0); // arranca con la barra 0
+            }
+            
+            /**
+             * Scheduler tick - processes events in timeline
+             */
+            schedulerTick() {
+                const now = this.audioContext.currentTime;
+                while (this.nextNoteTime < now + SCHEDULE_AHEAD_TIME) {
+                    // Colar notas de la barra actual cuyo event.time caiga entre now..now+horizon
+                    const bar = this.sequence[this.currentBar];
+                    for (const ev of bar) {
+                        const when = this.sequenceStartTime + ev.time + this.currentBar * this.barDuration();
+                        if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
+                            this.triggerScheduled(ev, when);
+                        }
+                    }
+                    // Avanzar beat/bar si corresponde
+                    this.nextNoteTime += this.beatDuration() / GRID_STEPS_PER_BEAT;
+                }
+            }
+            
+            /**
+             * Trigger scheduled event with bank switching
+             */
+            triggerScheduled(ev, when) {
+                const originalBank = this.currentBank;
+                if (ev.bank && ev.bank !== originalBank) this.selectBank(ev.bank);
+                this.playPad(ev.pad, when); // <-- usa la nueva firma con when
+                if (ev.bank && ev.bank !== originalBank) setTimeout(() => this.selectBank(originalBank), 0);
+            }
+            
+            /**
+             * Queue bar for processing
+             */
+            queueBar(barIndex) {
+                // Preparar la siguiente barra para el scheduler
+                if (barIndex < BAR_COUNT && this.sequence[barIndex]) {
+                    this.logToTerminal(`Bar ${barIndex + 1} queued for scheduler`, 'info');
+                }
+            }
+            
+            /**
+             * Calculate bar duration in seconds
+             */
+            barDuration() { 
+                return (60 / this.bpm) * BEATS_PER_BAR; 
+            }
+            
+            /**
+             * Calculate beat duration in seconds
+             */
+            beatDuration() { 
+                return 60 / this.bpm; 
+            }
+            
+            /**
+             * Stop deterministic scheduler
+             */
+            stopSequence() {
+                if (this.schedulerTimer) {
+                    clearInterval(this.schedulerTimer);
+                    this.schedulerTimer = null;
+                }
+                this.isPlaying = false;
             }
             
             toggleRecording() {
@@ -4027,12 +4322,21 @@
                 let preCountRemaining = PRE_COUNT_BARS * BEATS_PER_BAR;
                 this.startMetronome();
                 
+                // NEW: Timeline-based pre-count (Cuellos de botella fix)
                 const self = this;
+                const beatDuration = 60 / this.bpm;
+                
                 function preCount() {
                     if (preCountRemaining > 0) {
                         self.logToTerminal('Pre-count: ' + Math.ceil(preCountRemaining / BEATS_PER_BAR), 'info');
                         preCountRemaining--;
-                        setTimeout(preCount, 60000 / self.bpm);
+                        
+                        // Programar el siguiente click en la timeline
+                        const nextClickTime = self.audioContext.currentTime + beatDuration;
+                        self.scheduleMetronomeClick(nextClickTime, preCountRemaining === 0);
+                        
+                        // Programar la siguiente función preCount
+                        setTimeout(preCount, beatDuration * 1000);
                     } else {
                         self.sequenceStartTime = self.audioContext.currentTime;
                         self.logToTerminal('Recording sequence...', 'info');
@@ -4041,6 +4345,35 @@
                 }
                 
                 preCount();
+            }
+            
+            /**
+             * NEW: Schedule metronome click in timeline
+             */
+            scheduleMetronomeClick(when, isAccented) {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(
+                    isAccented ? 880 : 440, 
+                    when
+                );
+                
+                gainNode.gain.setValueAtTime(
+                    isAccented ? 0.2 : 0.1, 
+                    when
+                );
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001, 
+                    when + 0.1
+                );
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.start(when);
+                oscillator.stop(when + 0.1);
             }
             
                         stopRecording() {
@@ -4079,7 +4412,6 @@
                 this.updateBarBeatDisplay();
                 
                 document.getElementById('play-sequence').classList.add('active');
-                this.sequenceStartTime = this.audioContext.currentTime;
                 
                 // AUTO: Activate visualization mode when sequence starts playing
                 if (this.performanceMode) {
@@ -4087,33 +4419,54 @@
                     this.logToTerminal('Auto-switched to visualization mode for sequence playback', 'info');
                 }
                 
-                this.logToTerminal('Playing sequence (without metronome)', 'info');
+                this.logToTerminal('Playing sequence with deterministic scheduler', 'info');
                 
-                this.startBarAdvancement();
-                this.playCurrentBar();
+                // NEW: Use deterministic scheduler instead of old system
+                this.startSequence();
             }
             
             playCurrentBar() {
                 if (!this.isPlaying) return;
                 
                 const self = this;
-                this.sequence[this.currentBar].forEach(function(event) {
+                const currentBarEvents = this.sequence[this.currentBar];
+                
+                if (!currentBarEvents || currentBarEvents.length === 0) {
+                    // Barra vacía, continuar con la siguiente
+                    return;
+                }
+                
+                this.logToTerminal(`Playing bar ${this.currentBar + 1} with ${currentBarEvents.length} events`, 'info');
+                
+                currentBarEvents.forEach(function(event) {
+                    if (!self.isPlaying) return; // Verificar si aún está reproduciendo
+                    
+                    // Calcular el tiempo relativo dentro del compás
+                    const eventTime = event.time || 0;
+                    const beatDuration = 60 / self.bpm; // duración de un pulso en segundos
+                    const eventDelay = eventTime * beatDuration;
+                    
                     setTimeout(function() {
                         if (self.isPlaying) {
-                            if (event.bank && event.bank !== self.currentBank) {
-                                const originalBank = self.currentBank;
-                                self.selectBank(event.bank);
-                                
-                                self.playPad(event.pad);
-                                
-                                setTimeout(function() {
-                                    self.selectBank(originalBank);
-                                }, 100);
-                            } else {
-                                self.playPad(event.pad);
+                            try {
+                                if (event.bank && event.bank !== self.currentBank) {
+                                    const originalBank = self.currentBank;
+                                    self.selectBank(event.bank);
+                                    
+                                    self.playPad(event.pad);
+                                    
+                                    setTimeout(function() {
+                                        self.selectBank(originalBank);
+                                    }, 100);
+                                } else {
+                                    self.playPad(event.pad);
+                                }
+                            } catch (error) {
+                                console.error('Error playing event:', error);
+                                self.logToTerminal(`Error playing event in bar ${self.currentBar + 1}: ${error.message}`, 'error');
                             }
                         }
-                    }, event.time * 1000);
+                    }, eventDelay * 1000);
                 });
             }
             
@@ -4153,7 +4506,7 @@
             async stopAll() {
                 this.logToTerminal('Stopping all audio and sequences...', 'info');
                 
-                // Stop sequence playback
+                // Stop sequence playback with new scheduler
                 this.stopSequence();
                 
                 // Stop all active audio samples
@@ -4465,6 +4818,17 @@
             }
             
             logToTerminal(message, type = 'info') {
+                // NEW: Throttle logging in performance mode (Cuellos de botella fix)
+                if (this.performanceMode && type === 'info') {
+                    const now = Date.now();
+                    if (now - this.lastLogAt < this.logThrottleInterval) {
+                        // Skip logging if too soon, but always log to console
+                        console.log(`[TERMINAL-THROTTLED] ${message}`);
+                        return;
+                    }
+                    this.lastLogAt = now;
+                }
+                
                 this.updateTerminal(message, type);
                 console.log(`[TERMINAL] ${message}`);
             }
@@ -4511,7 +4875,7 @@
             setTimeout(() => {
                 if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
                     window.embryoPlayer.logToTerminal('Embrio Player v3.0 - Enhanced Version Started', 'info');
-                    window.embryoPlayer.logToTerminal('No samples precargados - Use "Load Samples" para agregar tus archivos', 'info');
+                    window.embryoPlayer.logToTerminal('🎵 Auto-loading 15 GitHub samples into banks A and B...', 'info');
                 }
             }, 100);
             
@@ -4531,7 +4895,7 @@
             console.log('   - Pre-created audio nodes');
             console.log('   - Auto performance mode (visualization only during sequence playback)');
             console.log('   - Asynchronous DOM operations');
-                            console.log('[READY] Ready to use - Start audio to begin (no samples precargados)');
+                            console.log('[READY] Ready to use - Start audio to begin (GitHub samples will auto-load)');
         });
     </script>
 </body>
