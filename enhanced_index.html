@@ -1543,15 +1543,15 @@
         const SCHEDULE_AHEAD_TIME = 0.12; // s de horizonte
         const LOOKAHEAD = 0.025;          // s de tick del scheduler
 
-        // Lista unificada de archivos de audio con prefijos de banco
+        // Lista unificada de archivos de audio con prefijos de banco (nombres exactos de GitHub)
         const allSampleFiles = [
             // Bank A (88 BPM) - 8 samples
-            'A_01-Pad_88_BPM.wav', 'A_02-Bass_88_BPM.wav', 'A_03-Arp_88_BPM.wav', 
-            'A_04-BD_SN_HH_OH_Slice.wav', 'A_05-Kick_88.wav', 'A_06-Snare_88.wav', 
+            'A_01-Pad _88 _BPM.wav', 'A_02-Bass_88_BPM.wav', 'A_03-Arp_88_BPM.wav', 
+            'A_04-BD_SN_HH_OH_Slice .wav', 'A_05-Kick_88.wav', 'A_06-Snare_88.wav', 
             'A_07-HH_88.wav', 'A_08-Shaker_88.wav',
             // Bank B (135 BPM) - 7 samples  
             'B_01-FM_Pads_135_BPM.wav', 'B_02-Reese_Bass_135_BPM.wav', 'B_03-You_are_135_BPM.wav',
-            'B_04-Multi_Drum_135_BPM.wav', 'B_05-Kick_4-4_135_BPM.wav', 'B_06-Hi_Hats_135_BPM.wav',
+            'B_04-Multi_Drum_135_BPM.wav', 'B_05-Kick_4-4_135 BPM.wav', 'B_06-Hi_Hats_135 BPM.wav',
             'B_07-Claps_135_BPM.wav'
         ];
 
@@ -3388,7 +3388,7 @@
                         pad.classList.add('loading');
                     }
                     
-                    const promise = self.loadAudioForPad(padNumber, 'A', file)
+                    const promise = self.loadAudioForPad(padNumber, file, 'A')
                         .then(function() {
                             if (pad) {
                                 pad.classList.remove('loading');
@@ -3425,7 +3425,7 @@
                         pad.classList.add('loading');
                     }
                     
-                    const promise = self.loadAudioForPad(padNumber, 'B', file)
+                    const promise = self.loadAudioForPad(padNumber, file, 'B')
                         .then(function() {
                             if (pad) {
                                 pad.classList.remove('loading');

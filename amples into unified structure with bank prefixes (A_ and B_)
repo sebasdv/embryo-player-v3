@@ -1,0 +1,145 @@
+[1mdiff --git a/Cuellos de botella detectados.md b/Cuellos de botella detectados.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..4db5323[m
+[1m--- /dev/null[m
+[1m+++ b/Cuellos de botella detectados.md[m	
+[36m@@ -0,0 +1,159 @@[m
+[32m+[m[32mCuellos de botella detectados (y por qué importan)[m
+[32m+[m[32mScheduling con setTimeout[m
+[32m+[m
+[32m+[m[32mEl secuenciador dispara eventos de barra con setTimeout(event.time * 1000). Eso es jitter-prone (pausas del event loop, timer clamping en segundo plano, variación por GC). Debemos programar en la timeline de Web Audio (usar audioContext.currentTime + source.start(when) con un look-ahead corto).[m[41m [m
+[32m+[m
+[32m+[m[32mDisparo inmediato sin when[m
+[32m+[m
+[32m+[m[32mplayPad() hace source.start() sin tiempo objetivo → imposible alinear golpes grabados con precisión sub-ms; también complica cuantizar. Lo ideal: source.start(when, offset, duration).[m[41m [m
+[32m+[m
+[32m+[m[32mMetronome/Pre-count en timers[m
+[32m+[m
+[32m+[m[32mEl pre-count y el avance de compases usan setTimeout/intervalos ligados a BPM; mismos problemas de jitter. Programar clicks como osciladores/samples en la timeline.[m[41m [m
+[32m+[m
+[32m+[m[32mLogging/UI en cada golpe[m
+[32m+[m
+[32m+[m[32mRegistrar en “terminal” cada playPad desde requestAnimationFrame agrega trabajo en el hilo principal cuando más preciso queremos ser. Recomiendo throttle o desactivar en “performance mode”.[m[41m [m
+[32m+[m
+[32m+[m[32mFormatos admitidos vs soporte real[m
+[32m+[m
+[32m+[m[32mAceptas flac/aac/m4a pero decodeAudioData no siempre los soporta (según navegador). Sugiero fallback con mensaje claro y/o filtrado por canPlayType previo a leer.[m[41m [m
+[32m+[m
+[32m+[m[32mCambios concretos (drop-in)[m
+[32m+[m[32m1) Scheduler musical determinista (look-ahead + horizon)[m
+[32m+[m
+[32m+[m[32mMeta: dejar de usar setTimeout por evento, y en su lugar colar (queue) los inicios en la timeline.[m
+[32m+[m
+[32m+[m[32m// Config[m
+[32m+[m[32mconst SCHEDULE_AHEAD_TIME = 0.12; // s de horizonte[m
+[32m+[m[32mconst LOOKAHEAD = 0.025;          // s de tick del scheduler[m
+[32m+[m[32mlet nextNoteTime = 0;[m
+[32m+[m[32mlet schedulerTimer = null;[m
+[32m+[m
+[32m+[m[32mstartSequence() {[m
+[32m+[m[32m  this.isPlaying = true;[m
+[32m+[m[32m  this.sequenceStartTime = this.audioContext.currentTime + 0.05; // pequeño offset[m
+[32m+[m[32m  nextNoteTime = this.sequenceStartTime;[m
+[32m+[m[32m  schedulerTimer = setInterval(() => this.schedulerTick(), LOOKAHEAD * 1000);[m
+[32m+[m[32m  this.queueBar(0); // arranca con la barra 0[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mschedulerTick() {[m
+[32m+[m[32m  const now = this.audioContext.currentTime;[m
+[32m+[m[32m  while (nextNoteTime < now + SCHEDULE_AHEAD_TIME) {[m
+[32m+[m[32m    // Colar notas de la barra actual cuyo event.time caiga entre now..now+horizon[m
+[32m+[m[32m    const bar = this.sequence[this.currentBar];[m
+[32m+[m[32m    for (const ev of bar) {[m
+[32m+[m[32m      const when = this.sequenceStartTime + ev.time + this.currentBar * this.barDuration();[m
+[32m+[m[32m      if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {[m
+[32m+[m[32m        this.triggerScheduled(ev, when);[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[32m    // Avanzar beat/bar si corresponde[m
+[32m+[m[32m    nextNoteTime += this.beatDuration() / GRID_STEPS_PER_BEAT; // o tu resolución de step[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtriggerScheduled(ev, when) {[m
+[32m+[m[32m  const originalBank = this.currentBank;[m
+[32m+[m[32m  if (ev.bank && ev.bank !== originalBank) this.selectBank(ev.bank);[m
+[32m+[m[32m  this.playPad(ev.pad, when); // <-- ver firma abajo[m
+[32m+[m[32m  if (ev.bank && ev.bank !== originalBank) setTimeout(() => this.selectBank(originalBank), 0);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mbarDuration() { return (60 / this.bpm) * BEATS_PER_BAR; }[m
+[32m+[m[32mbeatDuration(){ return 60 / this.bpm; }[m
+[32m+[m
+[32m+[m[32mstopSequence() {[m
+[32m+[m[32m  clearInterval(schedulerTimer);[m
+[32m+[m[32m  schedulerTimer = null;[m
+[32m+[m[32m  this.isPlaying = false;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+[32m+[m[32mY cambia playCurrentBar() para que no use setTimeout. (Reemplaza la lógica existente citada arriba).[m[41m [m
+[32m+[m
+[32m+[m[32m2) playPad(padNumber, when?, offset?, duration?)[m
+[32m+[m
+[32m+[m[32mAjusta la firma para programar en la timeline:[m
+[32m+[m
+[32m+[m[32mplayPad(padNumber, when = 0, offset = 0, duration = undefined) {[m
+[32m+[m[32m  if (!this.validatePlayback(padNumber)) return;[m
+[32m+[m
+[32m+[m[32m  const source = this.createAudioSource(padNumber);[m
+[32m+[m[32m  const analyser = this.preCreatedAnalysers[padNumber];[m
+[32m+[m[32m  const gain = this.preCreatedGains[padNumber];[m
+[32m+[m
+[32m+[m[32m  source.connect(gain);[m
+[32m+[m[32m  gain.connect(analyser);[m
+[32m+[m[32m  (this.masterOutput || this.audioContext.destination).connect ? analyser.connect(this.masterOutput) : analyser.connect(this.audioContext.destination);[m
+[32m+[m
+[32m+[m[32m  const startAt = when || this.audioContext.currentTime;[m
+[32m+[m[32m  // Si tienes cuantización activa, puedes empujar startAt al grid aquí.[m
+[32m+[m[32m  source.start(startAt, offset, duration);[m
+[32m+[m
+[32m+[m[32m  this.activeSources[padNumber] = source;[m
+[32m+[m
+[32m+[m[32m  if (!this.performanceMode) {[m
+[32m+[m[32m    const canvas = document.querySelector(`.pad[data-number="${padNumber}"] .visualizer`);[m
+[32m+[m[32m    if (canvas) this.visualize(padNumber, analyser, canvas);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+[32m+[m[32mCon esto, grabar un evento pasa de “guardar Date.now()” a guardar audioContext.currentTime relativo a sequenceStartTime, y reproducir es reproducir con when = sequenceStartTime + event.time + .... Esto resuelve el drift. (Sustituye el source.start() inmediato actual).[m[41m [m
+[32m+[m
+[32m+[m[32m3) Pre-count y metrónomo en la timeline[m
+[32m+[m
+[32m+[m[32mEn lugar de setTimeout por beat, crea un OscillatorNode o sample de click y programa osc.start(when); osc.stop(when+short). Evitas jitter durante conteo. Sustituye la función startPrecount() que hoy usa timers.[m[41m [m
+[32m+[m
+[32m+[m[32m4) Throttle del terminal en “performance mode”[m
+[32m+[m
+[32m+[m[32mGuarda un lastLogAt y emite a lo sumo cada 200–300 ms o desactívalo al tocar pads si performanceMode es true. El log actual se llama en cada golpe (aunque vía requestAnimationFrame).[m[41m [m
+[32m+[m
+[32m+[m[32m5) Slicing no destructivo y eficiente[m
+[32m+[m
+[32m+[m[32mCuando apliques el slicer (UI ya está), no copies buffers. Asigna a cada pad un par {buffer, offset, duration} y dispara con source.start(when, offset, duration). Eso te da slices instantáneos sin duplicar memoria y permite “re-slice” barato. (La UI del modal y el hook applySlicer(n) ya están listos).[m[41m [m
+[32m+[m
+[32m+[m[32m6) Compatibilidad de formatos[m
+[32m+[m
+[32m+[m[32mAntes de FileReader, valida con:[m
+[32m+[m
+[32m+[m[32mconst el = document.createElement('audio');[m
+[32m+[m[32mconst canPlay = ext => !!el.canPlayType(`audio/${ext}`);[m
+[32m+[m
+[32m+[m
+[32m+[m[32mSi !canPlay('flac') o !canPlay('aac'), avisa y evita intentarlo, en lugar de fallar en decodeAudioData. (Tu validador hoy permite FLAC).[m[41m [m
+[32m+[m
+[32m+[m[32m7) Recursos y limpieza[m
+[32m+[m
+[32m+[m[32mTras stopPadIfPlaying, añade disconnect() y borra referencias del source para evitar fugas si se reproduce muy seguido:[m
+[32m+[m
+[32m+[m[32mstopPadIfPlaying(n){[m
+[32m+[m[32m  const s = this.activeSources[n];[m
+[32m+[m[32m  if (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} }[m
+[32m+[m[32m  delete this.activeSources[n];[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+[32m+[m[32mExtras que te dan “feeling” de sample
