@@ -6,22 +6,43 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Embrio Player v3.0</title>
+    <title>Embrio Player v3.0 - Enhanced Version | Professional Web Sampler & Sequencer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #9bbc0f;  /* Verde GameBoy */
-            --shadow-color-dark: #0f380f;  /* Verde oscuro GameBoy */
-            --shadow-color-light: #8bac0f;  /* Verde claro GameBoy */
-            --text-color: #0f380f;  /* Verde oscuro para texto */
-            --accent-color: #306230;  /* Verde medio para acentos */
-            --braun-yellow: #8bac0f;  /* Verde claro para botones */
-            --braun-red: #306230;  /* Verde medio para alertas */
-            --braun-orange: #306230;  /* Verde medio para acciones */
-            --braun-grey: #0f380f;  /* Verde oscuro para elementos secundarios */
-            --braun-darkgrey: #0f380f;  /* Verde oscuro para elementos terciarios */
-            --braun-black: #0f380f;  /* Verde oscuro para texto principal */
+            /* ============================================================================
+             * GAMEBOY COLOR PALETTE - Sistema de colores coherente y descriptivo
+             * ============================================================================ */
+            
+            /* Colores principales GameBoy */
+            --gb-primary: #9bbc0f;      /* Verde principal GameBoy */
+            --gb-secondary: #8bac0f;    /* Verde secundario GameBoy */
+            --gb-dark: #0f380f;         /* Verde oscuro GameBoy */
+            --gb-accent: #306230;       /* Verde acento GameBoy */
+            
+            /* Estados y feedback visual */
+            --gb-active: #0f380f;       /* Color para elementos activos/seleccionados */
+            --gb-hover: #8bac0f;        /* Color para estados hover */
+            --gb-disabled: #306230;     /* Color para elementos deshabilitados */
+            --gb-focus: #306230;        /* Color para elementos con foco */
+            
+            /* Texto y contraste */
+            --gb-text-primary: #0f380f; /* Texto principal con máximo contraste */
+            --gb-text-secondary: #306230; /* Texto secundario */
+            --gb-text-inverse: #9bbc0f;  /* Texto invertido (claro sobre oscuro) */
+            
+            /* Sombras y efectos */
+            --gb-shadow-dark: #0f380f;  /* Sombra principal */
+            --gb-shadow-light: #8bac0f; /* Sombra secundaria */
+            --gb-border: #0f380f;       /* Bordes de elementos */
+            
+            /* Compatibilidad con nombres anteriores (mantener temporalmente) */
+            --bg-color: var(--gb-primary);
+            --shadow-color-dark: var(--gb-dark);
+            --shadow-color-light: var(--gb-secondary);
+            --text-color: var(--gb-text-primary);
+            --accent-color: var(--gb-accent);
         }
 
         * {
@@ -1313,7 +1334,7 @@
 </head>
 <body>
     <div class="title-container">
-        <h1>Embrio Player v3.0</h1>
+        <h1>Embrio Player v3.0 - Enhanced Version</h1>
     </div>
 
     <div class="header-row">
@@ -1489,52 +1510,152 @@
 
     <script>
         /**
-         * Embrio Player v3.0
-         * Un sampler y secuenciador web avanzado con múltiples funcionalidades de audio.
+         * ============================================================================
+         * EMBRIO PLAYER v3.0 - Enhanced Version
+         * ============================================================================
          * 
-         * @version 3.0
+         * @version 3.0.0
          * @author [Tu nombre]
          * @license MIT
-         */
-        
-        /**
-         * EMBRIO PLAYER v3.0 - ENHANCED VERSION
-         * Reproductor de samples con secuenciador y funcionalidades avanzadas
+         * @description Professional Web Sampler & Sequencer with Advanced Audio Features
          * 
-         * NUEVAS CARACTERÍSTICAS v3.0:
-         * - Long Press para BPM (cambios rápidos cada 200ms)
-         * - Tap Tempo para establecer BPM tocando el botón central
-         * - Sistema de entrada múltiple mejorado (Mouse + Touch + Teclado + MIDI)
-         * - Mapeo de teclado completo (QWER/ASDF/ZXCV/1234)
-         * - Indicadores de método de entrada activo
-         * - Feedback visual mejorado para todas las interacciones
-         * - Sistema unificado de control de pads
+         * ============================================================================
+         * FEATURES & CAPABILITIES
+         * ============================================================================
+         * 
+         * 🎵 AUDIO SYSTEM:
+         * - Web Audio API optimized for minimum latency
+         * - Pre-created audio nodes for instant response
+         * - Master effects chain (Volume, Distortion, Filter, Resonance)
+         * - Non-destructive sample slicing
+         * - Multi-format audio support with validation
+         * 
+         * 🎛️ SEQUENCER:
+         * - Deterministic musical scheduler (look-ahead + horizon)
+         * - Timeline-based playback (source.start(when, offset, duration))
+         * - Timeline-based metronome (no setTimeout)
+         * - Configurable quantization system (0% to 100% strength)
+         * - 4-bar recording with automatic looping
+         * 
+         * 🎹 INPUT METHODS:
+         * - Multi-input system (Mouse + Touch + Keyboard + MIDI)
+         * - Complete keyboard mapping (QWER/ASDF/ZXCV/1234)
+         * - Long press BPM control (rapid changes every 200ms)
+         * - Tap tempo functionality
+         * - Active input method indicators
+         * 
+         * 🎨 USER INTERFACE:
+         * - GameBoy-inspired retro aesthetic
+         * - Enhanced visual feedback for all interactions
+         * - Responsive design for mobile and desktop
+         * - Unified pad control system
+         * - Performance mode with auto-switching
+         * 
+         * ============================================================================
+         * PERFORMANCE OPTIMIZATIONS IMPLEMENTED
+         * ============================================================================
+         * ✅ Deterministic musical scheduler (look-ahead + horizon)
+         * ✅ Timeline-based audio playback (source.start(when, offset, duration))
+         * ✅ Timeline-based metronome (no setTimeout delays)
+         * ✅ Terminal logging throttle in performance mode
+         * ✅ Non-destructive sample slicing (no buffer copying)
+         * ✅ Audio format compatibility with canPlayType()
+         * ✅ Enhanced resource management and cleanup
+         * ✅ Pre-created audio nodes for minimum latency
+         * ✅ Auto-switching performance modes
          */
         
+        // ============================================================================
         // CONSTANTS & CONFIGURATION
-        const GITHUB_REPO_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/169a0a75db1d0af6149bdced5f3af7cefff5f23a/Bank%20A/';
-        const FFT_SIZE = 256;
-        const BEATS_PER_BAR = 4;
-        const MIN_BPM = 60;
-        const MAX_BPM = 200;
-        const PRE_COUNT_BARS = 1;
-        const BAR_COUNT = 4;
-        const BPM_LONG_PRESS_DELAY = 200; // Delay para iniciar cambios rápidos de BPM (reducido de 300ms)
-        const BPM_RAPID_INTERVAL = 200; // Intervalo para cambios rápidos de BPM (aumentado de 150ms para mejor control)
+        // ============================================================================
         
-        // NEW: QUANTIZATION SYSTEM CONSTANTS
-        const GRID_RESOLUTION = 16; // 16th notes per bar (4 beats × 4 subdivisions)
-        const GRID_STEPS_PER_BEAT = 4; // 4 steps per beat (16th notes)
-        const QUANTIZE_STRENGTH = 0.5; // 0.0 = no quantization, 1.0 = full quantization
-        const QUANTIZE_THRESHOLD = 0.125; // Threshold for quantization (in beats)
+        // GitHub Repository Configuration
+        const GITHUB_SAMPLES_URL = 'https://raw.githubusercontent.com/sebasdv/embrio-player-v3/master/samples/';
+        const GITHUB_VERSION = '?v=' + Date.now(); // Cache busting for fresh samples
+        
+        // Audio System Configuration
+        const FFT_SIZE = 256;                    // Fast Fourier Transform size for visualization
+        const BEATS_PER_BAR = 4;                 // Standard 4/4 time signature
+        const MIN_BPM = 60;                      // Minimum tempo (60 BPM)
+        const MAX_BPM = 200;                     // Maximum tempo (200 BPM)
+        const PRE_COUNT_BARS = 1;                // Pre-count bars before recording
+        const BAR_COUNT = 4;                     // Total bars in sequence (4-bar loop)
+        
+        // BPM Control Configuration
+        const BPM_LONG_PRESS_DELAY = 200;        // Delay before rapid BPM changes (ms)
+        const BPM_RAPID_INTERVAL = 200;          // Interval for rapid BPM changes (ms)
+        
+        // Quantization System Configuration
+        const GRID_RESOLUTION = 16;              // 16th notes per bar (4 beats × 4 subdivisions)
+        const GRID_STEPS_PER_BEAT = 4;           // 4 steps per beat (16th notes)
+        const QUANTIZE_STRENGTH = 0.5;           // Quantization strength (0.0 = off, 1.0 = full)
+        const QUANTIZE_THRESHOLD = 0.125;        // Quantization threshold (in beats)
+        
+        // Deterministic Scheduler Configuration (Performance Optimization)
+        const SCHEDULE_AHEAD_TIME = 0.12;        // Schedule horizon in seconds
+        const LOOKAHEAD = 0.025;                 // Scheduler tick interval in seconds
 
-        // Lista de archivos de audio personalizados desde Bank A
-        const audioFiles = [
-            '01-Pad 88 BPM.wav', '02-Bass 88 BPM.wav', '03-Arp 88 BPM.wav', '04-BD SN HH OH Slice .wav',
-            '05-Kick 88.wav', '06-Snare 88.wav', '07-HH 88.wav', '08-Shaker 88.wav'
+        // ============================================================================
+        // SAMPLE FILES CONFIGURATION
+        // ============================================================================
+        
+        // Unified sample files list with bank prefixes (clean names without spaces)
+        const allSampleFiles = [
+            // Bank A (88 BPM) - 8 samples for electronic/ambient music
+            'A_01-Pad_88_BPM.wav',      // Ambient pad
+            'A_02-Bass_88_BPM.wav',     // Bass line
+            'A_03-Arp_88_BPM.wav',      // Arpeggiated sequence
+            'A_04-BD_SN_HH_OH_Slice.wav', // Drum kit slice
+            'A_05-Kick_88.wav',         // Kick drum
+            'A_06-Snare_88.wav',        // Snare drum
+            'A_07-HH_88.wav',           // Hi-hat
+            'A_08-Shaker_88.wav',       // Shaker percussion
+            
+            // Bank B (135 BPM) - 7 samples for electronic/dance music
+            'B_01-FM_Pads_135_BPM.wav', // FM synthesis pads
+            'B_02-Reese_Bass_135_BPM.wav', // Reese bass (electronic)
+            'B_03-You_are_135_BPM.wav', // Vocal sample
+            'B_04-Multi_Drum_135_BPM.wav', // Multi-layered drums
+            'B_05-Kick_4-4_135_BPM.wav', // 4/4 kick pattern
+            'B_06-Hi_Hats_135_BPM.wav', // Hi-hats pattern
+            'B_07-Claps_135_BPM.wav'    // Clap samples
         ];
 
-        // PAD CONTROLLER CLASS - Sistema Unificado de Control
+        /**
+         * Utility function to detect bank from filename prefix
+         * @param {string} fileName - The filename to analyze
+         * @returns {string|null} Bank identifier ('A', 'B') or null if invalid
+         */
+        function getBankFromFileName(fileName) {
+            if (!fileName || typeof fileName !== 'string') return null;
+            
+            const firstChar = fileName.charAt(0).toUpperCase();
+            if (firstChar === 'A') return 'A';
+            if (firstChar === 'B') return 'B';
+            
+            return null; // Invalid bank prefix
+        }
+        
+        // ============================================================================
+        // CORE CLASSES
+        // ============================================================================
+        
+        /**
+         * Pad Controller Class - Unified Input Control System
+         * 
+         * @class PadController
+         * @description Handles all pad interactions including mouse, touch, keyboard, and MIDI
+         * 
+         * @property {EmbrioPlayer} embryoPlayer - Reference to main player instance
+         * @property {Map} pads - Map of pad elements and their states
+         * @property {boolean} midiAvailable - MIDI connection status
+         * @property {Object} keyToPad - Keyboard mapping configuration
+         * @property {Set} pressedKeys - Currently pressed keyboard keys
+         * 
+         * @example
+         * const padController = new PadController(embryoPlayer);
+         * padController.triggerPad(1, 127, 'keyboard');
+         */
         class PadController {
             constructor(embryoPlayer) {
                 this.embryoPlayer = embryoPlayer;
@@ -1653,21 +1774,22 @@
         }
 
         /**
-         * BPM Controller
+         * BPM Controller Class - Tempo Management System
+         * 
          * @class BPMController
          * @description Handles tempo control, BPM changes, and tap tempo functionality
          * 
          * @property {EmbrioPlayer} embryoPlayer - Main player instance
-         * @property {number} longPressTimer - Timer for long press
-         * @property {number} rapidTimer - Timer for rapid changes
-         * @property {boolean} isLongPressing - Long press state
-         * @property {Array<number>} tapTimes - Array of tap timestamps for tap tempo
+         * @property {number} longPressTimer - Timer for long press functionality
+         * @property {number} rapidTimer - Timer for rapid BPM changes
+         * @property {boolean} isLongPressing - Long press state indicator
+         * @property {Array<number>} tapTimes - Array of tap timestamps for tap tempo calculation
          * @property {number} maxTaps - Maximum number of taps to consider for BPM calculation
          * 
          * @example
          * const bpmController = new BPMController(embryoPlayer);
-         * bpmController.changeBPM(1); // Increase BPM
-         * bpmController.handleTapTempo(); // Handle tap tempo input
+         * bpmController.changeBPM(1);        // Increase BPM by 1
+         * bpmController.handleTapTempo();    // Handle tap tempo input
          */
         class BPMController {
             constructor(embryoPlayer) {
@@ -1855,26 +1977,33 @@
 
 
         /**
-         * Main player class
+         * Main Player Class - Core Application Logic
+         * 
          * @class EmbrioPlayer
-         * @description Handles the main player logic, including audio, sequencer and UI
+         * @description Handles the main player logic, including audio, sequencer, UI, and all core functionality
          * 
          * @property {AudioContext} audioContext - Web Audio API audio context
-         * @property {Object} samples - Map of loaded samples
-         * @property {Object} activeSources - Active audio sources
-         * @property {Object} visualizers - Audio visualizers
-         * @property {Set} touchedPads - Currently touched pads
-         * @property {boolean} isAudioInitialized - Audio initialization state
-         * @property {boolean} isRecording - Recording state
-         * @property {boolean} isPlaying - Playback state
-         * @property {number} bpm - Current tempo
-         * @property {number} currentBar - Current bar
-         * @property {number} currentBeat - Current beat
-         * @property {Array} sequence - Recorded sequence
+         * @property {Object} samples - Map of loaded audio samples
+         * @property {Object} activeSources - Currently playing audio sources
+         * @property {Object} visualizers - Audio visualization components
+         * @property {Set} touchedPads - Currently touched/active pads
+         * @property {boolean} isAudioInitialized - Audio system initialization state
+         * @property {boolean} isRecording - Sequence recording state
+         * @property {boolean} isPlaying - Sequence playback state
+         * @property {number} bpm - Current tempo in BPM
+         * @property {number} currentBar - Current bar position (0-3)
+         * @property {number} currentBeat - Current beat position (1-4)
+         * @property {Array} sequence - Recorded sequence data structure
+         * @property {Object} bankSamples - Samples organized by bank (A, B, C, D)
+         * @property {Object} sampleNames - Sample names organized by bank
+         * @property {boolean} slicerMode - Sample slicer mode state
+         * @property {boolean} quantizeMode - Quantization system state
+         * @property {boolean} performanceMode - Performance optimization mode
          * 
          * @example
          * const player = new EmbrioPlayer();
-         * player.initAudio();
+         * await player.initAudio();
+         * player.loadAllSamples();
          */
         class EmbrioPlayer {
             constructor() {
@@ -1899,6 +2028,10 @@
                 this.metronomeInterval = null;
                 this.beatInterval = null;
                 this.barAdvancementInterval = null;
+                
+                // NEW: SCHEDULER DETERMINISTA (Cuellos de botella fix)
+                this.nextNoteTime = 0;
+                this.schedulerTimer = null;
                 
                 // MIDI
                 this.midiAccess = null;
@@ -1935,6 +2068,10 @@
                 this.performanceMode = true; // true = perf mode (low latency) by default, visualization only when sequence is playing
                 this.preCreatedAnalysers = {};
                 this.preCreatedGains = {};
+                
+                // NEW: Terminal throttle system (Cuellos de botella fix)
+                this.lastLogAt = 0;
+                this.logThrottleInterval = 250; // ms entre logs en performance mode
 
                 // MASTER AUDIO EFFECTS ARCHITECTURE
                 this.masterGain = null;          // Control de volumen master
@@ -1952,22 +2089,55 @@
                 this.effectsValues = {
                     volume: 100,
                     filter: 50,
-                    distortion: 0
+                    distortion: 0,
+                    resonance: 5
                 };
 
                 
-                // Specialized controllers
+                // ============================================================================
+                // CONTROLLER INITIALIZATION
+                // ============================================================================
+                
+                // Initialize specialized controllers
+                console.log('[INIT] Creating PadController...');
                 this.padController = new PadController(this);
+                
+                console.log('[INIT] Creating BPMController...');
                 this.bpmController = new BPMController(this);
                 
-                // Initialize
+                // ============================================================================
+                // SYSTEM INITIALIZATION
+                // ============================================================================
+                
+                // Initialize core systems
+                console.log('[INIT] Setting up event listeners...');
                 this.initEventListeners();
+                
+                console.log('[INIT] Loading sample information from storage...');
                 this.loadSampleInfoFromStorage();
+                
+                // Initialize MIDI system (works before audio starts)
+                console.log('[INIT] Initializing MIDI system...');
+                this.initMIDI();
+                
+                // Create UI components after controllers are ready
+                console.log('[INIT] Creating pad grid interface...');
+                this.createPadGrid();
+                
+                console.log('[INIT] EmbrioPlayer constructor completed successfully');
                 
 
             }
             
-            // INITIALIZATION AND CONFIGURATION
+            // ============================================================================
+            // INITIALIZATION & CONFIGURATION METHODS
+            // ============================================================================
+            
+            /**
+             * Load sample information from browser's local storage
+             * @method loadSampleInfoFromStorage
+             * @description Retrieves saved sample names and configurations from localStorage
+             */
             loadSampleInfoFromStorage() {
                 try {
                     const savedInfo = localStorage.getItem('embryoPlayerSamples');
@@ -1982,6 +2152,11 @@
                 }
             }
             
+            /**
+             * Save sample information to browser's local storage
+             * @method saveSampleInfo
+             * @description Persists sample names and configurations to localStorage
+             */
             saveSampleInfo() {
                 try {
                     const info = {
@@ -1993,6 +2168,11 @@
                 }
             }
             
+            /**
+             * Initialize all event listeners for user interactions
+             * @method initEventListeners
+             * @description Sets up event handlers for buttons, controls, and UI elements
+             */
             initEventListeners() {
                 const self = this;
                 
@@ -2041,11 +2221,11 @@
             }
             
             /**
-             * Initialize audio
+             * Initialize the Web Audio API system
              * @method initAudio
-             * @description Creates the audio context and prepares the player
-             * @throws {Error} If audio context cannot be created
-             * @returns {Promise} Promise that resolves when audio is ready
+             * @description Creates the audio context and prepares the player for audio processing
+             * @throws {Error} If audio context cannot be created or initialized
+             * @returns {Promise} Promise that resolves when audio system is ready
              */
             async initAudio() {
                 const self = this;
@@ -2095,18 +2275,17 @@
                     document.getElementById('start-audio').disabled = true;
 
                     
-                            this.logToTerminal('Audio started. No samples loaded. Use "Load Samples" to add your own.', 'info');
+                            this.logToTerminal('Audio started. Loading GitHub samples automatically...', 'info');
                     
                     // NEW: Log effects system status
                     this.logEffectsStatus();
                     
                     // Initialize components
                     this.createPadGrid();
-                    this.initMIDI();
-                    // REMOVED: Auto-load samples - will be loaded manually
-                    // this.loadAllSamples().then(function() {
-                    //     self.logToTerminal('All samples loaded. Ready to play.', 'info');
-                    // });
+                    // AUTO-LOAD: Load GitHub samples into banks A and B
+                    this.loadAllSamples().then(function() {
+                        self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                    });
                     
                 } catch (error) {
                     console.error('Error starting audio:', error);
@@ -2114,7 +2293,11 @@
                 }
             }
             
-            // OPTIMIZATION: Pre-create audio nodes to reduce latency
+            /**
+             * Pre-create audio nodes to minimize latency
+             * @method preCreateAudioNodes
+             * @description Creates and configures audio nodes in advance for instant response
+             */
             preCreateAudioNodes() {
                 // Pre-create analysers for each pad
                 this.preCreatedAnalysers = {};
@@ -2138,7 +2321,11 @@
                 console.log('[AUDIO] Master effects chain created');
             }
             
-            // NEW: Create master audio effects chain
+            /**
+             * Create the master audio effects processing chain
+             * @method createMasterEffectsChain
+             * @description Sets up the main effects chain: Master Output → Volume → Filter → Distortion → Destination
+             */
             createMasterEffectsChain() {
                 // Crear nodos de efectos en orden de procesamiento
 
@@ -2168,7 +2355,11 @@
                 console.log('[EFFECTS] Master effects chain initialized with Distortion');
             }
             
-                            // Setup Distortion chain with dynamic curves
+            /**
+             * Setup the distortion effects chain with dynamic curves
+             * @method setupDistortionChain
+             * @description Configures WaveShaper nodes and gain controls for distortion effects
+             */
             setupDistortionChain() {
                 // Configurar WaveShaper inicial
                 this.masterDistortion.curve = this.createDistortionCurve(0);
@@ -2190,7 +2381,13 @@
                 console.log('[DISTORTION] Distortion chain initialized with dynamic curves');
             }
             
-                            // Create dynamic distortion curve for WaveShaper
+            /**
+             * Create dynamic distortion curve for WaveShaper node
+             * @method createDistortionCurve
+             * @param {number} amount - Distortion intensity (0-100)
+             * @returns {Float32Array} Distortion curve for WaveShaper
+             * @description Generates a distortion curve that intensifies with the amount parameter
+             */
             createDistortionCurve(amount) {
                 const k = typeof amount === 'number' ? amount : 50;
                 const n_samples = 44100;
@@ -2212,22 +2409,41 @@
                 return curve;
             }
             
-                            // Apply initial effects values
+            /**
+             * Apply initial effects values to the audio chain
+             * @method applyInitialEffectsValues
+             * @description Sets up the initial state of all master effects (volume, filter, distortion, resonance)
+             */
             applyInitialEffectsValues() {
-                if (this.masterGain) {
-                    this.masterGain.gain.setValueAtTime(this.effectsValues.volume / 100, this.audioContext.currentTime);
-                }
-                if (this.masterFilter) {
-                    const freq = Math.exp(Math.log(20) + (this.effectsValues.filter / 100) * Math.log(20000/20));
-                    this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                    this.masterFilter.Q.setValueAtTime(this.effectsValues.resonance / 10, this.audioContext.currentTime);
-                }
-                if (this.masterDistortion) {
-                    this.updateDistortionIntensity(this.effectsValues.distortion);
+                try {
+                    if (this.masterGain && typeof this.effectsValues.volume === 'number' && isFinite(this.effectsValues.volume)) {
+                        const volumeValue = Math.max(0, Math.min(100, this.effectsValues.volume)) / 100;
+                        this.masterGain.gain.setValueAtTime(volumeValue, this.audioContext.currentTime);
+                    }
+                    if (this.masterFilter && typeof this.effectsValues.filter === 'number' && isFinite(this.effectsValues.filter)) {
+                        const filterValue = Math.max(0, Math.min(100, this.effectsValues.filter));
+                        const freq = Math.exp(Math.log(20) + (filterValue / 100) * Math.log(20000/20));
+                        this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                        
+                        if (typeof this.effectsValues.resonance === 'number' && isFinite(this.effectsValues.resonance)) {
+                            const resonanceValue = Math.max(0, Math.min(100, this.effectsValues.resonance)) / 10;
+                            this.masterFilter.Q.setValueAtTime(resonanceValue, this.audioContext.currentTime);
+                        }
+                    }
+                    if (this.masterDistortion && typeof this.effectsValues.distortion === 'number' && isFinite(this.effectsValues.distortion)) {
+                        this.updateDistortionIntensity(this.effectsValues.distortion);
+                    }
+                } catch (error) {
+                    console.error('Error applying initial effects values:', error);
                 }
             }
             
-                            // Update Distortion intensity for saturation effect
+            /**
+             * Update distortion intensity for saturation effects
+             * @method updateDistortionIntensity
+             * @param {number} value - Distortion intensity (0-100)
+             * @description Updates the distortion curve and gain settings based on intensity value
+             */
             updateDistortionIntensity(value) {
                 if (!this.masterDistortion) return;
 
@@ -2259,46 +2475,70 @@
                 }
             }
             
-                            // Main method to apply master effects from sliders
+            /**
+             * Apply master effects from slider controls
+             * @method applyMasterEffect
+             * @param {string} sliderId - Identifier of the slider (slider-1, slider-2, etc.)
+             * @param {number} value - Effect value (0-100)
+             * @description Processes slider input and applies corresponding audio effects
+             */
             applyMasterEffect(sliderId, value) {
-                switch(sliderId) {
-                    case 'slider-1': // VOL
-                        if (this.masterGain) {
-                            this.effectsValues.volume = value;
-                            this.masterGain.gain.setValueAtTime(value / 100, this.audioContext.currentTime);
-                            this.logToTerminal(`VOL ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-2': // DISTORTION
-                        if (this.masterDistortion) {
-                            this.effectsValues.distortion = value;
-                            this.updateDistortionIntensity(value);
-                            this.logToTerminal(`DISTORTION ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-3': // FILT
-                        if (this.masterFilter) {
-                            this.effectsValues.filter = value;
-                            // Mapeo logarítmico para mejor control (20Hz - 20kHz)
-                            const freq = Math.exp(Math.log(20) + (value / 100) * Math.log(20000/20));
-                            this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
-                            this.logToTerminal(`FILT ${value}%`, 'info');
-                        }
-                        break;
-                        
-                    case 'slider-4': // RES
-                        if (this.masterFilter) {
-                            this.effectsValues.resonance = value;
-                            this.masterFilter.Q.setValueAtTime(value / 10, this.audioContext.currentTime);
-                            this.logToTerminal(`RES ${value}%`, 'info');
-                        }
-                        break;
+                try {
+                    // Validate input value
+                    if (typeof value !== 'number' || !isFinite(value)) {
+                        console.error('Invalid effect value:', value);
+                        return;
+                    }
+                    
+                    // Clamp value to valid range
+                    const clampedValue = Math.max(0, Math.min(100, value));
+                    
+                    switch(sliderId) {
+                        case 'slider-1': // VOL
+                            if (this.masterGain) {
+                                this.effectsValues.volume = clampedValue;
+                                this.masterGain.gain.setValueAtTime(clampedValue / 100, this.audioContext.currentTime);
+                                this.logToTerminal(`VOL ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-2': // DISTORTION
+                            if (this.masterDistortion) {
+                                this.effectsValues.distortion = clampedValue;
+                                this.updateDistortionIntensity(clampedValue);
+                                this.logToTerminal(`DISTORTION ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-3': // FILT
+                            if (this.masterFilter) {
+                                this.effectsValues.filter = clampedValue;
+                                // Mapeo logarítmico para mejor control (20Hz - 20kHz)
+                                const freq = Math.exp(Math.log(20) + (clampedValue / 100) * Math.log(20000/20));
+                                this.masterFilter.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                                this.logToTerminal(`FILT ${clampedValue}%`, 'info');
+                            }
+                            break;
+                            
+                        case 'slider-4': // RES
+                            if (this.masterFilter) {
+                                this.effectsValues.resonance = clampedValue;
+                                this.masterFilter.Q.setValueAtTime(clampedValue / 10, this.audioContext.currentTime);
+                                this.logToTerminal(`RES ${clampedValue}%`, 'info');
+                            }
+                            break;
+                    }
+                } catch (error) {
+                    console.error('Error applying master effect:', error);
                 }
             }
             
-                            // Get current effects status for debugging
+            /**
+             * Get current effects system status for debugging
+             * @method getEffectsStatus
+             * @returns {Object} Current effects configuration and node status
+             * @description Returns the current state of all effects for monitoring and debugging
+             */
             getEffectsStatus() {
                 return {
                     enabled: this.effectsEnabled,
@@ -2312,99 +2552,124 @@
                 };
             }
             
-                            // Log effects status for debugging
+            /**
+             * Log effects system status to terminal for debugging
+             * @method logEffectsStatus
+             * @description Outputs current effects configuration to the terminal for user monitoring
+             */
             logEffectsStatus() {
                 const status = this.getEffectsStatus();
                 console.log('[EFFECTS] Current effects status:', status);
                 this.logToTerminal('Effects system ready - VOL: ' + status.values.volume + '%, DISTORTION: ' + status.values.distortion + '%, FILT: ' + status.values.filter + '%, RES: ' + status.values.resonance + '%', 'info');
             }
             
-            // IMPROVED PAD SYSTEM
+            /**
+             * Create the main pad grid interface
+             * @method createPadGrid
+             * @description Generates the 4x4 pad grid with all necessary UI elements and event handlers
+             */
             createPadGrid() {
-                const grid = document.getElementById('pad-grid');
-                grid.innerHTML = '';
-                
-                for (let i = 1; i <= 16; i++) {
-                    const pad = document.createElement('div');
-                    pad.className = 'pad';
-                    pad.dataset.number = i;
+                try {
+                    const grid = document.getElementById('pad-grid');
+                    if (!grid) {
+                        console.error('Pad grid element not found!');
+                        return;
+                    }
                     
-                    // Create canvas for visualizer
-                    const visualizer = document.createElement('canvas');
-                    visualizer.className = 'visualizer';
-                    pad.appendChild(visualizer);
+                    console.log('Creating pad grid...');
+                    grid.innerHTML = '';
                     
-                    // Create drop indicator
-                    const dropIndicator = document.createElement('div');
-                    dropIndicator.className = 'drop-indicator';
-                    dropIndicator.textContent = 'Drop here';
-                    pad.appendChild(dropIndicator);
+                    for (let i = 1; i <= 16; i++) {
+                        const pad = document.createElement('div');
+                        pad.className = 'pad';
+                        pad.dataset.number = i;
+                        
+                        // Create canvas for visualizer
+                        const visualizer = document.createElement('canvas');
+                        visualizer.className = 'visualizer';
+                        pad.appendChild(visualizer);
+                        
+                        // Create drop indicator
+                        const dropIndicator = document.createElement('div');
+                        dropIndicator.className = 'drop-indicator';
+                        dropIndicator.textContent = 'Drop here';
+                        pad.appendChild(dropIndicator);
+                        
+                        // Create bank indicator
+                        const sampleIndicator = document.createElement('div');
+                        sampleIndicator.className = 'sample-indicator';
+                        sampleIndicator.style.display = 'none';
+                        pad.appendChild(sampleIndicator);
+                        
+                        // Create label for sample name
+                        const nameLabel = document.createElement('div');
+                        nameLabel.className = 'sample-name';
+                        nameLabel.style.display = 'none';
+                        pad.appendChild(nameLabel);
+                        
+                        // Create slice indicator
+                        const sliceIndicator = document.createElement('div');
+                        sliceIndicator.className = 'slice-indicator';
+                        sliceIndicator.style.display = 'none';
+                        pad.appendChild(sliceIndicator);
+                        
+                        // Create keyboard indicator
+                        const keyboardIndicator = document.createElement('div');
+                        keyboardIndicator.className = 'keyboard-indicator';
+                        keyboardIndicator.textContent = this.padController.getKeyForPad(i);
+                        keyboardIndicator.style.display = 'none';
+                        pad.appendChild(keyboardIndicator);
+                        
+                        // Create button to delete sample
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-pad-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.title = 'Delete sample';
+                        
+                        // Event listeners for delete
+                        const self = this;
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            self.deletePadSample(i);
+                        });
+                        
+                        deleteBtn.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        deleteBtn.addEventListener('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        });
+                        
+                        pad.appendChild(deleteBtn);
+                        
+                        // NEW IMPROVED EVENT LISTENERS
+                        this.setupPadEventListeners(pad, i);
+                        this.setupDragAndDrop(pad, i);
+                        
+                        grid.appendChild(pad);
+                    }
                     
-                    // Create bank indicator
-                    const sampleIndicator = document.createElement('div');
-                    sampleIndicator.className = 'sample-indicator';
-                    sampleIndicator.style.display = 'none';
-                    pad.appendChild(sampleIndicator);
-                    
-                    // Create label for sample name
-                    const nameLabel = document.createElement('div');
-                    nameLabel.className = 'sample-name';
-                    nameLabel.style.display = 'none';
-                    pad.appendChild(nameLabel);
-                    
-                    // Create slice indicator
-                    const sliceIndicator = document.createElement('div');
-                    sliceIndicator.className = 'slice-indicator';
-                    sliceIndicator.style.display = 'none';
-                    pad.appendChild(sliceIndicator);
-                    
-                    // Create keyboard indicator
-                    const keyboardIndicator = document.createElement('div');
-                    keyboardIndicator.className = 'keyboard-indicator';
-                    keyboardIndicator.textContent = this.padController.getKeyForPad(i);
-                    keyboardIndicator.style.display = 'none';
-                    pad.appendChild(keyboardIndicator);
-                    
-                    // Create button to delete sample
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-pad-btn';
-                    deleteBtn.innerHTML = '×';
-                    deleteBtn.title = 'Delete sample';
-                    
-                    // Event listeners for delete
-                    const self = this;
-                    deleteBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        self.deletePadSample(i);
-                    });
-                    
-                    deleteBtn.addEventListener('mousedown', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    });
-                    
-                    deleteBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    });
-                    
-                    pad.appendChild(deleteBtn);
-                    
-                    // NEW IMPROVED EVENT LISTENERS
-                    this.setupPadEventListeners(pad, i);
-                    this.setupDragAndDrop(pad, i);
-                    
-                    grid.appendChild(pad);
+                    console.log('Pad grid created successfully with', grid.children.length, 'pads');
+                    this.resizeCanvases();
+                } catch (error) {
+                    console.error('Error creating pad grid:', error);
                 }
-                
-                this.resizeCanvases();
             }
             
-            // Setup event listeners for a pad
+            /**
+             * Setup event listeners for individual pad interactions
+             * @method setupPadEventListeners
+             * @param {HTMLElement} pad - The pad DOM element
+             * @param {number} padNumber - The pad number (1-16)
+             * @description Configures mouse and touch events for pad interaction
+             */
             setupPadEventListeners(pad, padNumber) {
                 const self = this;
                 
@@ -2441,8 +2706,16 @@
                 });
             }
             
-            // AUDIO PLAYBACK AND CONTROL - OPTIMIZED FOR MINIMUM LATENCY
-            playPad(padNumber) {
+            /**
+             * Play audio sample from a specific pad
+             * @method playPad
+             * @param {number} padNumber - The pad number to play (1-16)
+             * @param {number} when - When to start playback (audio timeline)
+             * @param {number} offset - Offset within the sample to start from
+             * @param {number} duration - Duration to play (optional)
+             * @description Optimized audio playback with timeline support and minimum latency
+             */
+            playPad(padNumber, when = 0, offset = 0, duration = undefined) {
                 if (!this.validatePlayback(padNumber)) return;
                 
                 // Use pre-created nodes to reduce latency
@@ -2455,8 +2728,19 @@
                 gain.connect(analyser);
                 analyser.connect(this.masterGain);
                 
-                // Start audio immediately without delay
-                source.start();
+                // NEW: Timeline-based playback (Cuellos de botella fix)
+                const startAt = when || this.audioContext.currentTime;
+                
+                // NEW: Handle slice parameters if this is a slice
+                const sample = this.samples[padNumber];
+                if (sample && sample.offset !== undefined && sample.duration !== undefined) {
+                    // This is a slice - use slice offset and duration
+                    source.start(startAt, sample.offset, sample.duration);
+                } else {
+                    // This is a regular sample - use provided parameters or defaults
+                    source.start(startAt, offset, duration);
+                }
+                
                 this.activeSources[padNumber] = source;
                 
                 // Update UI asynchronously to not block audio
@@ -2485,6 +2769,13 @@
                 });
             }
             
+            /**
+             * Validate if a pad can be played
+             * @method validatePlayback
+             * @param {number} padNumber - The pad number to validate
+             * @returns {boolean} True if playback is valid, false otherwise
+             * @description Checks audio context and sample availability before playback
+             */
             validatePlayback(padNumber) {
                 if (!this.audioContext) {
                     this.logToTerminal('Please start audio before playing samples.', 'warning');
@@ -2499,21 +2790,50 @@
                 return true;
             }
             
+            /**
+             * Stop audio playback for a specific pad
+             * @method stopPadIfPlaying
+             * @param {number} padNumber - The pad number to stop (1-16)
+             * @description Stops and cleans up audio sources for the specified pad
+             */
             stopPadIfPlaying(padNumber) {
-                if (this.activeSources[padNumber]) {
-                    try {
-                        this.activeSources[padNumber].stop();
-                        this.activeSources[padNumber].disconnect();
-                    } catch (e) {
+                const source = this.activeSources[padNumber];
+                if (source) {
+                    try { 
+                        source.stop(); 
+                    } catch(e) {
                         console.warn('Error stopping audio source:', e);
                     }
+                    try { 
+                        source.disconnect(); 
+                    } catch(e) {
+                        console.warn('Error disconnecting audio source:', e);
+                    }
+                    delete this.activeSources[padNumber];
                 }
             }
             
+            /**
+             * Create an audio source for playback
+             * @method createAudioSource
+             * @param {number} padNumber - The pad number for the audio source
+             * @returns {AudioBufferSourceNode} Configured audio source node
+             * @description Creates and configures audio source with optimized settings for minimum latency
+             */
             createAudioSource(padNumber) {
                 // Create audio source with optimized configuration
                 const source = this.audioContext.createBufferSource();
-                source.buffer = this.samples[padNumber];
+                
+                // NEW: Handle non-destructive slices (Cuellos de botella fix)
+                const sample = this.samples[padNumber];
+                if (sample && sample.buffer && sample.offset !== undefined) {
+                    // This is a slice - use offset and duration
+                    source.buffer = sample.buffer;
+                    // Note: offset and duration will be used in playPad(when, offset, duration)
+                } else {
+                    // This is a regular sample
+                    source.buffer = sample;
+                }
                 
                 // Configure for minimum latency
                 if (source.playbackRate) {
@@ -2523,12 +2843,25 @@
                 return source;
             }
             
+            /**
+             * Create an audio analyser node for visualization
+             * @method createAnalyser
+             * @returns {AnalyserNode} Configured analyser node
+             * @description Creates an analyser node with optimized FFT settings for real-time visualization
+             */
             createAnalyser() {
                 const analyser = this.audioContext.createAnalyser();
                 analyser.fftSize = FFT_SIZE;
                 return analyser;
             }
             
+            /**
+             * Update pad UI state during playback
+             * @method updatePadUI
+             * @param {number} padNumber - The pad number to update
+             * @param {AudioBufferSourceNode} source - The audio source node
+             * @description Updates visual feedback and manages playback state for the pad
+             */
             updatePadUI(padNumber, source) {
                 const self = this;
                 const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
@@ -2547,19 +2880,42 @@
                 };
             }
             
-            // MIDI INTEGRATION
+            /**
+             * Initialize MIDI system for external controller support
+             * @method initMIDI
+             * @description Sets up Web MIDI API connection and event handling
+             */
             initMIDI() {
-                const self = this;
-                
-                if (navigator.requestMIDIAccess) {
-                    navigator.requestMIDIAccess()
-                        .then(function(midiAccess) { self.onMIDISuccess(midiAccess); })
-                        .catch(function(error) { self.onMIDIFailure(error); });
-                } else {
-                    this.logToTerminal('Web MIDI API not supported in this browser.', 'warning');
+                try {
+                    console.log('Initializing MIDI...');
+                    const self = this;
+                    
+                    if (navigator.requestMIDIAccess) {
+                        console.log('Web MIDI API available, requesting access...');
+                        navigator.requestMIDIAccess()
+                            .then(function(midiAccess) { 
+                                console.log('MIDI access granted');
+                                self.onMIDISuccess(midiAccess); 
+                            })
+                            .catch(function(error) { 
+                                console.error('MIDI access failed:', error);
+                                self.onMIDIFailure(error); 
+                            });
+                    } else {
+                        console.warn('Web MIDI API not supported in this browser');
+                        this.logToTerminal('Web MIDI API not supported in this browser.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error initializing MIDI:', error);
                 }
             }
             
+            /**
+             * Handle successful MIDI access
+             * @method onMIDISuccess
+             * @param {MIDIAccess} midiAccess - MIDI access object from Web MIDI API
+             * @description Configures MIDI input handling and updates connection status
+             */
             onMIDISuccess(midiAccess) {
                 const self = this;
                 this.midiAccess = midiAccess;
@@ -2574,12 +2930,24 @@
                         this.logToTerminal('MIDI connected (OMNI - all channels). MIDI controller ready.', 'info');
             }
             
+            /**
+             * Handle MIDI access failure
+             * @method onMIDIFailure
+             * @param {Error} error - Error object from failed MIDI access
+             * @description Logs MIDI connection errors and updates status
+             */
             onMIDIFailure(error) {
                 console.error('Error accessing MIDI:', error);
                 this.padController.setMIDIAvailable(false);
                         this.logToTerminal('Error connecting MIDI. You can continue using mouse, touch or keyboard.', 'warning');
             }
             
+            /**
+             * Handle incoming MIDI messages
+             * @method onMIDIMessage
+             * @param {MIDIMessageEvent} message - MIDI message event from controller
+             * @description Processes MIDI note-on messages and triggers corresponding pads
+             */
             onMIDIMessage(message) {
                 const data = message.data;
                 const status = data[0];
@@ -2607,7 +2975,12 @@
             
 
             
-            // TEMPO Y BPM (MEJORADO)
+            /**
+             * Change the current tempo/BPM
+             * @method changeTempo
+             * @param {number} change - Amount to change BPM (positive or negative)
+             * @description Updates BPM within valid range and restarts timers if needed
+             */
             changeTempo(change) {
                 this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, this.bpm + change));
                 this.updateTempoDisplay();
@@ -2620,11 +2993,20 @@
                 }
             }
             
-            // Update tempo display
+            /**
+             * Update the tempo display in the UI
+             * @method updateTempoDisplay
+             * @description Updates the BPM display button with current tempo value
+             */
             updateTempoDisplay() {
                 document.getElementById('tempo-display').textContent = this.bpm + ' BPM';
             }
             
+            /**
+             * Restart all active timers with new BPM
+             * @method restartTimers
+             * @description Restarts metronome and bar advancement timers when tempo changes
+             */
             restartTimers() {
                 this.stopTimers();
                 
@@ -2636,6 +3018,11 @@
                 }
             }
             
+            /**
+             * Stop all active timers
+             * @method stopTimers
+             * @description Clears all interval timers and logs the number of timers stopped
+             */
             stopTimers() {
                 let timersStopped = 0;
                 
@@ -2662,7 +3049,12 @@
                 }
             }
             
-            // BANK SYSTEM (EXISTING)
+            /**
+             * Select and activate a sample bank
+             * @method selectBank
+             * @param {string} bank - Bank identifier ('A', 'B', 'C', 'D')
+             * @description Switches to the specified bank and updates UI indicators
+             */
             selectBank(bank) {
                 if (this.currentBank === bank) return;
                 
@@ -2682,6 +3074,11 @@
                         this.logToTerminal('Bank ' + bank + ' selected.', 'info');
             }
 
+            /**
+             * Update pad indicators for the current bank
+             * @method updatePadBankIndicators
+             * @description Updates visual indicators showing which pads have samples loaded
+             */
             updatePadBankIndicators() {
                 for (let i = 1; i <= 16; i++) {
                     const pad = document.querySelector('.pad[data-number="' + i + '"]');
@@ -2785,7 +3182,11 @@
                 }
             }
             
-            // SAMPLE LOADING (EXISTING)
+            /**
+             * Load multiple audio samples from file selection
+             * @method loadMultipleSamples
+             * @description Opens file dialog for multiple audio file selection and loading
+             */
             loadMultipleSamples() {
                 if (!this.audioContext) {
                     this.logToTerminal('Please start audio first', 'warning');
@@ -2841,7 +3242,12 @@
                 input.click();
             }
             
-                            // Find empty pads in current bank
+            /**
+             * Find empty pads in the current bank
+             * @method findEmptyPads
+             * @returns {Array<number>} Array of empty pad numbers
+             * @description Identifies which pads are available for loading new samples
+             */
             findEmptyPads() {
                 const emptyPads = [];
                 for (let i = 1; i <= 16; i++) {
@@ -2852,7 +3258,12 @@
                 return emptyPads;
             }
             
-                            // Show bank status information
+            /**
+             * Show current bank status information
+             * @method showBankStatus
+             * @returns {Object} Bank status with empty and loaded pad counts
+             * @description Displays information about the current bank's sample loading status
+             */
             showBankStatus() {
                 const emptyPads = this.findEmptyPads();
                 const loadedPads = 16 - emptyPads.length;
@@ -2875,7 +3286,12 @@
                 return { emptyPads, loadedPads };
             }
             
-                            // Enhanced error message for full bank
+            /**
+             * Show enhanced error message for full bank
+             * @method showFullBankError
+             * @param {string} action - The action that cannot be performed
+             * @description Displays detailed error message and available actions when bank is full
+             */
             showFullBankError(action = 'load samples') {
                 this.logToTerminal(`Cannot ${action}: Bank ${this.currentBank} is FULL`, 'error');
                 this.logToTerminal('Available actions:', 'info');
@@ -2884,6 +3300,11 @@
                 this.logToTerminal('• Switch to another bank with available space', 'info');
             }
 
+            /**
+             * Clear all samples from the current bank
+             * @method clearCurrentBank
+             * @description Removes all samples and resets the current bank to empty state
+             */
             clearCurrentBank() {
                 const bank = this.currentBank;
                 
@@ -2899,6 +3320,12 @@
                 }
             }
             
+            /**
+             * Delete a sample from a specific pad
+             * @method deletePadSample
+             * @param {number} padNumber - The pad number to clear (1-16)
+             * @description Removes sample from pad and updates UI indicators
+             */
             deletePadSample(padNumber) {
                 const bank = this.currentBank;
                 const sampleName = this.sampleNames[bank][padNumber] || ('Pad ' + padNumber);
@@ -2931,8 +3358,12 @@
                 this.logToTerminal('"' + sampleName + '" deleted from Pad ' + padNumber, 'info');
             }
             
-            // HELPER FUNCTIONS AND UTILITIES
-            
+            /**
+             * Show visual effect when sample is loaded
+             * @method showLoadedEffect
+             * @param {HTMLElement} pad - The pad DOM element
+             * @description Provides visual feedback when a sample is successfully loaded
+             */
             showLoadedEffect(pad) {
                 const originalBoxShadow = pad.style.boxShadow;
                 pad.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.8)';
@@ -2942,7 +3373,13 @@
                 }, 500);
             }
             
-            // REST OF EXISTING FUNCTIONS
+            /**
+             * Setup drag and drop functionality for a pad
+             * @method setupDragAndDrop
+             * @param {HTMLElement} pad - The pad DOM element
+             * @param {number} padNumber - The pad number (1-16)
+             * @description Configures drag and drop event handlers for sample loading
+             */
             setupDragAndDrop(pad, padNumber) {
                 const self = this;
                 pad.addEventListener('dragenter', function(e) { self.handleDragEnter(e, padNumber); }, false);
@@ -2951,6 +3388,13 @@
                 pad.addEventListener('drop', function(e) { self.handleDrop(e, padNumber); }, false);
             }
             
+            /**
+             * Handle drag enter event for a pad
+             * @method handleDragEnter
+             * @param {DragEvent} e - Drag event object
+             * @param {number} padNumber - The pad number being dragged over
+             * @description Provides visual feedback when dragging files over a pad
+             */
             handleDragEnter(e, padNumber) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2979,12 +3423,26 @@
                 }
             }
             
+            /**
+             * Handle drag over event for a pad
+             * @method handleDragOver
+             * @param {DragEvent} e - Drag event object
+             * @param {number} padNumber - The pad number being dragged over
+             * @description Sets drop effect and prevents default behavior
+             */
             handleDragOver(e, padNumber) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.dataTransfer.dropEffect = 'copy';
             }
             
+            /**
+             * Handle drag leave event for a pad
+             * @method handleDragLeave
+             * @param {DragEvent} e - Drag event object
+             * @param {number} padNumber - The pad number being left
+             * @description Removes visual feedback when dragging away from a pad
+             */
             handleDragLeave(e, padNumber) {
                 if (!e.currentTarget.contains(e.relatedTarget)) {
                     const pad = e.currentTarget;
@@ -2995,6 +3453,13 @@
                 }
             }
             
+            /**
+             * Handle file drop event for a pad
+             * @method handleDrop
+             * @param {DragEvent} e - Drop event object
+             * @param {number} padNumber - The pad number receiving the drop
+             * @description Processes dropped audio files and loads them into the pad
+             */
             handleDrop(e, padNumber) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -3037,6 +3502,13 @@
                 indicator.textContent = 'Drop here';
             }
             
+            /**
+             * Load multiple audio files into consecutive empty pads
+             * @method loadMultipleFilesToPads
+             * @param {Array<File>} files - Array of audio files to load
+             * @param {number} startPadNumber - Starting pad number for loading
+             * @description Distributes multiple audio files across available empty pads
+             */
             loadMultipleFilesToPads(files, startPadNumber) {
                 this.logToTerminal('Loading ' + files.length + ' files from Pad ' + startPadNumber + '...', 'info');
                 
@@ -3083,9 +3555,17 @@
                 this.logToTerminal('Loading ' + totalLoaded + ' samples in available empty pads...', 'info');
             }
             
+            /**
+             * Validate audio file format and size
+             * @method validateAudioFile
+             * @param {File} file - File object to validate
+             * @returns {boolean} True if file is valid, false otherwise
+             * @description Checks file format, size, and browser compatibility
+             */
             validateAudioFile(file) {
                 if (!file) return false;
                 
+                // NEW: Enhanced format validation with canPlayType (Cuellos de botella fix)
                 const validTypes = [
                     'audio/wav', 'audio/x-wav', 'audio/mp3', 'audio/mpeg', 
                     'audio/ogg', 'audio/aac', 'audio/m4a', 'audio/flac'
@@ -3095,11 +3575,25 @@
                 const extension = fileName.split('.').pop();
                 const validExtensions = ['wav', 'mp3', 'ogg', 'aac', 'm4a', 'flac'];
                 
+                // Check if browser can actually play this format
+                const el = document.createElement('audio');
+                const canPlay = ext => !!el.canPlayType(`audio/${ext}`);
+                
+                // Validate extension and browser support
                 const isValidType = validTypes.includes(file.type) || 
                                    validExtensions.includes(extension);
                 
                 if (!isValidType) {
                     return false;
+                }
+                
+                // Check browser support for specific formats
+                if (extension === 'flac' && !canPlay('flac')) {
+                    console.warn('FLAC format not supported by browser, but will attempt to load');
+                }
+                
+                if ((extension === 'aac' || extension === 'm4a') && !canPlay('aac')) {
+                    console.warn('AAC/M4A format not supported by browser, but will attempt to load');
                 }
                 
                 if (file.size > 50 * 1024 * 1024) { // 50MB
@@ -3109,6 +3603,14 @@
                 return true;
             }
             
+            /**
+             * Load user-provided audio sample into a pad
+             * @method loadUserSample
+             * @param {number} padNumber - The pad number to load into (1-16)
+             * @param {string} bank - The bank identifier ('A', 'B', 'C', 'D')
+             * @param {File} file - The audio file to load
+             * @description Processes and loads user audio files with error handling
+             */
             loadUserSample(padNumber, bank, file) {
                 try {
                     // Enhanced validations
@@ -3218,26 +3720,35 @@
             }
             }
             
-            // DISABLED: Auto-load samples function (commented out for manual loading)
-            /*
+            /**
+             * Auto-load GitHub samples into banks A and B
+             * @method loadAllSamples
+             * @returns {Promise} Promise that resolves when all samples are loaded
+             * @description Automatically loads pre-configured samples from GitHub repository
+             */
             loadAllSamples() {
-                this.logToTerminal('Loading 8 custom samples from Bank A (88 BPM)...', 'info');
+                this.logToTerminal('🚀 Loading GitHub samples using unified approach...', 'info');
+                this.logToTerminal('📁 Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
+                this.logToTerminal('📊 Total files to load: ' + allSampleFiles.length, 'info');
+                this.logToTerminal('🎵 Bank A files: ' + allSampleFiles.filter(f => f.startsWith('A_')).length + ' samples', 'info');
+                this.logToTerminal('🎵 Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).length + ' samples', 'info');
                 
-                // FORCE LOAD: Clear Bank A first to ensure clean loading
+                // Clear both banks to ensure clean loading
                 this.bankSamples['A'] = {};
+                this.bankSamples['B'] = {};
                 this.sampleNames['A'] = {};
+                this.sampleNames['B'] = {};
                 
                 const loadPromises = [];
                 const self = this;
                 
-                // FORCE LOAD: Use first 8 pads (1-8) for the 8 samples
-                const targetPads = [1, 2, 3, 4, 5, 6, 7, 8];
-                const samplesToLoad = audioFiles;
+                // Bank A: Load 8 samples (88 BPM) into pads 1-8
+                const bankAPads = [1, 2, 3, 4, 5, 6, 7, 8];
+                this.logToTerminal('Loading Bank A: 8 samples (88 BPM) into pads ' + bankAPads.join(', '), 'info');
+                this.logToTerminal('Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
                 
-                this.logToTerminal('Loading 8 samples into pads: ' + targetPads.join(', '), 'info');
-                
-                samplesToLoad.forEach(function(file, index) {
-                    const padNumber = targetPads[index];
+                allSampleFiles.filter(f => f.startsWith('A_')).forEach(function(file, index) {
+                    const padNumber = bankAPads[index];
                     const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
                     
                     if (pad) {
@@ -3253,36 +3764,99 @@
                                 const nameWithoutExt = file.split('.').slice(0, -1).join('.');
                                 self.sampleNames['A'][padNumber] = nameWithoutExt;
                                 
-                                self.updatePadBankIndicators();
                                 self.showLoadedEffect(pad);
+                                self.logToTerminal('✅ Bank A: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
                             }
                         })
                         .catch(function(error) {
                             if (pad) {
                                 pad.classList.remove('loading');
                             }
-                            console.error('Error loading sample ' + padNumber + ':', error);
+                            console.error('Error loading Bank A sample ' + padNumber + ':', error);
+                            self.logToTerminal('❌ Bank A: Error loading ' + file + ' in Pad ' + padNumber + ': ' + error.message, 'error');
+                        });
+                    
+                    loadPromises.push(promise);
+                });
+                
+                // Bank B: Load 7 samples (135 BPM) into pads 1-7
+                const bankBPads = [1, 2, 3, 4, 5, 6, 7];
+                this.logToTerminal('Loading Bank B: 7 samples (135 BPM) into pads ' + bankBPads.join(', '), 'info');
+                this.logToTerminal('Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).join(', '), 'info');
+                
+                allSampleFiles.filter(f => f.startsWith('B_')).forEach(function(file, index) {
+                    const padNumber = bankBPads[index];
+                    const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
+                    
+                    if (pad) {
+                        pad.classList.add('loading');
+                    }
+                    
+                    const promise = self.loadAudioForPad(padNumber, file, 'B')
+                        .then(function() {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                                pad.classList.add('loaded');
+                                
+                                const nameWithoutExt = file.split('.').slice(0, -1).join('.');
+                                self.sampleNames['B'][padNumber] = nameWithoutExt;
+                                
+                                self.showLoadedEffect(pad);
+                                self.logToTerminal('✅ Bank B: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
+                            }
+                        })
+                        .catch(function(error) {
+                            if (pad) {
+                                pad.classList.remove('loading');
+                            }
+                            console.error('Error loading Bank B sample ' + padNumber + ':', error);
+                            self.logToTerminal('❌ Bank B: Error loading ' + file + ' in Pad ' + padNumber + ': ' + error.message, 'error');
                         });
                     
                     loadPromises.push(promise);
                 });
                 
                 return Promise.allSettled(loadPromises).then(function() {
+                    // Update UI for both banks
+                    self.updatePadBankIndicators();
                     self.saveSampleInfo();
-                    self.updatePadBankIndicators(); // Update UI after all samples loaded
-                    self.logToTerminal('8 custom samples loaded successfully from Bank A', 'info');
+                    
+                    // Verify both banks loaded correctly
+                    const bankACount = Object.keys(self.bankSamples['A']).length;
+                    const bankBCount = Object.keys(self.bankSamples['B']).length;
+                    
+                    self.logToTerminal('✅ Bank A: ' + bankACount + ' samples loaded (88 BPM, pads 1-8)', 'info');
+                    self.logToTerminal('✅ Bank B: ' + bankBCount + ' samples loaded (135 BPM, pads 1-7)', 'info');
+                    self.logToTerminal('🎵 Total: ' + (bankACount + bankBCount) + ' samples ready to play!', 'info');
+                    
+                    // Debug info
+                    console.log('[BANK A] Samples:', self.bankSamples['A']);
+                    console.log('[BANK B] Samples:', self.bankSamples['B']);
+                    
                     return loadPromises;
                 });
             }
-            */
             
+            /**
+             * Load audio sample from GitHub into a specific pad
+             * @method loadAudioForPad
+             * @param {number} padNumber - The pad number to load into (1-16)
+             * @param {string} audioName - The audio filename to load
+             * @param {string} bank - The bank identifier ('A', 'B', 'C', 'D')
+             * @returns {Promise<AudioBuffer>} Promise that resolves to the loaded audio buffer
+             * @description Fetches and decodes audio from GitHub repository
+             */
             loadAudioForPad(padNumber, audioName, bank) {
                 const self = this;
                 bank = bank || 'A';
                 
                 if (!this.audioContext) return Promise.reject(new Error('Contexto de audio no inicializado'));
                 
-                const audioUrl = GITHUB_REPO_URL + audioName;
+                // Use unified samples URL with cache busting
+                const audioUrl = GITHUB_SAMPLES_URL + audioName + GITHUB_VERSION;
+                
+                // Debug: Log the generated URL
+                console.log(`Loading Bank ${bank} Pad ${padNumber}: ${audioUrl}`);
                 return fetch(audioUrl)
                     .then(function(response) {
                         if (!response.ok) {
@@ -3313,6 +3887,12 @@
                     });
             }
             
+            /**
+             * Record a pad event during sequence recording
+             * @method recordPadEvent
+             * @param {number} padNumber - The pad number that was triggered
+             * @description Records pad triggers with timing and applies quantization if enabled
+             */
             recordPadEvent(padNumber) {
                 const currentTime = this.audioContext.currentTime;
                 const relativeTime = (currentTime - this.sequenceStartTime) % (60 / this.bpm * BEATS_PER_BAR);
@@ -3342,8 +3922,10 @@
             
             /**
              * Quantize time to the nearest grid step
+             * @method quantizeTime
              * @param {number} time - Time in seconds
              * @returns {number} Quantized time in seconds
+             * @description Applies quantization to timing values based on current grid resolution
              */
             quantizeTime(time) {
                 const beatDuration = 60 / this.bpm; // Duration of one beat in seconds
@@ -3364,8 +3946,10 @@
             
             /**
              * Get grid step information for a given time
+             * @method getGridStepInfo
              * @param {number} time - Time in seconds
-             * @returns {Object} Grid step info
+             * @returns {Object} Grid step info with step index, beat index, and timing
+             * @description Calculates grid position and timing information for quantization
              */
             getGridStepInfo(time) {
                 const beatDuration = 60 / this.bpm;
@@ -3384,7 +3968,9 @@
             }
             
             /**
-             * NEW: Consolidated quantization control - cycles through OFF (0%) and strength levels
+             * Cycle through quantization strength levels
+             * @method cycleQuantizeConsolidated
+             * @description Cycles through quantization settings: OFF (0%), 25%, 50%, 75%, 100%
              */
             cycleQuantizeConsolidated() {
                 const strengths = [0.0, 0.25, 0.5, 0.75, 1.0];
@@ -3422,7 +4008,9 @@
             }
             
             /**
-             * Initialize the QT button with the current quantization state
+             * Initialize the QT button with current quantization state
+             * @method initializeQTButton
+             * @description Sets up the quantization button text and styling on initialization
              */
             initializeQTButton() {
                 const qtBtn = document.getElementById('bank-e');
@@ -3442,7 +4030,9 @@
             }
             
             /**
-             * Show grid information in terminal
+             * Show quantization grid information in terminal
+             * @method showGridInfo
+             * @description Displays current grid resolution and timing information for user reference
              */
             showGridInfo() {
                 const beatDuration = 60 / this.bpm;
@@ -3464,7 +4054,14 @@
                 this.logToTerminal(gridVisual, 'info');
             }
             
-            // AUDIO VISUALIZER - OPTIMIZED FOR LATENCY
+            /**
+             * Visualize audio waveform for a pad
+             * @method visualize
+             * @param {number} padNumber - The pad number to visualize
+             * @param {AnalyserNode} analyser - Audio analyser node
+             * @param {HTMLCanvasElement} canvas - Canvas element for drawing
+             * @description Creates real-time audio visualization with optimized performance
+             */
             visualize(padNumber, analyser, canvas) {
                 if (!canvas || this.performanceMode) return;
                 
@@ -3514,6 +4111,17 @@
                 draw();
             }
             
+            /**
+             * Draw waveform visualization on canvas
+             * @method drawWaveform
+             * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
+             * @param {Uint8Array} dataArray - Audio waveform data
+             * @param {number} width - Canvas width
+             * @param {number} height - Canvas height
+             * @param {Object} colors - Color configuration object
+             * @param {number} energy - Audio energy level (0-1)
+             * @description Renders audio waveform with smooth curves and visual effects
+             */
             drawWaveform(ctx, dataArray, width, height, colors, energy) {
                 const bufferLength = dataArray.length;
                 const sliceWidth = width / bufferLength;
@@ -3586,6 +4194,13 @@
                 ctx.globalAlpha = 1.0;
             }
             
+            /**
+             * Get color scheme for pad visualization
+             * @method getPadColors
+             * @param {number} padNumber - The pad number (1-16)
+             * @returns {Object} Color configuration object
+             * @description Returns color scheme for waveform visualization
+             */
             getPadColors(padNumber) {
                 return {
                     primary: 'var(--shadow-color-dark)',    // Dark GameBoy green
@@ -3593,6 +4208,11 @@
                 };
             }
             
+            /**
+             * Resize all pad visualization canvases
+             * @method resizeCanvases
+             * @description Adjusts canvas dimensions to match pad sizes for proper visualization
+             */
             resizeCanvases() {
                 const pads = document.querySelectorAll('.pad');
                 pads.forEach(function(pad) {
@@ -3604,7 +4224,13 @@
                 });
             }
             
-            // SAMPLE SLICER
+            /**
+             * Open the sample slicer modal for a specific pad
+             * @method openSlicerModal
+             * @param {number} padNumber - The pad number containing the sample to slice
+             * @param {number} maxAvailableSlices - Maximum number of slices that can be created
+             * @description Opens the slicer interface for sample manipulation
+             */
             openSlicerModal(padNumber, maxAvailableSlices = null) {
                 if (!this.samples[padNumber]) {
                     this.logToTerminal('No sample in this pad to slice', 'error');
@@ -3636,6 +4262,12 @@
                 this.logToTerminal('Slicer opened for Pad ' + padNumber + ' with ' + maxSlices + ' available slices', 'info');
             }
             
+            /**
+             * Update slicer modal buttons based on available space
+             * @method updateSlicerButtons
+             * @param {number} maxSlices - Maximum number of slices that can be created
+             * @description Configures slicer buttons based on available pad space
+             */
             updateSlicerButtons(maxSlices) {
                 const buttonsContainer = document.getElementById('slicer-buttons');
                 buttonsContainer.innerHTML = '';
@@ -3665,6 +4297,11 @@
                 });
             }
             
+            /**
+             * Close the sample slicer modal
+             * @method closeSlicerModal
+             * @description Closes the slicer interface and resets related state
+             */
             closeSlicerModal() {
                 document.getElementById('slicer-modal').style.display = 'none';
                 this.slicerSourcePad = null;
@@ -3672,6 +4309,12 @@
                 this.logToTerminal('Slicer cancelled', 'info');
             }
             
+            /**
+             * Apply slicing to create multiple sample slices
+             * @method applySlicer
+             * @param {number} numSlices - Number of slices to create (4, 8, or 16)
+             * @description Creates and distributes sample slices across available pads
+             */
             applySlicer(numSlices) {
                 if (!this.slicerSourceBuffer || !this.slicerSourcePad) {
                     this.logToTerminal('Error: No sample to slice', 'error');
@@ -3699,7 +4342,16 @@
                 }
             }
             
+            /**
+             * Create sample slices from source buffer
+             * @method createSlices
+             * @param {AudioBuffer} sourceBuffer - Source audio buffer to slice
+             * @param {number} numSlices - Number of slices to create
+             * @returns {Array} Array of slice objects with buffer references
+             * @description Creates non-destructive slices using buffer references and timing offsets
+             */
             createSlices(sourceBuffer, numSlices) {
+                // NEW: Non-destructive slicing (Cuellos de botella fix)
                 const slices = [];
                 const totalFrames = sourceBuffer.length;
                 const framesPerSlice = Math.floor(totalFrames / numSlices);
@@ -3711,27 +4363,28 @@
                     const endFrame = Math.min(startFrame + framesPerSlice, totalFrames);
                     const sliceLength = endFrame - startFrame;
                     
-                    const sliceBuffer = this.audioContext.createBuffer(
-                        numberOfChannels, 
-                        sliceLength, 
-                        sampleRate
-                    );
+                    // Crear slice como referencia al buffer original + offset + duration
+                    const slice = {
+                        buffer: sourceBuffer,
+                        offset: startFrame / sampleRate,
+                        duration: sliceLength / sampleRate,
+                        startFrame: startFrame,
+                        endFrame: endFrame
+                    };
                     
-                    for (let channel = 0; channel < numberOfChannels; channel++) {
-                        const sourceData = sourceBuffer.getChannelData(channel);
-                        const sliceData = sliceBuffer.getChannelData(channel);
-                        
-                        for (let frame = 0; frame < sliceLength; frame++) {
-                            sliceData[frame] = sourceData[startFrame + frame];
-                        }
-                    }
-                    
-                    slices.push(sliceBuffer);
+                    slices.push(slice);
                 }
                 
                 return slices;
             }
             
+            /**
+             * Distribute sample slices across available pads
+             * @method distributeSlices
+             * @param {Array} slices - Array of slice objects to distribute
+             * @param {number} startPadNumber - Starting pad number for distribution
+             * @description Places slice objects into available pads and updates UI indicators
+             */
             distributeSlices(slices, startPadNumber) {
                 const sourcePadName = this.sampleNames[this.currentBank][this.slicerSourcePad] || 
                                      ('Sample ' + this.slicerSourcePad);
@@ -3748,6 +4401,7 @@
                     if (index < availablePads.length) {
                         const targetPad = availablePads[index];
                         
+                        // NEW: Store slice reference instead of copied buffer
                         self.bankSamples[self.currentBank][targetPad] = slice;
                         self.samples[targetPad] = slice;
                         
@@ -3775,7 +4429,13 @@
                 this.logToTerminal(usedPads + ' slices distributed in pads: ' + availablePads.slice(0, usedPads).join(', '), 'info');
             }
             
-            // NEW: Find available empty pads for slicing (excluding the source pad)
+            /**
+             * Find available empty pads for slicing operations
+             * @method findAvailablePadsForSlicing
+             * @param {number} sourcePad - Source pad number (excluded from results)
+             * @returns {Array<number>} Array of available empty pad numbers
+             * @description Identifies empty pads available for placing slice results
+             */
             findAvailablePadsForSlicing(sourcePad) {
                 const availablePads = [];
                 
@@ -3798,7 +4458,12 @@
                 return availablePads;
             }
             
-            // SECUENCIADOR
+            /**
+             * Create metronome click sound
+             * @method createMetronomeSound
+             * @param {boolean} isAccented - Whether this is an accented beat (first beat of bar)
+             * @description Generates metronome audio feedback for timing reference
+             */
             createMetronomeSound(isAccented) {
                 isAccented = isAccented || false;
                 if (!this.audioContext) return;
@@ -3828,10 +4493,20 @@
                 oscillator.stop(this.audioContext.currentTime + 0.1);
             }
             
+            /**
+             * Create accented metronome sound for first beat
+             * @method createAccentedMetronomeSound
+             * @description Generates accented metronome click for bar start indication
+             */
             createAccentedMetronomeSound() {
                 this.createMetronomeSound(true);
             }
             
+            /**
+             * Start the metronome system
+             * @method startMetronome
+             * @description Initiates metronome timing with visual and audio feedback
+             */
             startMetronome() {
                 if (this.metronomeInterval) {
                     clearInterval(this.metronomeInterval);
@@ -3870,6 +4545,11 @@
                 }, beatDuration);
             }
             
+            /**
+             * Stop the metronome system
+             * @method stopMetronome
+             * @description Stops metronome timing and clears interval
+             */
             stopMetronome() {
                 if (this.metronomeInterval) {
                     clearInterval(this.metronomeInterval);
@@ -3877,11 +4557,21 @@
                 }
             }
             
+            /**
+             * Update bar and beat display in the UI
+             * @method updateBarBeatDisplay
+             * @description Updates the current bar and beat indicators
+             */
             updateBarBeatDisplay() {
                 document.getElementById('current-bar').textContent = this.currentBar + 1;
                 document.getElementById('current-beat').textContent = this.currentBeat;
             }
             
+            /**
+             * Start bar advancement system for recording and playback
+             * @method startBarAdvancement
+             * @description Manages bar progression and automatic playback after recording
+             */
             startBarAdvancement() {
                 if (this.beatInterval) {
                     clearInterval(this.beatInterval);
@@ -3907,7 +4597,18 @@
                         
                         // Si completamos un compás
                         if (self.currentBeat === 1) {
-                            self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                            if (self.isRecording) {
+                                // Durante la grabación, avanzar secuencialmente (0 a 3)
+                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                            } else if (self.isPlaying) {
+                                // Durante la reproducción, avanzar en bucle continuo
+                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
+                                
+                                // Log del loop para debugging
+                                if (self.currentBar === 0) {
+                                    self.logToTerminal('Loop: Starting new sequence cycle', 'info');
+                                }
+                            }
                             document.getElementById('current-bar').textContent = self.currentBar + 1;
                             
                             if (self.isRecording) {
@@ -3921,7 +4622,14 @@
                                     
                                     document.getElementById('record-sequence').textContent = "REC";
                                     document.getElementById('record-sequence').classList.remove('active');
-                                    self.logToTerminal('Recording completed. Playing in loop (without metronome)...', 'info');
+                                    
+                                    // AUTO: Activate play button to show sequence is playing
+                                    document.getElementById('play-sequence').classList.add('active');
+                                    
+                                    self.logToTerminal('Recording completed. Starting playback in loop...', 'info');
+                                    
+                                    // AUTO: Start playing the recorded sequence immediately
+                                    self.playCurrentBar();
                                 }
                                 else {
                                     const statusMsg = 'Recording bar ' + (self.currentBar + 1) + '... (' + totalBarsRecorded + '/' + BAR_COUNT + ')';
@@ -3932,7 +4640,13 @@
                                 const statusMsg = 'Playing bar ' + (self.currentBar + 1) + '...';
                                 self.logToTerminal(statusMsg, 'info');
                                 
+                                // Reproducir el compás actual
                                 self.playCurrentBar();
+                                
+                                // Si llegamos al final de la secuencia, reiniciar para el loop
+                                if (self.currentBar === BAR_COUNT - 1) {
+                                    self.logToTerminal('Loop completed, restarting sequence...', 'info');
+                                }
                             }
                         }
                     } else {
@@ -3941,7 +4655,11 @@
                 }, beatDuration);
             }
             
-            // NEW: Show quantization statistics after recording
+            /**
+             * Show quantization statistics after recording
+             * @method showQuantizationStats
+             * @description Displays timing accuracy statistics for recorded events
+             */
             showQuantizationStats() {
                 if (!this.quantizeMode) return;
                 
@@ -3977,6 +4695,112 @@
                 }
             }
             
+            // NEW: SCHEDULER DETERMINISTA FUNCTIONS (Cuellos de botella fix)
+            
+            /**
+             * Start sequence playback with deterministic scheduler
+             * @method startSequence
+             * @description Initiates the deterministic musical scheduler for sequence playback
+             */
+            startSequence() {
+                this.isPlaying = true;
+                this.sequenceStartTime = this.audioContext.currentTime + 0.05; // pequeño offset
+                this.nextNoteTime = this.sequenceStartTime;
+                this.schedulerTimer = setInterval(() => this.schedulerTick(), LOOKAHEAD * 1000);
+                this.queueBar(0); // arranca con la barra 0
+            }
+            
+            /**
+             * Scheduler tick - processes events in timeline
+             * @method schedulerTick
+             * @description Main scheduler loop that processes scheduled events and advances timeline
+             */
+            schedulerTick() {
+                const now = this.audioContext.currentTime;
+                while (this.nextNoteTime < now + SCHEDULE_AHEAD_TIME) {
+                    // Colar notas de la barra actual cuyo event.time caiga entre now..now+horizon
+                    const bar = this.sequence[this.currentBar];
+                    for (const ev of bar) {
+                        const when = this.sequenceStartTime + ev.time + this.currentBar * this.barDuration();
+                        if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
+                            this.triggerScheduled(ev, when);
+                        }
+                    }
+                    // Avanzar beat/bar si corresponde
+                    this.nextNoteTime += this.beatDuration() / GRID_STEPS_PER_BEAT;
+                }
+            }
+            
+            /**
+             * Trigger scheduled event with bank switching
+             * @method triggerScheduled
+             * @param {Object} ev - Event object with pad and bank information
+             * @param {number} when - When to trigger the event (audio timeline)
+             * @description Executes scheduled events with automatic bank switching
+             */
+            triggerScheduled(ev, when) {
+                const originalBank = this.currentBank;
+                if (ev.bank && ev.bank !== originalBank) this.selectBank(ev.bank);
+                this.playPad(ev.pad, when); // <-- usa la nueva firma con when
+                if (ev.bank && ev.bank !== originalBank) setTimeout(() => this.selectBank(originalBank), 0);
+            }
+            
+            /**
+             * Queue bar for scheduler processing
+             * @method queueBar
+             * @param {number} barIndex - Index of the bar to queue (0-3)
+             * @description Prepares the next bar for scheduler processing
+             */
+            queueBar(barIndex) {
+                // Preparar la siguiente barra para el scheduler
+                if (barIndex < BAR_COUNT && this.sequence[barIndex]) {
+                    this.logToTerminal(`Bar ${barIndex + 1} queued for scheduler`, 'info');
+                }
+            }
+            
+            /**
+             * Calculate bar duration in seconds
+             * @method barDuration
+             * @returns {number} Duration of one bar in seconds
+             * @description Calculates the time duration of a complete bar based on current BPM
+             */
+            barDuration() { 
+                return (60 / this.bpm) * BEATS_PER_BAR; 
+            }
+            
+            /**
+             * Calculate beat duration in seconds
+             * @method beatDuration
+             * @returns {number} Duration of one beat in seconds
+             * @description Calculates the time duration of one beat based on current BPM
+             */
+            beatDuration() { 
+                return 60 / this.bpm; 
+            }
+            
+            /**
+             * Stop deterministic scheduler
+             * @method stopSequence
+             * @description Stops the musical scheduler and resets playback state
+             */
+            /**
+             * Stop sequence playback
+             * @method stopSequence
+             * @description Stops sequence playback and resets all timers
+             */
+            stopSequence() {
+                if (this.schedulerTimer) {
+                    clearInterval(this.schedulerTimer);
+                    this.schedulerTimer = null;
+                }
+                this.isPlaying = false;
+            }
+            
+            /**
+             * Toggle recording state
+             * @method toggleRecording
+             * @description Switches between recording and stopped states
+             */
             toggleRecording() {
                 if (this.isRecording) {
                     this.stopRecording();
@@ -3986,10 +4810,10 @@
             }
             
             /**
-             * Inicia la grabación
+             * Start sequence recording
              * @method startRecording
-             * @description Comienza a grabar una secuencia
-             * @throws {Error} Si el audio no está inicializado
+             * @description Begins recording a new sequence with metronome count-in
+             * @throws {Error} If audio system is not initialized
              */
             startRecording() {
                 if (!this.audioContext) {
@@ -4023,16 +4847,30 @@
                 this.startPrecount();
             }
             
+            /**
+             * Start pre-count metronome before recording
+             * @method startPrecount
+             * @description Provides count-in beats before actual recording begins
+             */
             startPrecount() {
                 let preCountRemaining = PRE_COUNT_BARS * BEATS_PER_BAR;
                 this.startMetronome();
                 
+                // NEW: Timeline-based pre-count (Cuellos de botella fix)
                 const self = this;
+                const beatDuration = 60 / this.bpm;
+                
                 function preCount() {
                     if (preCountRemaining > 0) {
                         self.logToTerminal('Pre-count: ' + Math.ceil(preCountRemaining / BEATS_PER_BAR), 'info');
                         preCountRemaining--;
-                        setTimeout(preCount, 60000 / self.bpm);
+                        
+                        // Programar el siguiente click en la timeline
+                        const nextClickTime = self.audioContext.currentTime + beatDuration;
+                        self.scheduleMetronomeClick(nextClickTime, preCountRemaining === 0);
+                        
+                        // Programar la siguiente función preCount
+                        setTimeout(preCount, beatDuration * 1000);
                     } else {
                         self.sequenceStartTime = self.audioContext.currentTime;
                         self.logToTerminal('Recording sequence...', 'info');
@@ -4043,7 +4881,45 @@
                 preCount();
             }
             
-                        stopRecording() {
+            /**
+             * Schedule metronome click in audio timeline
+             * @method scheduleMetronomeClick
+             * @param {number} when - When to play the click (audio timeline)
+             * @param {boolean} isAccented - Whether this is an accented beat
+             * @description Schedules metronome clicks directly on the Web Audio timeline
+             */
+            scheduleMetronomeClick(when, isAccented) {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(
+                    isAccented ? 880 : 440, 
+                    when
+                );
+                
+                gainNode.gain.setValueAtTime(
+                    isAccented ? 0.2 : 0.1, 
+                    when
+                );
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001, 
+                    when + 0.1
+                );
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.start(when);
+                oscillator.stop(when + 0.1);
+            }
+            
+            /**
+             * Stop sequence recording
+             * @method stopRecording
+             * @description Stops recording and switches to playback mode
+             */
+            stopRecording() {
                 this.isRecording = false;
                 this.stopTimers();
                 const recordBtn = document.getElementById('record-sequence');
@@ -4059,6 +4935,11 @@
                 this.logToTerminal('Recording stopped', 'info');
             }
             
+            /**
+             * Start sequence playback
+             * @method playSequence
+             * @description Begins playing the recorded sequence with deterministic scheduler
+             */
             playSequence() {
                 if (this.isPlaying) return;
                 
@@ -4079,7 +4960,6 @@
                 this.updateBarBeatDisplay();
                 
                 document.getElementById('play-sequence').classList.add('active');
-                this.sequenceStartTime = this.audioContext.currentTime;
                 
                 // AUTO: Activate visualization mode when sequence starts playing
                 if (this.performanceMode) {
@@ -4087,33 +4967,59 @@
                     this.logToTerminal('Auto-switched to visualization mode for sequence playback', 'info');
                 }
                 
-                this.logToTerminal('Playing sequence (without metronome)', 'info');
+                this.logToTerminal('Playing sequence with deterministic scheduler', 'info');
                 
-                this.startBarAdvancement();
-                this.playCurrentBar();
+                // NEW: Use deterministic scheduler instead of old system
+                this.startSequence();
             }
             
+            /**
+             * Play the current bar of the sequence
+             * @method playCurrentBar
+             * @description Executes all events in the current bar with proper timing
+             */
             playCurrentBar() {
                 if (!this.isPlaying) return;
                 
                 const self = this;
-                this.sequence[this.currentBar].forEach(function(event) {
+                const currentBarEvents = this.sequence[this.currentBar];
+                
+                if (!currentBarEvents || currentBarEvents.length === 0) {
+                    // Barra vacía, continuar con la siguiente
+                    return;
+                }
+                
+                this.logToTerminal(`Playing bar ${this.currentBar + 1} with ${currentBarEvents.length} events`, 'info');
+                
+                currentBarEvents.forEach(function(event) {
+                    if (!self.isPlaying) return; // Verificar si aún está reproduciendo
+                    
+                    // Calcular el tiempo relativo dentro del compás
+                    const eventTime = event.time || 0;
+                    const beatDuration = 60 / self.bpm; // duración de un pulso en segundos
+                    const eventDelay = eventTime * beatDuration;
+                    
                     setTimeout(function() {
                         if (self.isPlaying) {
-                            if (event.bank && event.bank !== self.currentBank) {
-                                const originalBank = self.currentBank;
-                                self.selectBank(event.bank);
-                                
-                                self.playPad(event.pad);
-                                
-                                setTimeout(function() {
-                                    self.selectBank(originalBank);
-                                }, 100);
-                            } else {
-                                self.playPad(event.pad);
+                            try {
+                                if (event.bank && event.bank !== self.currentBank) {
+                                    const originalBank = self.currentBank;
+                                    self.selectBank(event.bank);
+                                    
+                                    self.playPad(event.pad);
+                                    
+                                    setTimeout(function() {
+                                        self.selectBank(originalBank);
+                                    }, 100);
+                                } else {
+                                    self.playPad(event.pad);
+                                }
+                            } catch (error) {
+                                console.error('Error playing event:', error);
+                                self.logToTerminal(`Error playing event in bar ${self.currentBar + 1}: ${error.message}`, 'error');
                             }
                         }
-                    }, event.time * 1000);
+                    }, eventDelay * 1000);
                 });
             }
             
@@ -4149,11 +5055,15 @@
                 this.logToTerminal('Sequence playback stopped and reset', 'info');
             }
             
-            // NEW: Stop all audio and sequences
+            /**
+             * Stop all audio and sequences
+             * @method stopAll
+             * @description Stops all audio playback, sequences, and resets system state
+             */
             async stopAll() {
                 this.logToTerminal('Stopping all audio and sequences...', 'info');
                 
-                // Stop sequence playback
+                // Stop sequence playback with new scheduler
                 this.stopSequence();
                 
                 // Stop all active audio samples
@@ -4228,7 +5138,13 @@
                 this.logToTerminal('Audio context remains active - new samples can be played', 'info');
             }
             
-            // NEW: Force stop individual pad
+            /**
+             * Force stop audio for a specific pad
+             * @method forceStopPad
+             * @param {number} padNumber - The pad number to force stop
+             * @returns {boolean} True if pad was stopped, false if already stopped
+             * @description Immediately stops audio playback for a specific pad
+             */
             forceStopPad(padNumber) {
                 if (this.activeSources[padNumber]) {
                     try {
@@ -4251,6 +5167,11 @@
                 return false;
             }
             
+            /**
+             * Clear the recorded sequence
+             * @method clearSequence
+             * @description Removes all recorded events and resets sequence state
+             */
             clearSequence() {
                 this.sequence = Array(BAR_COUNT).fill().map(function() { return []; });
                 this.currentBar = 0;
@@ -4260,7 +5181,11 @@
             
 
             
-            // NEW: Show latency statistics
+            /**
+             * Show latency statistics for performance monitoring
+             * @method showLatencyStats
+             * @description Displays current latency statistics and performance mode status
+             */
             showLatencyStats() {
                 const stats = this.getLatencyStats();
                 console.log('[STATS] Latency Statistics:');
@@ -4272,7 +5197,12 @@
             
 
             
-            // NEW: Get latency statistics
+            /**
+             * Get current latency statistics
+             * @method getLatencyStats
+             * @returns {Object} Latency statistics object
+             * @description Calculates and returns current latency performance metrics
+             */
             getLatencyStats() {
                 const baseLatency = 5; // Web Audio API base latency
                 const visualLatency = this.performanceMode ? 0 : 15; // Additional visualization latency
@@ -4285,7 +5215,12 @@
                 };
             }
             
-            // NEW: Measure real-time latency
+            /**
+             * Measure real-time audio latency
+             * @method measureRealTimeLatency
+             * @returns {number} Measured latency in milliseconds
+             * @description Measures actual audio latency by playing a test tone
+             */
             measureRealTimeLatency() {
                 if (!this.audioContext) return;
                 
@@ -4314,7 +5249,11 @@
                 return latency;
             }
             
-            // NEW: Show pad selector for slicer
+            /**
+             * Show pad selector interface for slicer mode
+             * @method showPadSelectorForSlicer
+             * @description Activates slicer mode and shows available pads for sample selection
+             */
             showPadSelectorForSlicer() {
                 if (!this.audioContext) {
                     this.logToTerminal('Please start audio before using the slicer.', 'error');
@@ -4341,7 +5280,11 @@
                 this.logToTerminal('Available pads: ' + this.getLoadedPadsList(), 'info');
             }
             
-            // NEW: Activate slicer mode
+            /**
+             * Activate slicer mode for sample manipulation
+             * @method activateSlicerMode
+             * @description Enables slicer mode with visual feedback on selectable pads
+             */
             activateSlicerMode() {
                 this.slicerMode = true;
                 
@@ -4360,7 +5303,11 @@
                 slicerBtn.textContent = 'CANCEL';
             }
             
-            // NEW: Deactivate slicer mode
+            /**
+             * Deactivate slicer mode
+             * @method deactivateSlicerMode
+             * @description Disables slicer mode and removes visual feedback
+             */
             deactivateSlicerMode() {
                 this.slicerMode = false;
                 
@@ -4376,7 +5323,12 @@
                 slicerBtn.textContent = 'SLCR';
             }
             
-            // NEW: Get list of loaded pads for slicer
+            /**
+             * Get list of loaded pads for slicer mode
+             * @method getLoadedPadsList
+             * @returns {string} Comma-separated list of loaded pad numbers
+             * @description Returns a formatted list of pads with samples for slicer selection
+             */
             getLoadedPadsList() {
                 const loadedPads = [];
                 for (let i = 1; i <= 16; i++) {
@@ -4387,7 +5339,12 @@
                 return loadedPads.join(', ');
             }
             
-            // NEW: Select pad for slicing
+            /**
+             * Select a pad for slicing operations
+             * @method selectPadForSlicing
+             * @param {number} padNumber - The pad number to select for slicing
+             * @description Processes pad selection and opens slicer modal with available options
+             */
             selectPadForSlicing(padNumber) {
                 if (!this.samples[padNumber]) {
                     this.logToTerminal('Pad ' + padNumber + ' has no sample to slice', 'warning');
@@ -4411,7 +5368,13 @@
                 this.logToTerminal('Pad ' + padNumber + ' selected for slicing. Available slices: ' + availablePads.length, 'info');
             }
             
-            // NEW: Calculate available pads for slicing
+            /**
+             * Calculate available pads for slicing operations
+             * @method calculateAvailablePadsForSlicing
+             * @param {number} startPad - Starting pad number for calculation
+             * @returns {Array<number>} Array of available empty pad numbers
+             * @description Determines how many slices can be created based on available space
+             */
             calculateAvailablePadsForSlicing(startPad) {
                 const availablePads = [];
                 
@@ -4434,7 +5397,13 @@
                 return availablePads;
             }
 
-            // TERMINAL METHODS
+            /**
+             * Update terminal display with message
+             * @method updateTerminal
+             * @param {string} message - Message to display
+             * @param {string} type - Message type ('info', 'warning', 'error')
+             * @description Updates the terminal footer with formatted messages and timestamps
+             */
             updateTerminal(message, type = 'info') {
                 const terminalText = document.getElementById('terminal-text');
                 const terminalFooter = document.getElementById('terminal-footer');
@@ -4464,14 +5433,40 @@
                 }
             }
             
+            /**
+             * Log message to terminal with throttling
+             * @method logToTerminal
+             * @param {string} message - Message to log
+             * @param {string} type - Message type ('info', 'warning', 'error')
+             * @description Logs messages to terminal with performance throttling in performance mode
+             */
             logToTerminal(message, type = 'info') {
+                // NEW: Throttle logging in performance mode (Cuellos de botella fix)
+                if (this.performanceMode && type === 'info') {
+                    const now = Date.now();
+                    if (now - this.lastLogAt < this.logThrottleInterval) {
+                        // Skip logging if too soon, but always log to console
+                        console.log(`[TERMINAL-THROTTLED] ${message}`);
+                        return;
+                    }
+                    this.lastLogAt = now;
+                }
+                
                 this.updateTerminal(message, type);
                 console.log(`[TERMINAL] ${message}`);
             }
 
         }
         
+        // ============================================================================
         // AUDIO SLIDERS INITIALIZATION
+        // ============================================================================
+        
+        /**
+         * Initialize audio control sliders
+         * @function initializeAudioSliders
+         * @description Sets up event listeners for master effects control sliders
+         */
         function initializeAudioSliders() {
             const sliders = document.querySelectorAll('.audio-slider');
             
@@ -4500,38 +5495,55 @@
             console.log('[SLIDERS] Audio control sliders initialized with master effects system');
         }
         
+        // ============================================================================
         // APPLICATION INITIALIZATION
+        // ============================================================================
+        
+        /**
+         * Main application initialization
+         * @event DOMContentLoaded
+         * @description Initializes the Embrio Player when DOM is ready
+         */
         document.addEventListener('DOMContentLoaded', function() {
             window.embryoPlayer = new EmbrioPlayer();
             
             // Initialize audio control sliders
             initializeAudioSliders();
             
+            // ============================================================================
+            // WELCOME MESSAGE & STATUS
+            // ============================================================================
+            
             // Welcome message in terminal
             setTimeout(() => {
                 if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
                     window.embryoPlayer.logToTerminal('Embrio Player v3.0 - Enhanced Version Started', 'info');
-                    window.embryoPlayer.logToTerminal('No samples precargados - Use "Load Samples" para agregar tus archivos', 'info');
+                    window.embryoPlayer.logToTerminal('🎵 Auto-loading 15 GitHub samples into banks A and B...', 'info');
                 }
             }, 100);
             
+            // ============================================================================
             // INITIALIZATION LOG
+            // ============================================================================
+            
             console.log('[INIT] Embrio Player v3.0 - Enhanced Version Started');
             console.log('[FEATURES] New features:');
             console.log('   - Long Press BPM (rapid changes every 200ms)');
-        console.log('   - Tap Tempo button (click to set BPM)');
+            console.log('   - Tap Tempo button (click to set BPM)');
             console.log('   - Multiple input system (Mouse + Touch + Keyboard + MIDI)');
             console.log('   - Keyboard mapping: QWER/ASDF/ZXCV/1234 → Pads 1-16');
             console.log('   - Active input method indicators');
             console.log('   - Enhanced visual feedback');
             console.log('   - Unified pad control system');
             console.log('   - Touch button for mobile slicer');
-                            console.log('[LATENCY] LATENCY OPTIMIZATIONS:');
+            
+            console.log('[LATENCY] LATENCY OPTIMIZATIONS:');
             console.log('   - AudioContext configured for minimum latency');
             console.log('   - Pre-created audio nodes');
             console.log('   - Auto performance mode (visualization only during sequence playback)');
             console.log('   - Asynchronous DOM operations');
-                            console.log('[READY] Ready to use - Start audio to begin (no samples precargados)');
+            
+            console.log('[READY] Ready to use - Start audio to begin (GitHub samples will auto-load)');
         });
     </script>
 </body>
