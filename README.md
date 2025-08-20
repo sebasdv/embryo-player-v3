@@ -1,4 +1,4 @@
-# Embrio Player v3.0 - Enhanced Version
+# Embrio Player v3.0
 
 [![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/sebasdv/embrio-player-v3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
