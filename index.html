@@ -66,6 +66,13 @@
             position: relative;
         }
 
+        /* Ajuste específico para móviles - Dynamic Viewport Height */
+        @media (max-width: 768px) {
+            body {
+                min-height: 100dvh; /* Dynamic viewport height para móviles */
+            }
+        }
+
         /* Efecto de scanlines */
         body::after {
             content: "";
