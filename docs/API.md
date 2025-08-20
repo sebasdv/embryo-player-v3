@@ -1,6 +1,6 @@
-# API Reference - Embrio Player v3.0
+# API Reference - Embryo Player v3.0
 
-Complete technical documentation for the Embrio Player API, classes, and methods.
+Complete technical documentation for the Embryo Player API, classes, and methods.
 
 ## Table of Contents
 

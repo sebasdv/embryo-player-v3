@@ -1,6 +1,6 @@
-# Performance Guide - Embrio Player v3.0
+# Performance Guide - Embryo Player v3.0
 
-Comprehensive guide to the performance optimizations implemented in Embrio Player v3.0.
+Comprehensive guide to the performance optimizations implemented in Embryo Player v3.0.
 
 ## Table of Contents
 

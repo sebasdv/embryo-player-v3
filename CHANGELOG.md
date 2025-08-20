@@ -1,11 +1,11 @@
 # Changelog
 
-All notable changes to the **Embrio Player v3.0** project will be documented in this file.
+All notable changes to the **Embryo Player** project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - 2025-08-18 - Enhanced Version (Gold Release)
+## [3.0.0] - 2025-08-18 (Gold Release)
 
 ### **Major Release - Professional Grade**
 This version represents a complete overhaul with professional-grade features and optimizations.

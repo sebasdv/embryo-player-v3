@@ -1,6 +1,6 @@
-# Sample Management - Embrio Player v3.0
+# Sample Management - Embryo Player v3.0
 
-Complete guide to working with audio samples in Embrio Player v3.0.
+Complete guide to working with audio samples in Embryo Player v3.0.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ Complete guide to working with audio samples in Embrio Player v3.0.
 
 ### **Sample System Architecture**
 
-Embrio Player uses a sophisticated sample management system with:
+Embryo Player uses a sophisticated sample management system with:
 
 - **16 Pads**: Each pad can hold one sample
 - **4 Banks**: A, B, C, D for organization

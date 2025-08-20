@@ -1,4 +1,4 @@
-# Embrio Player v3.0
+# Embryo Player v3.0
 
 [![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/sebasdv/embrio-player-v3)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -42,7 +42,7 @@ A powerful, browser-based audio sampler and sequencer built with modern web tech
 ## Quick Start
 
 ### **Live Demo**
-Open `index.html` in any modern web browser to start using Embrio Player.
+Open `index.html` in any modern web browser to start using Embryo Player.
 
 ### **Requirements**
 - Modern web browser with Web Audio API support
@@ -162,4 +162,4 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Made with love for the music community**
 
-*Embrio Player v3.0 - Professional Web Sampler & Sequencer*
+*Embryo Player v3.0 - Professional Web Sampler & Sequencer*
