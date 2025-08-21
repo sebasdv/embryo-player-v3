@@ -4595,7 +4595,7 @@
                 this.updateBarBeatDisplay();
                 
                 this.beatInterval = setInterval(function() {
-                    if (self.isRecording || self.isPlaying) {
+                    if (self.isRecording) {
                         tickCount++;
                         
                         // Actualizar el pulso basado en el tick
@@ -4604,56 +4604,32 @@
                         
                         // Si completamos un compás
                         if (self.currentBeat === 1) {
-                            if (self.isRecording) {
-                                // Durante la grabación, avanzar secuencialmente (0 a 3)
-                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
-                            } else if (self.isPlaying) {
-                                // Durante la reproducción, avanzar en bucle continuo
-                                self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
-                                
-                                // Log del loop para debugging
-                                if (self.currentBar === 0) {
-                                    self.logToTerminal('Loop: Starting new sequence cycle', 'info');
-                                }
-                            }
+                            // Durante la grabación, avanzar secuencialmente (0 a 3)
+                            self.currentBar = Math.floor(tickCount / BEATS_PER_BAR) % BAR_COUNT;
                             document.getElementById('current-bar').textContent = self.currentBar + 1;
                             
-                            if (self.isRecording) {
-                                totalBarsRecorded++;
+                            totalBarsRecorded++;
+                            
+                            if (totalBarsRecorded >= BAR_COUNT) {
+                                self.isRecording = false;
+                                self.isPlaying = true;
                                 
-                                if (totalBarsRecorded >= BAR_COUNT) {
-                                    self.isRecording = false;
-                                    self.isPlaying = true;
-                                    
-                                    self.stopMetronome();
-                                    
-                                    document.getElementById('record-sequence').textContent = "REC";
-                                    document.getElementById('record-sequence').classList.remove('active');
-                                    
-                                    // AUTO: Activate play button to show sequence is playing
-                                    document.getElementById('play-sequence').classList.add('active');
-                                    
-                                    self.logToTerminal('Recording completed. Starting playback in loop...', 'info');
-                                    
-                                    // AUTO: Start playing the recorded sequence immediately
-                                    self.playCurrentBar();
-                                }
-                                else {
-                                    const statusMsg = 'Recording bar ' + (self.currentBar + 1) + '... (' + totalBarsRecorded + '/' + BAR_COUNT + ')';
-                                    self.logToTerminal(statusMsg, 'info');
-                                }
+                                self.stopMetronome();
+                                
+                                document.getElementById('record-sequence').textContent = "REC";
+                                document.getElementById('record-sequence').classList.remove('active');
+                                
+                                // AUTO: Activate play button to show sequence is playing
+                                document.getElementById('play-sequence').classList.add('active');
+                                
+                                self.logToTerminal('Recording completed. Starting playback with deterministic scheduler...', 'info');
+                                
+                                // AUTO: Start the deterministic scheduler instead of old system
+                                self.startSequence();
                             }
-                            else if (self.isPlaying) {
-                                const statusMsg = 'Playing bar ' + (self.currentBar + 1) + '...';
+                            else {
+                                const statusMsg = 'Recording bar ' + (self.currentBar + 1) + '... (' + totalBarsRecorded + '/' + BAR_COUNT + ')';
                                 self.logToTerminal(statusMsg, 'info');
-                                
-                                // Reproducir el compás actual
-                                self.playCurrentBar();
-                                
-                                // Si llegamos al final de la secuencia, reiniciar para el loop
-                                if (self.currentBar === BAR_COUNT - 1) {
-                                    self.logToTerminal('Loop completed, restarting sequence...', 'info');
-                                }
                             }
                         }
                     } else {
@@ -4710,6 +4686,9 @@
              * @description Initiates the deterministic musical scheduler for sequence playback
              */
             startSequence() {
+                // Clean up any existing audio sources before starting new sequence
+                this.cleanupActiveSources();
+                
                 this.isPlaying = true;
                 this.sequenceStartTime = this.audioContext.currentTime + 0.05; // pequeño offset
                 this.nextNoteTime = this.sequenceStartTime;
@@ -4759,6 +4738,7 @@
                         for (const ev of bar) {
                             const when = this.sequenceStartTime + (cycle * loopDuration) + (barIndex * this.barDuration()) + ev.time;
                             if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
+                                this.logToTerminal(`Scheduling event: Pad ${ev.pad} at ${when.toFixed(3)}s (Bar ${barIndex + 1}, Cycle ${cycle + 1})`, 'info');
                                 this.triggerScheduled(ev, when);
                             }
                         }
@@ -4817,6 +4797,33 @@
             }
             
             /**
+             * Clean up all active audio sources to prevent double playback
+             * @method cleanupActiveSources
+             * @description Stops and disconnects all active audio sources to ensure clean state
+             */
+            cleanupActiveSources() {
+                let sourcesCleaned = 0;
+                const activeSourceKeys = Object.keys(this.activeSources);
+                
+                activeSourceKeys.forEach(padNumber => {
+                    if (this.activeSources[padNumber]) {
+                        try {
+                            this.activeSources[padNumber].stop();
+                            this.activeSources[padNumber].disconnect();
+                            delete this.activeSources[padNumber];
+                            sourcesCleaned++;
+                        } catch (error) {
+                            console.warn('Error cleaning up audio source for pad', padNumber, error);
+                        }
+                    }
+                });
+                
+                if (sourcesCleaned > 0) {
+                    this.logToTerminal(`Cleaned up ${sourcesCleaned} active audio sources`, 'info');
+                }
+            }
+            
+            /**
              * Stop sequence playback and scheduler
              * @method stopSequence
              * @description Stops sequence playback, cleans up all timers and resets state
@@ -4834,6 +4841,9 @@
                 this.isRecording = false; // Also stop recording if active
                 
                 this.stopTimers();
+                
+                // Clean up all active audio sources to prevent double playback
+                this.cleanupActiveSources();
                 
                 // Reset UI buttons
                 const playBtn = document.getElementById('play-sequence');
@@ -5037,53 +5047,19 @@
             }
             
             /**
-             * Play the current bar of the sequence
+             * Play the current bar of the sequence (Legacy method - now uses deterministic scheduler)
              * @method playCurrentBar
-             * @description Executes all events in the current bar with proper timing
+             * @description This method is kept for compatibility but the main playback now uses the deterministic scheduler
              */
             playCurrentBar() {
+                // This method is deprecated - the deterministic scheduler handles all playback
+                // Keeping it for backward compatibility but it should not be used for main sequence playback
+                this.logToTerminal('Warning: playCurrentBar is deprecated. Use startSequence() instead.', 'warning');
+                
                 if (!this.isPlaying) return;
                 
-                const self = this;
-                const currentBarEvents = this.sequence[this.currentBar];
-                
-                if (!currentBarEvents || currentBarEvents.length === 0) {
-                    // Barra vacía, continuar con la siguiente
-                    return;
-                }
-                
-                this.logToTerminal(`Playing bar ${this.currentBar + 1} with ${currentBarEvents.length} events`, 'info');
-                
-                currentBarEvents.forEach(function(event) {
-                    if (!self.isPlaying) return; // Verificar si aún está reproduciendo
-                    
-                    // Calcular el tiempo relativo dentro del compás
-                    const eventTime = event.time || 0;
-                    const beatDuration = 60 / self.bpm; // duración de un pulso en segundos
-                    const eventDelay = eventTime * beatDuration;
-                    
-                    setTimeout(function() {
-                        if (self.isPlaying) {
-                            try {
-                                if (event.bank && event.bank !== self.currentBank) {
-                                    const originalBank = self.currentBank;
-                                    self.selectBank(event.bank);
-                                    
-                                    self.playPad(event.pad);
-                                    
-                                    setTimeout(function() {
-                                        self.selectBank(originalBank);
-                                    }, 100);
-                                } else {
-                                    self.playPad(event.pad);
-                                }
-                            } catch (error) {
-                                console.error('Error playing event:', error);
-                                self.logToTerminal(`Error playing event in bar ${self.currentBar + 1}: ${error.message}`, 'error');
-                            }
-                        }
-                    }, eventDelay * 1000);
-                });
+                // For manual play button, start the deterministic scheduler
+                this.startSequence();
             }
             
 
