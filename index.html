@@ -4713,8 +4713,12 @@
                 this.isPlaying = true;
                 this.sequenceStartTime = this.audioContext.currentTime + 0.05; // pequeño offset
                 this.nextNoteTime = this.sequenceStartTime;
+                this.currentBar = 0; // Reset to start of sequence
+                this.currentBeat = 1;
+                this.updateBarBeatDisplay();
+                
+                this.logToTerminal('Starting deterministic scheduler with loop', 'info');
                 this.schedulerTimer = setInterval(() => this.schedulerTick(), LOOKAHEAD * 1000);
-                this.queueBar(0); // arranca con la barra 0
             }
             
             /**
@@ -4724,16 +4728,43 @@
              */
             schedulerTick() {
                 const now = this.audioContext.currentTime;
+                const loopDuration = this.barDuration() * BAR_COUNT;
+                
+                // Update current bar based on elapsed time since sequence start
+                if (this.sequenceStartTime > 0) {
+                    const elapsedTime = now - this.sequenceStartTime;
+                    const currentCycle = Math.floor(elapsedTime / loopDuration);
+                    const timeInCurrentCycle = elapsedTime % loopDuration;
+                    this.currentBar = Math.floor(timeInCurrentCycle / this.barDuration());
+                    this.currentBeat = Math.floor((timeInCurrentCycle % this.barDuration()) / this.beatDuration()) + 1;
+                    this.updateBarBeatDisplay();
+                    
+                    // Log loop completion
+                    if (this.currentBar === 0 && this.currentBeat === 1) {
+                        this.logToTerminal(`Loop ${currentCycle + 1}: Starting new sequence cycle`, 'info');
+                    }
+                }
+                
+                // Schedule events for the look-ahead horizon
                 while (this.nextNoteTime < now + SCHEDULE_AHEAD_TIME) {
-                    // Colar notas de la barra actual cuyo event.time caiga entre now..now+horizon
-                    const bar = this.sequence[this.currentBar];
-                    for (const ev of bar) {
-                        const when = this.sequenceStartTime + ev.time + this.currentBar * this.barDuration();
-                        if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
-                            this.triggerScheduled(ev, when);
+                    // Calculate which cycle and bar this time represents
+                    const timeFromStart = this.nextNoteTime - this.sequenceStartTime;
+                    const cycle = Math.floor(timeFromStart / loopDuration);
+                    const timeInCycle = timeFromStart % loopDuration;
+                    const barIndex = Math.floor(timeInCycle / this.barDuration());
+                    
+                    // Get events from the calculated bar
+                    const bar = this.sequence[barIndex];
+                    if (bar && bar.length > 0) {
+                        for (const ev of bar) {
+                            const when = this.sequenceStartTime + (cycle * loopDuration) + (barIndex * this.barDuration()) + ev.time;
+                            if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
+                                this.triggerScheduled(ev, when);
+                            }
                         }
                     }
-                    // Avanzar beat/bar si corresponde
+                    
+                    // Advance to next grid step
                     this.nextNoteTime += this.beatDuration() / GRID_STEPS_PER_BEAT;
                 }
             }
@@ -4786,21 +4817,46 @@
             }
             
             /**
-             * Stop deterministic scheduler
+             * Stop sequence playback and scheduler
              * @method stopSequence
-             * @description Stops the musical scheduler and resets playback state
-             */
-            /**
-             * Stop sequence playback
-             * @method stopSequence
-             * @description Stops sequence playback and resets all timers
+             * @description Stops sequence playback, cleans up all timers and resets state
              */
             stopSequence() {
+                this.logToTerminal('Stopping sequence playback...', 'info');
+                
+                // Stop deterministic scheduler
                 if (this.schedulerTimer) {
                     clearInterval(this.schedulerTimer);
                     this.schedulerTimer = null;
                 }
+                
                 this.isPlaying = false;
+                this.isRecording = false; // Also stop recording if active
+                
+                this.stopTimers();
+                
+                // Reset UI buttons
+                const playBtn = document.getElementById('play-sequence');
+                const recordBtn = document.getElementById('record-sequence');
+                
+                if (playBtn) playBtn.classList.remove('active');
+                if (recordBtn) {
+                    recordBtn.classList.remove('active');
+                    recordBtn.textContent = 'REC';
+                }
+                
+                // Reset counters
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                this.updateBarBeatDisplay();
+                
+                // AUTO: Return to performance mode when sequence stops
+                if (!this.performanceMode) {
+                    this.performanceMode = true;
+                    this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
+                }
+                
+                this.logToTerminal('Sequence playback stopped and reset', 'info');
             }
             
             /**
@@ -5030,37 +5086,7 @@
                 });
             }
             
-            stopSequence() {
-                this.logToTerminal('Stopping sequence playback...', 'info');
-                
-                this.isPlaying = false;
-                this.isRecording = false; // Also stop recording if active
-                
-                this.stopTimers();
-                
-                // Reset UI buttons
-                const playBtn = document.getElementById('play-sequence');
-                const recordBtn = document.getElementById('record-sequence');
-                
-                if (playBtn) playBtn.classList.remove('active');
-                if (recordBtn) {
-                    recordBtn.classList.remove('active');
-                    recordBtn.textContent = 'REC';
-                }
-                
-                // Reset counters
-                this.currentBar = 0;
-                this.currentBeat = 1;
-                this.updateBarBeatDisplay();
-                
-                // AUTO: Return to performance mode when sequence stops
-                if (!this.performanceMode) {
-                    this.performanceMode = true;
-                    this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
-                }
-                
-                this.logToTerminal('Sequence playback stopped and reset', 'info');
-            }
+
             
             /**
              * Stop all audio and sequences
