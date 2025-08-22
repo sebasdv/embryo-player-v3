@@ -2293,7 +2293,7 @@
                     try {
                         await this.requestMicrophonePermission();
                         this.logToTerminal('Microphone access granted for recording.', 'info');
-                    this.logToTerminal('Hold SHIFT + click empty pad to record from microphone', 'info');
+                    this.logToTerminal('SHIFT + click empty pad: click to start recording, click again to stop', 'info');
                     } catch (error) {
                         this.logToTerminal('Microphone access denied. Recording will not be available.', 'warning');
                     }
@@ -2702,7 +2702,7 @@
                 const self = this;
                 
                 // Mouse events
-                pad.addEventListener('mousedown', function(e) {
+                pad.addEventListener('click', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
                     
@@ -2710,21 +2710,19 @@
                     if (self.slicerMode && self.samples[padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
-                        // NEW: Check for SHIFT + pad combination for microphone recording
+                        // NEW: Improved SHIFT + pad recording system
                         if (self.isShiftActive && !self.samples[padNumber]) {
-                            self.startMicrophoneRecording(padNumber);
+                            // Toggle recording: click to start, click again to stop
+                            if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                // Stop recording if already recording on this pad
+                                self.stopMicrophoneRecording();
+                            } else if (!self.isMicrophoneRecording) {
+                                // Start recording on this pad
+                                self.startMicrophoneRecording(padNumber);
+                            }
                         } else {
                             self.padController.triggerPad(padNumber, 127, 'mouse');
                         }
-                    }
-                });
-                
-                pad.addEventListener('mouseup', function(e) {
-                    if (e.target.classList.contains('delete-pad-btn')) return;
-                    
-                    // NEW: Stop recording if SHIFT was active and we were recording
-                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                        self.stopMicrophoneRecording();
                     }
                 });
                 
@@ -2737,9 +2735,16 @@
                     if (self.slicerMode && self.samples[padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
-                        // NEW: Check for SHIFT + pad combination for microphone recording
+                        // NEW: Improved SHIFT + pad recording system for touch
                         if (self.isShiftActive && !self.samples[padNumber]) {
-                            self.startMicrophoneRecording(padNumber);
+                            // Toggle recording: touch to start, touch again to stop
+                            if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                // Stop recording if already recording on this pad
+                                self.stopMicrophoneRecording();
+                            } else if (!self.isMicrophoneRecording) {
+                                // Start recording on this pad
+                                self.startMicrophoneRecording(padNumber);
+                            }
                         } else {
                             self.padController.triggerPad(padNumber, 127, 'touch');
                             self.touchedPads.add(padNumber);
@@ -2749,22 +2754,11 @@
                 
                 pad.addEventListener('touchend', function(e) {
                     if (e.target.classList.contains('delete-pad-btn')) return;
-                    
-                    // NEW: Stop recording if SHIFT was active and we were recording
-                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                        self.stopMicrophoneRecording();
-                    }
-                    
                     self.touchedPads.delete(padNumber);
                 });
                 
                 pad.addEventListener('touchcancel', function(e) {
                     self.touchedPads.delete(padNumber);
-                    
-                    // NEW: Stop recording if touch is cancelled
-                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                        self.stopMicrophoneRecording();
-                    }
                 });
             }
             
@@ -5585,7 +5579,7 @@
 
                 // Start recording
                 this.mediaRecorder.start(100); // Collect data every 100ms
-                this.logToTerminal(`Recording started on pad ${padId}. Hold pad to record (max 10s).`, 'info');
+                this.logToTerminal(`Recording started on pad ${padId}. Click pad again to stop recording (max 10s).`, 'info');
                 
                 // Start VU meter
                 this.startVUMeter();
@@ -5762,7 +5756,7 @@
                         if (window.embryoPlayer.isShiftActive) {
                             this.style.background = 'var(--gb-active)';
                             this.style.color = 'var(--gb-text-inverse)';
-                            window.embryoPlayer.logToTerminal('SHIFT ACTIVE - Hold SHIFT + click empty pad to record', 'info');
+                            window.embryoPlayer.logToTerminal('SHIFT ACTIVE - Click empty pad to start recording, click again to stop', 'info');
                         } else {
                             this.style.background = 'var(--bg-color)';
                             this.style.color = 'var(--text-color)';
