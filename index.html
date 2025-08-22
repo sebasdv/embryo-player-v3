@@ -231,7 +231,7 @@
             background: var(--shadow-color-dark);
             border: 2px solid var(--shadow-color-light);
             border-radius: 4px;
-            margin: 0 0 0 0;
+            margin: 0 0 15px 0;
             padding: 10px;
             font-family: 'Press Start 2P', monospace;
             font-size: 10px;
@@ -1414,7 +1414,7 @@
             </div>
         </div>
         <div class="empty-space"></div>
-        <div class="empty-space"></div>
+        <button id="shift-button" class="header-button">SHIFT</button>
     </div>
         
         <!-- NEW: Input Status Indicator -->
@@ -1453,21 +1453,7 @@
             <button id="bank-h" class="header-button bank-btn">SLCR</button>
         </div>
         
-        <!-- Audio Control Sliders -->
-        <div class="header-row slider-row">
-            <div class="slider-container">
-                <input type="range" id="slider-1" class="audio-slider" min="0" max="100" value="100">
-            </div>
-            <div class="slider-container">
-                <input type="range" id="slider-2" class="audio-slider" min="0" max="100" value="0">
-            </div>
-            <div class="slider-container">
-                <input type="range" id="slider-3" class="audio-slider" min="0" max="100" value="50">
-            </div>
-            <div class="slider-container">
-                <input type="range" id="slider-4" class="audio-slider" min="0" max="100" value="25">
-            </div>
-        </div>
+
         
         
         
@@ -1488,6 +1474,22 @@
         </div>
 
     </footer>
+
+    <!-- Audio Control Sliders -->
+    <div class="header-row slider-row">
+        <div class="slider-container">
+            <input type="range" id="slider-1" class="audio-slider" min="0" max="100" value="100">
+        </div>
+        <div class="slider-container">
+            <input type="range" id="slider-2" class="audio-slider" min="0" max="100" value="0">
+        </div>
+        <div class="slider-container">
+            <input type="range" id="slider-3" class="audio-slider" min="0" max="100" value="50">
+        </div>
+        <div class="slider-container">
+            <input type="range" id="slider-4" class="audio-slider" min="0" max="100" value="25">
+        </div>
+    </div>
 
     <main>
         <div id="pad-grid" class="pad-grid">
@@ -2100,6 +2102,17 @@
                     resonance: 5
                 };
 
+                // NEW: Microphone Recording System
+                this.microphoneStream = null;
+                this.hasMicrophoneAccess = false;
+                this.isRecording = false;
+                this.recordingPadId = null;
+                this.recordingStartTime = null;
+                this.recordingChunks = [];
+                this.mediaRecorder = null;
+                this.maxRecordingTimer = null;
+                this.isShiftActive = false;
+
                 
                 // ============================================================================
                 // CONTROLLER INITIALIZATION
@@ -2272,17 +2285,20 @@
                     // OPTIMIZATION: Pre-create audio nodes to reduce latency
                     this.preCreateAudioNodes();
                     
-
+                    // NEW: Request microphone permissions for recording functionality
+                    try {
+                        await this.requestMicrophonePermission();
+                        this.logToTerminal('Microphone access granted for recording.', 'info');
+                    } catch (error) {
+                        this.logToTerminal('Microphone access denied. Recording will not be available.', 'warning');
+                    }
                     
                     this.isAudioInitialized = true;
                     
-
-                    
                     // Update UI
                     document.getElementById('start-audio').disabled = true;
-
                     
-                            this.logToTerminal('Audio started. Loading GitHub samples automatically...', 'info');
+                    this.logToTerminal('Audio started. Loading GitHub samples automatically...', 'info');
                     
                     // NEW: Log effects system status
                     this.logEffectsStatus();
@@ -2689,7 +2705,21 @@
                     if (self.slicerMode && self.samples[padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
-                        self.padController.triggerPad(padNumber, 127, 'mouse');
+                        // NEW: Check for SHIFT + pad combination for microphone recording
+                        if (self.isShiftActive && !self.samples[padNumber]) {
+                            self.startMicrophoneRecording(padNumber);
+                        } else {
+                            self.padController.triggerPad(padNumber, 127, 'mouse');
+                        }
+                    }
+                });
+                
+                pad.addEventListener('mouseup', function(e) {
+                    if (e.target.classList.contains('delete-pad-btn')) return;
+                    
+                    // NEW: Stop recording if SHIFT was active and we were recording
+                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                        self.stopMicrophoneRecording();
                     }
                 });
                 
@@ -2702,14 +2732,34 @@
                     if (self.slicerMode && self.samples[padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
-                        self.padController.triggerPad(padNumber, 127, 'touch');
-                        self.touchedPads.add(padNumber);
-                        self.touchedPads.delete(padNumber);
+                        // NEW: Check for SHIFT + pad combination for microphone recording
+                        if (self.isShiftActive && !self.samples[padNumber]) {
+                            self.startMicrophoneRecording(padNumber);
+                        } else {
+                            self.padController.triggerPad(padNumber, 127, 'touch');
+                            self.touchedPads.add(padNumber);
+                        }
                     }
+                });
+                
+                pad.addEventListener('touchend', function(e) {
+                    if (e.target.classList.contains('delete-pad-btn')) return;
+                    
+                    // NEW: Stop recording if SHIFT was active and we were recording
+                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                        self.stopMicrophoneRecording();
+                    }
+                    
+                    self.touchedPads.delete(padNumber);
                 });
                 
                 pad.addEventListener('touchcancel', function(e) {
                     self.touchedPads.delete(padNumber);
+                    
+                    // NEW: Stop recording if touch is cancelled
+                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                        self.stopMicrophoneRecording();
+                    }
                 });
             }
             
@@ -5465,6 +5515,235 @@
                 console.log(`[TERMINAL] ${message}`);
             }
 
+            /**
+             * Request microphone permission for recording functionality
+             * @method requestMicrophonePermission
+             * @description Requests access to microphone and stores the MediaStream
+             * @returns {Promise<MediaStream>} Promise that resolves with the audio stream
+             */
+            async requestMicrophonePermission() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: 44100,
+                            channelCount: 1
+                        } 
+                    });
+                    
+                    this.microphoneStream = stream;
+                    this.hasMicrophoneAccess = true;
+                    return stream;
+                } catch (error) {
+                    this.hasMicrophoneAccess = false;
+                    throw new Error('Microphone access denied: ' + error.message);
+                }
+            }
+
+            /**
+             * Start microphone recording for a specific pad
+             * @method startMicrophoneRecording
+             * @param {number} padId - ID of the pad to record to
+             * @description Starts recording from microphone to the specified pad
+             */
+            startMicrophoneRecording(padId) {
+                if (!this.hasMicrophoneAccess || !this.microphoneStream) {
+                    this.logToTerminal('Microphone not available. Press START first.', 'warning');
+                    return;
+                }
+
+                if (this.isRecording) {
+                    this.logToTerminal('Already recording. Stop current recording first.', 'warning');
+                    return;
+                }
+
+                this.isRecording = true;
+                this.recordingPadId = padId;
+                this.recordingStartTime = Date.now();
+                this.recordingChunks = [];
+
+                // Create MediaRecorder with compatible format (will convert to WAV later)
+                const options = { mimeType: 'audio/webm;codecs=opus' };
+                this.mediaRecorder = new MediaRecorder(this.microphoneStream, options);
+
+                this.mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        this.recordingChunks.push(event.data);
+                    }
+                };
+
+                this.mediaRecorder.onstop = () => {
+                    this.finishRecording();
+                };
+
+                // Start recording
+                this.mediaRecorder.start(100); // Collect data every 100ms
+                this.logToTerminal(`Recording started on pad ${padId}. Hold pad to record (max 10s).`, 'info');
+                
+                // Start VU meter
+                this.startVUMeter();
+                
+                // Set maximum recording time (10 seconds)
+                this.maxRecordingTimer = setTimeout(() => {
+                    if (this.isRecording) {
+                        this.stopMicrophoneRecording();
+                    }
+                }, 10000);
+            }
+
+            /**
+             * Stop microphone recording
+             * @method stopMicrophoneRecording
+             * @description Stops the current recording and processes the audio
+             */
+            stopMicrophoneRecording() {
+                if (!this.isRecording || !this.mediaRecorder) {
+                    return;
+                }
+
+                clearTimeout(this.maxRecordingTimer);
+                this.isRecording = false;
+                
+                if (this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                }
+                
+                this.stopVUMeter();
+                this.logToTerminal('Recording stopped. Processing audio...', 'info');
+            }
+
+            /**
+             * Finish recording and save to pad
+             * @method finishRecording
+             * @description Processes recorded audio and saves it to the specified pad
+             */
+            async finishRecording() {
+                if (this.recordingChunks.length === 0) {
+                    this.logToTerminal('No audio recorded.', 'warning');
+                    return;
+                }
+
+                try {
+                    const audioBlob = new Blob(this.recordingChunks, { type: 'audio/wav' });
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    
+                    // Decode audio data
+                    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    
+                    // Create sample name
+                    const timestamp = new Date().toISOString().slice(11, 19).replace(/:/g, '-');
+                    const sampleName = `MIC_${this.currentBank}_${this.recordingPadId}_${timestamp}`;
+                    
+                    // Save to current bank and pad
+                    this.samples[this.currentBank][this.recordingPadId] = {
+                        name: sampleName,
+                        buffer: audioBuffer,
+                        duration: audioBuffer.duration,
+                        source: 'microphone'
+                    };
+
+                    this.logToTerminal(`Sample "${sampleName}" saved to pad ${this.recordingPadId} (${audioBuffer.duration.toFixed(2)}s)`, 'info');
+                    
+                    // Update pad display
+                    this.updatePadDisplay(this.recordingPadId);
+                    
+                } catch (error) {
+                    this.logToTerminal('Error processing recorded audio: ' + error.message, 'error');
+                }
+
+                // Reset recording state
+                this.recordingChunks = [];
+                this.recordingPadId = null;
+                this.recordingStartTime = null;
+            }
+
+            /**
+             * Start VU meter visualization
+             * @method startVUMeter
+             * @description Starts real-time VU meter display during recording
+             */
+            startVUMeter() {
+                if (!this.microphoneStream) return;
+
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(this.microphoneStream);
+                const analyser = audioContext.createAnalyser();
+                
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const updateVUMeter = () => {
+                    if (!this.isRecording) return;
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                    const level = Math.min(Math.floor(average / 25), 10); // Scale to 0-10
+                    
+                    // Update terminal with VU meter
+                    const vuBar = '█'.repeat(level) + '░'.repeat(10 - level);
+                    const recordingTime = Math.min((Date.now() - this.recordingStartTime) / 1000, 10);
+                    const timeDisplay = recordingTime.toFixed(1);
+                    
+                    this.updateTerminal(`REC MIC [${vuBar}] TIME: ${timeDisplay}s`, 'info');
+                    
+                    if (this.isRecording) {
+                        requestAnimationFrame(updateVUMeter);
+                    }
+                };
+                
+                updateVUMeter();
+            }
+
+            /**
+             * Stop VU meter visualization
+             * @method stopVUMeter
+             * @description Stops VU meter display
+             */
+            stopVUMeter() {
+                // VU meter stops automatically when isRecording becomes false
+            }
+
+        }
+        
+        // ============================================================================
+        // SHIFT BUTTON INITIALIZATION
+        // ============================================================================
+        
+        /**
+         * Initialize SHIFT button for microphone recording functionality
+         * @function initializeShiftButton
+         * @description Sets up event listeners for SHIFT button toggle functionality
+         */
+        function initializeShiftButton() {
+            const shiftButton = document.getElementById('shift-button');
+            
+            if (shiftButton) {
+                shiftButton.addEventListener('click', function() {
+                    if (window.embryoPlayer) {
+                        window.embryoPlayer.isShiftActive = !window.embryoPlayer.isShiftActive;
+                        
+                        // Update button appearance
+                        if (window.embryoPlayer.isShiftActive) {
+                            this.style.background = 'var(--gb-active)';
+                            this.style.color = 'var(--gb-text-inverse)';
+                            window.embryoPlayer.logToTerminal('SHIFT ACTIVE - Hold SHIFT + click empty pad to record', 'info');
+                        } else {
+                            this.style.background = 'var(--bg-color)';
+                            this.style.color = 'var(--text-color)';
+                            window.embryoPlayer.logToTerminal('SHIFT deactivated', 'info');
+                        }
+                    }
+                });
+                
+                console.log('[SHIFT] SHIFT button initialized for microphone recording');
+            } else {
+                console.warn('[SHIFT] SHIFT button not found in DOM');
+            }
         }
         
         // ============================================================================
@@ -5519,6 +5798,9 @@
             // Initialize audio control sliders
             initializeAudioSliders();
             
+            // NEW: Initialize SHIFT button for microphone recording
+            initializeShiftButton();
+            
             // ============================================================================
             // WELCOME MESSAGE & STATUS
             // ============================================================================
@@ -5528,6 +5810,8 @@
                 if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
                     window.embryoPlayer.logToTerminal('Embryo Player v3.0 Started', 'info');
                     window.embryoPlayer.logToTerminal('🎵 Auto-loading 15 GitHub samples into banks A and B...', 'info');
+                    window.embryoPlayer.logToTerminal('🎤 NEW: Press START to enable microphone recording', 'info');
+                    window.embryoPlayer.logToTerminal('🎤 NEW: SHIFT + empty pad = record from microphone (0-10s)', 'info');
                 }
             }, 100);
             
@@ -5545,6 +5829,9 @@
             console.log('   - Enhanced visual feedback');
             console.log('   - Unified pad control system');
             console.log('   - Touch button for mobile slicer');
+            console.log('   - NEW: Microphone recording with SHIFT + pad (0-10s)');
+            console.log('   - NEW: Real-time VU meter during recording');
+            console.log('   - NEW: WAV format output for recorded samples');
             
             console.log('[LATENCY] LATENCY OPTIMIZATIONS:');
             console.log('   - AudioContext configured for minimum latency');
