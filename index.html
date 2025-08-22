@@ -2105,7 +2105,7 @@
                 // NEW: Microphone Recording System
                 this.microphoneStream = null;
                 this.hasMicrophoneAccess = false;
-                this.isRecording = false;
+                this.isMicrophoneRecording = false;
                 this.recordingPadId = null;
                 this.recordingStartTime = null;
                 this.recordingChunks = [];
@@ -2143,6 +2143,10 @@
                 // Create UI components after controllers are ready
                 console.log('[INIT] Creating pad grid interface...');
                 this.createPadGrid();
+                
+                // Initialize SHIFT button for microphone recording
+                console.log('[INIT] Initializing SHIFT button...');
+                initializeShiftButton();
                 
                 console.log('[INIT] EmbrioPlayer constructor completed successfully');
                 
@@ -2289,6 +2293,7 @@
                     try {
                         await this.requestMicrophonePermission();
                         this.logToTerminal('Microphone access granted for recording.', 'info');
+                    this.logToTerminal('Hold SHIFT + click empty pad to record from microphone', 'info');
                     } catch (error) {
                         this.logToTerminal('Microphone access denied. Recording will not be available.', 'warning');
                     }
@@ -2718,7 +2723,7 @@
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     
                     // NEW: Stop recording if SHIFT was active and we were recording
-                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
                         self.stopMicrophoneRecording();
                     }
                 });
@@ -2746,7 +2751,7 @@
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     
                     // NEW: Stop recording if SHIFT was active and we were recording
-                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
                         self.stopMicrophoneRecording();
                     }
                     
@@ -2757,7 +2762,7 @@
                     self.touchedPads.delete(padNumber);
                     
                     // NEW: Stop recording if touch is cancelled
-                    if (self.isShiftActive && self.isRecording && self.recordingPadId === padNumber) {
+                    if (self.isShiftActive && self.isMicrophoneRecording && self.recordingPadId === padNumber) {
                         self.stopMicrophoneRecording();
                     }
                 });
@@ -5554,17 +5559,17 @@
                     return;
                 }
 
-                if (this.isRecording) {
+                if (this.isMicrophoneRecording) {
                     this.logToTerminal('Already recording. Stop current recording first.', 'warning');
                     return;
                 }
 
-                this.isRecording = true;
+                this.isMicrophoneRecording = true;
                 this.recordingPadId = padId;
                 this.recordingStartTime = Date.now();
                 this.recordingChunks = [];
 
-                // Create MediaRecorder with compatible format (will convert to WAV later)
+                // Create MediaRecorder with compatible format
                 const options = { mimeType: 'audio/webm;codecs=opus' };
                 this.mediaRecorder = new MediaRecorder(this.microphoneStream, options);
 
@@ -5587,7 +5592,7 @@
                 
                 // Set maximum recording time (10 seconds)
                 this.maxRecordingTimer = setTimeout(() => {
-                    if (this.isRecording) {
+                    if (this.isMicrophoneRecording) {
                         this.stopMicrophoneRecording();
                     }
                 }, 10000);
@@ -5599,12 +5604,12 @@
              * @description Stops the current recording and processes the audio
              */
             stopMicrophoneRecording() {
-                if (!this.isRecording || !this.mediaRecorder) {
+                if (!this.isMicrophoneRecording || !this.mediaRecorder) {
                     return;
                 }
 
                 clearTimeout(this.maxRecordingTimer);
-                this.isRecording = false;
+                this.isMicrophoneRecording = false;
                 
                 if (this.mediaRecorder.state === 'recording') {
                     this.mediaRecorder.stop();
@@ -5626,7 +5631,8 @@
                 }
 
                 try {
-                    const audioBlob = new Blob(this.recordingChunks, { type: 'audio/wav' });
+                    // Create blob with correct MIME type (webm since that's what we're recording)
+                    const audioBlob = new Blob(this.recordingChunks, { type: 'audio/webm;codecs=opus' });
                     const arrayBuffer = await audioBlob.arrayBuffer();
                     
                     // Decode audio data
@@ -5637,6 +5643,13 @@
                     const sampleName = `MIC_${this.currentBank}_${this.recordingPadId}_${timestamp}`;
                     
                     // Save to current bank and pad
+                    if (!this.samples[this.currentBank]) {
+                        this.samples[this.currentBank] = {};
+                    }
+                    if (!this.bankSamples[this.currentBank]) {
+                        this.bankSamples[this.currentBank] = {};
+                    }
+                    
                     this.samples[this.currentBank][this.recordingPadId] = {
                         name: sampleName,
                         buffer: audioBuffer,
@@ -5644,10 +5657,28 @@
                         source: 'microphone'
                     };
 
+                    // Also save to bankSamples for consistency
+                    this.bankSamples[this.currentBank][this.recordingPadId] = {
+                        name: sampleName,
+                        buffer: audioBuffer,
+                        duration: audioBuffer.duration,
+                        source: 'microphone'
+                    };
+
+                    // Update sample names for the bank
+                    if (!this.sampleNames[this.currentBank]) {
+                        this.sampleNames[this.currentBank] = {};
+                    }
+                    this.sampleNames[this.currentBank][this.recordingPadId] = sampleName;
+
                     this.logToTerminal(`Sample "${sampleName}" saved to pad ${this.recordingPadId} (${audioBuffer.duration.toFixed(2)}s)`, 'info');
                     
-                    // Update pad display
-                    this.updatePadDisplay(this.recordingPadId);
+                    // Update pad display using the correct function
+                    this.updatePadUI(this.recordingPadId, null);
+                    this.updatePadBankIndicators();
+                    
+                    // Save sample info to storage
+                    this.saveSampleInfo();
                     
                 } catch (error) {
                     this.logToTerminal('Error processing recorded audio: ' + error.message, 'error');
@@ -5678,7 +5709,7 @@
                 const dataArray = new Uint8Array(bufferLength);
                 
                 const updateVUMeter = () => {
-                    if (!this.isRecording) return;
+                    if (!this.isMicrophoneRecording) return;
                     
                     analyser.getByteFrequencyData(dataArray);
                     const average = dataArray.reduce((a, b) => a + b) / bufferLength;
@@ -5691,7 +5722,7 @@
                     
                     this.updateTerminal(`REC MIC [${vuBar}] TIME: ${timeDisplay}s`, 'info');
                     
-                    if (this.isRecording) {
+                    if (this.isMicrophoneRecording) {
                         requestAnimationFrame(updateVUMeter);
                     }
                 };
