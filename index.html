@@ -189,7 +189,17 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-weight: normal;
+            transition: all 0.3s ease;
         }
+        
+        /* NEW: Estilo para modo MIC cuando SHIFT está activo */
+        .btn-record.mic-mode {
+            background-color: var(--gb-active);
+            color: #FFFFFF; /* Texto blanco para máximo contraste con fondo azul */
+            border-color: var(--gb-active);
+        }
+        
+
         
         /* Botón de Reproducción (Play) */
         .btn-play {
@@ -217,6 +227,8 @@
         .btn-record:hover {
             background-color: var(--shadow-color-dark);
         }
+        
+
         
         .btn-play:hover {
             background-color: var(--shadow-color-dark);
@@ -2018,7 +2030,9 @@
             constructor() {
                 // Audio
                 this.audioContext = null;
-                this.samples = {};
+                this.samples = {
+                    'A': {}, 'B': {}, 'C': {}, 'D': {}
+                };
                 this.activeSources = {};
                 this.visualizers = {};
                 
@@ -2144,9 +2158,8 @@
                 console.log('[INIT] Creating pad grid interface...');
                 this.createPadGrid();
                 
-                // Initialize SHIFT button for microphone recording
-                console.log('[INIT] Initializing SHIFT button...');
-                initializeShiftButton();
+                // SHIFT button will be initialized in DOMContentLoaded
+                console.log('[INIT] SHIFT button initialization scheduled for DOM ready');
                 
                 console.log('[INIT] EmbrioPlayer constructor completed successfully');
                 
@@ -2208,7 +2221,16 @@
                 document.querySelector('.close-help').addEventListener('click', function() {
                     document.getElementById('help-modal').style.display = 'none';
                 });
-                document.getElementById('record-sequence').addEventListener('click', function() { self.toggleRecording(); });
+                // NEW: Transform REC button to MIC when SHIFT is active
+                document.getElementById('record-sequence').addEventListener('click', function() { 
+                    if (self.isShiftActive) {
+                        // SHIFT active: Show microphone recording info
+                        self.logToTerminal('🎤 SHIFT + click empty pad to record from microphone', 'info');
+                    } else {
+                        // SHIFT inactive: Normal sequence recording
+                        self.toggleRecording(); 
+                    }
+                });
                 document.getElementById('play-sequence').addEventListener('click', function() { self.playSequence(); });
                 document.getElementById('stop-sequence').addEventListener('click', function() { self.stopAll(); });
                 document.getElementById('clear-sequence').addEventListener('click', function() { self.clearSequence(); });
@@ -2291,10 +2313,13 @@
                     
                     // NEW: Request microphone permissions for recording functionality
                     try {
+                        console.log('[DEBUG] Requesting microphone permission...');
                         await this.requestMicrophonePermission();
+                        console.log('[DEBUG] Microphone permission granted');
                         this.logToTerminal('Microphone access granted for recording.', 'info');
-                    this.logToTerminal('SHIFT + click empty pad: click to start recording, click again to stop', 'info');
+                        this.logToTerminal('SHIFT + click empty pad: click to start recording, click again to stop', 'info');
                     } catch (error) {
+                        console.error('[DEBUG] Microphone permission error:', error);
                         this.logToTerminal('Microphone access denied. Recording will not be available.', 'warning');
                     }
                     
@@ -2311,8 +2336,27 @@
                     // Initialize components
                     this.createPadGrid();
                     // AUTO-LOAD: Load GitHub samples into banks A and B
+                    console.log('[DEBUG] About to call loadAllSamples()...');
                     this.loadAllSamples().then(function() {
+                        console.log('[DEBUG] loadAllSamples() completed successfully');
+                        
+                        // Synchronize samples with bankSamples after loading
+                        console.log('[DEBUG] Before synchronization:');
+                        console.log('[DEBUG] currentBank:', self.currentBank);
+                        console.log('[DEBUG] bankSamples[A]:', self.bankSamples['A']);
+                        console.log('[DEBUG] samples[A]:', self.samples);
+                        
+                        // Copy the entire bankSamples structure to samples
+                        self.samples = JSON.parse(JSON.stringify(self.bankSamples));
+                        
+                        console.log('[DEBUG] After synchronization:');
+                        console.log('[DEBUG] samples object:', self.samples);
+                        console.log('[DEBUG] samples[A]:', self.samples['A']);
+                        console.log('[DEBUG] samples[B]:', self.samples['B']);
+                        
                         self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                    }).catch(function(error) {
+                        console.error('[DEBUG] Error in loadAllSamples():', error);
                     });
                     
                 } catch (error) {
@@ -2706,21 +2750,49 @@
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
                     
+                    console.log('[DEBUG] Pad clicked:', padNumber);
+                    console.log('[DEBUG] isShiftActive:', self.isShiftActive);
+                    console.log('[DEBUG] currentBank:', self.currentBank);
+                    console.log('[DEBUG] samples object:', self.samples);
+                    console.log('[DEBUG] samples[currentBank]:', self.samples[self.currentBank]);
+                    console.log('[DEBUG] bankSamples[currentBank]:', self.bankSamples[self.currentBank]);
+                    console.log('[DEBUG] hasSample in pad:', !!self.samples[self.currentBank] && !!self.samples[self.currentBank][padNumber]);
+                    console.log('[DEBUG] isMicrophoneRecording:', self.isMicrophoneRecording);
+                    
                     // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[padNumber]) {
+                    if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
                         // NEW: Improved SHIFT + pad recording system
-                        if (self.isShiftActive && !self.samples[padNumber]) {
-                            // Toggle recording: click to start, click again to stop
-                            if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                                // Stop recording if already recording on this pad
-                                self.stopMicrophoneRecording();
-                            } else if (!self.isMicrophoneRecording) {
-                                // Start recording on this pad
-                                self.startMicrophoneRecording(padNumber);
+                        if (self.isShiftActive) {
+                            console.log('[DEBUG] SHIFT active - checking if pad is empty for recording');
+                            console.log('[DEBUG] Pad number:', padNumber);
+                            console.log('[DEBUG] Current bank:', self.currentBank);
+                            console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
+                            console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
+                            
+                            // Check if pad is empty (no sample assigned)
+                            const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
+                            console.log('[DEBUG] Pad is empty:', padIsEmpty);
+                            
+                            if (padIsEmpty) {
+                                console.log('[DEBUG] SHIFT active and pad empty - attempting recording');
+                                // Toggle recording: click to start, click again to stop
+                                if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                    console.log('[DEBUG] Stopping recording on pad:', padNumber);
+                                    // Stop recording if already recording on this pad
+                                    self.stopMicrophoneRecording();
+                                } else if (!self.isMicrophoneRecording) {
+                                    console.log('[DEBUG] Starting recording on pad:', padNumber);
+                                    // Start recording on this pad
+                                    self.startMicrophoneRecording(padNumber);
+                                }
+                            } else {
+                                console.log('[DEBUG] SHIFT active but pad has sample - playing sample instead');
+                                self.padController.triggerPad(padNumber, 127, 'mouse');
                             }
                         } else {
+                            // SHIFT not active - normal pad behavior
                             self.padController.triggerPad(padNumber, 127, 'mouse');
                         }
                     }
@@ -2732,20 +2804,38 @@
                     e.preventDefault();
                     
                     // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[padNumber]) {
+                    if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
                         self.selectPadForSlicing(padNumber);
                     } else {
                         // NEW: Improved SHIFT + pad recording system for touch
-                        if (self.isShiftActive && !self.samples[padNumber]) {
-                            // Toggle recording: touch to start, touch again to stop
-                            if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                                // Stop recording if already recording on this pad
-                                self.stopMicrophoneRecording();
-                            } else if (!self.isMicrophoneRecording) {
-                                // Start recording on this pad
-                                self.startMicrophoneRecording(padNumber);
+                        if (self.isShiftActive) {
+                            console.log('[DEBUG] SHIFT active (touch) - checking if pad is empty for recording');
+                            console.log('[DEBUG] Pad number:', padNumber);
+                            console.log('[DEBUG] Current bank:', self.currentBank);
+                            console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
+                            console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
+                            
+                            // Check if pad is empty (no sample assigned)
+                            const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
+                            console.log('[DEBUG] Pad is empty (touch):', padIsEmpty);
+                            
+                            if (padIsEmpty) {
+                                console.log('[DEBUG] SHIFT active and pad empty (touch) - attempting recording');
+                                // Toggle recording: touch to start, touch again to stop
+                                if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                    // Stop recording if already recording on this pad
+                                    self.stopMicrophoneRecording();
+                                } else if (!self.isMicrophoneRecording) {
+                                    // Start recording on this pad
+                                    self.startMicrophoneRecording(padNumber);
+                                }
+                            } else {
+                                console.log('[DEBUG] SHIFT active but pad has sample (touch) - playing sample instead');
+                                self.padController.triggerPad(padNumber, 127, 'touch');
+                                self.touchedPads.add(padNumber);
                             }
                         } else {
+                            // SHIFT not active - normal pad behavior
                             self.padController.triggerPad(padNumber, 127, 'touch');
                             self.touchedPads.add(padNumber);
                         }
@@ -2788,7 +2878,7 @@
                 const startAt = when || this.audioContext.currentTime;
                 
                 // NEW: Handle slice parameters if this is a slice
-                const sample = this.samples[padNumber];
+                const sample = this.samples[this.currentBank] && this.samples[this.currentBank][padNumber];
                 if (sample && sample.offset !== undefined && sample.duration !== undefined) {
                     // This is a slice - use slice offset and duration
                     source.start(startAt, sample.offset, sample.duration);
@@ -2838,7 +2928,7 @@
                     return false;
                 }
                 
-                if (!this.samples[padNumber]) {
+                if (!this.samples[this.currentBank] || !this.samples[this.currentBank][padNumber]) {
                     this.logToTerminal('No audio assigned to Pad ' + padNumber + ' in Bank ' + this.currentBank, 'warning');
                     return false;
                 }
@@ -2881,13 +2971,16 @@
                 const source = this.audioContext.createBufferSource();
                 
                 // NEW: Handle non-destructive slices (Cuellos de botella fix)
-                const sample = this.samples[padNumber];
+                const sample = this.samples[this.currentBank] && this.samples[this.currentBank][padNumber];
                 if (sample && sample.buffer && sample.offset !== undefined) {
                     // This is a slice - use offset and duration
                     source.buffer = sample.buffer;
                     // Note: offset and duration will be used in playPad(when, offset, duration)
-                } else {
+                } else if (sample && sample.buffer) {
                     // This is a regular sample
+                    source.buffer = sample.buffer;
+                } else {
+                    // Fallback for backward compatibility
                     source.buffer = sample;
                 }
                 
@@ -2923,17 +3016,23 @@
                 const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
                 if (!pad) return;
                 
-                pad.classList.add('playing');
-                
-                source.onended = function() {
-                    pad.classList.remove('playing');
-                    delete self.activeSources[padNumber];
+                // Only add playing class and set onended if source exists
+                if (source) {
+                    pad.classList.add('playing');
                     
-                    if (self.visualizers[padNumber]) {
-                        cancelAnimationFrame(self.visualizers[padNumber]);
-                        delete self.visualizers[padNumber];
-                    }
-                };
+                    source.onended = function() {
+                        pad.classList.remove('playing');
+                        delete self.activeSources[padNumber];
+                        
+                        if (self.visualizers[padNumber]) {
+                            cancelAnimationFrame(self.visualizers[padNumber]);
+                            delete self.visualizers[padNumber];
+                        }
+                    };
+                } else {
+                    // For microphone recordings, just update the pad display
+                    console.log('[DEBUG] updatePadUI called with null source for pad:', padNumber);
+                }
             }
             
             /**
@@ -3121,7 +3220,17 @@
                 });
                 document.getElementById('bank-' + bank.toLowerCase()).classList.add('bank-active');
                 
-                this.samples = this.bankSamples[bank] || {};
+                // Don't overwrite the entire samples structure, just ensure the current bank is available
+                if (!this.samples[bank]) {
+                    this.samples[bank] = this.bankSamples[bank] || {};
+                }
+                
+                console.log('[DEBUG] After selectBank:');
+                console.log('[DEBUG] currentBank:', this.currentBank);
+                console.log('[DEBUG] samples object:', this.samples);
+                console.log('[DEBUG] samples[A]:', this.samples['A']);
+                console.log('[DEBUG] samples[B]:', this.samples['B']);
+                
                 this.updatePadBankIndicators();
                 
                 // Show bank status when selecting
@@ -3872,7 +3981,7 @@
                     loadPromises.push(promise);
                 });
                 
-                return Promise.allSettled(loadPromises).then(function() {
+                return Promise.allSettled(loadPromises).then(function(results) {
                     // Update UI for both banks
                     self.updatePadBankIndicators();
                     self.saveSampleInfo();
@@ -3889,7 +3998,8 @@
                     console.log('[BANK A] Samples:', self.bankSamples['A']);
                     console.log('[BANK B] Samples:', self.bankSamples['B']);
                     
-                    return loadPromises;
+                    // Return a resolved promise so the .then() callback executes
+                    return Promise.resolve();
                 });
             }
             
@@ -5548,6 +5658,11 @@
              * @description Starts recording from microphone to the specified pad
              */
             startMicrophoneRecording(padId) {
+                console.log('[DEBUG] startMicrophoneRecording called with padId:', padId);
+                console.log('[DEBUG] hasMicrophoneAccess:', this.hasMicrophoneAccess);
+                console.log('[DEBUG] microphoneStream:', this.microphoneStream);
+                console.log('[DEBUG] isShiftActive:', this.isShiftActive);
+                
                 if (!this.hasMicrophoneAccess || !this.microphoneStream) {
                     this.logToTerminal('Microphone not available. Press START first.', 'warning');
                     return;
@@ -5692,36 +5807,48 @@
             startVUMeter() {
                 if (!this.microphoneStream) return;
 
-                const audioContext = new AudioContext();
-                const source = audioContext.createMediaStreamSource(this.microphoneStream);
-                const analyser = audioContext.createAnalyser();
-                
-                source.connect(analyser);
-                analyser.fftSize = 256;
-                
-                const bufferLength = analyser.frequencyBinCount;
-                const dataArray = new Uint8Array(bufferLength);
-                
-                const updateVUMeter = () => {
-                    if (!this.isMicrophoneRecording) return;
+                try {
+                    // Use existing audio context if available, otherwise create new one
+                    const vuAudioContext = this.audioContext || new AudioContext();
+                    const source = vuAudioContext.createMediaStreamSource(this.microphoneStream);
+                    const analyser = vuAudioContext.createAnalyser();
                     
-                    analyser.getByteFrequencyData(dataArray);
-                    const average = dataArray.reduce((a, b) => a + b) / bufferLength;
-                    const level = Math.min(Math.floor(average / 25), 10); // Scale to 0-10
+                    source.connect(analyser);
+                    analyser.fftSize = 256;
                     
-                    // Update terminal with VU meter
-                    const vuBar = '█'.repeat(level) + '░'.repeat(10 - level);
-                    const recordingTime = Math.min((Date.now() - this.recordingStartTime) / 1000, 10);
-                    const timeDisplay = recordingTime.toFixed(1);
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
                     
-                    this.updateTerminal(`REC MIC [${vuBar}] TIME: ${timeDisplay}s`, 'info');
+                    const updateVUMeter = () => {
+                        if (!this.isMicrophoneRecording) return;
+                        
+                        try {
+                            analyser.getByteFrequencyData(dataArray);
+                            const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                            const level = Math.min(Math.floor(average / 25), 10); // Scale to 0-10
+                            
+                            // Update terminal with VU meter
+                            const vuBar = '█'.repeat(level) + '░'.repeat(10 - level);
+                            const recordingTime = Math.min((Date.now() - this.recordingStartTime) / 1000, 10);
+                            const timeDisplay = recordingTime.toFixed(1);
+                            
+                            this.updateTerminal(`REC MIC [${vuBar}] TIME: ${timeDisplay}s`, 'info');
+                            
+                            if (this.isMicrophoneRecording) {
+                                requestAnimationFrame(updateVUMeter);
+                            }
+                        } catch (error) {
+                            console.warn('[DEBUG] VU meter update error:', error);
+                            // Stop VU meter on error
+                            return;
+                        }
+                    };
                     
-                    if (this.isMicrophoneRecording) {
-                        requestAnimationFrame(updateVUMeter);
-                    }
-                };
-                
-                updateVUMeter();
+                    updateVUMeter();
+                } catch (error) {
+                    console.warn('[DEBUG] VU meter initialization error:', error);
+                    // Continue without VU meter if there's an error
+                }
             }
 
             /**
@@ -5748,24 +5875,49 @@
             const shiftButton = document.getElementById('shift-button');
             
             if (shiftButton) {
-                shiftButton.addEventListener('click', function() {
+                // Remove any existing event listeners to prevent duplicates
+                const newShiftButton = shiftButton.cloneNode(true);
+                shiftButton.parentNode.replaceChild(newShiftButton, shiftButton);
+                
+                newShiftButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
                     if (window.embryoPlayer) {
-                        window.embryoPlayer.isShiftActive = !window.embryoPlayer.isShiftActive;
+                        // Toggle SHIFT state
+                        const newState = !window.embryoPlayer.isShiftActive;
+                        window.embryoPlayer.isShiftActive = newState;
+                        
+                        console.log('[DEBUG] SHIFT button clicked, new state:', newState);
                         
                         // Update button appearance
-                        if (window.embryoPlayer.isShiftActive) {
+                        if (newState) {
                             this.style.background = 'var(--gb-active)';
                             this.style.color = 'var(--gb-text-inverse)';
                             window.embryoPlayer.logToTerminal('SHIFT ACTIVE - Click empty pad to start recording, click again to stop', 'info');
+                            
+                            // NEW: Transform REC button to MIC
+                            const recordButton = document.getElementById('record-sequence');
+                            if (recordButton) {
+                                recordButton.textContent = 'MIC';
+                                recordButton.classList.add('mic-mode');
+                            }
                         } else {
                             this.style.background = 'var(--bg-color)';
                             this.style.color = 'var(--text-color)';
                             window.embryoPlayer.logToTerminal('SHIFT deactivated', 'info');
+                            
+                            // NEW: Transform MIC button back to REC
+                            const recordButton = document.getElementById('record-sequence');
+                            if (recordButton) {
+                                recordButton.textContent = 'REC';
+                                recordButton.classList.remove('mic-mode');
+                            }
                         }
                     }
                 });
                 
-                console.log('[SHIFT] SHIFT button initialized for microphone recording');
+                console.log('[SHIFT] SHIFT button initialized for microphone recording (duplicate prevention)');
             } else {
                 console.warn('[SHIFT] SHIFT button not found in DOM');
             }
