@@ -403,7 +403,7 @@
         
         .sequencer-row {
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         
 
@@ -411,7 +411,7 @@
         .tempo-controls {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             gap: 10px;
         }
         
@@ -465,7 +465,7 @@
 
         /* Bank Selector Styles - Updated for 8 buttons */
         .bank-selector-row {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             gap: 8px;
@@ -486,7 +486,13 @@
             font-weight: bold;
         }
         
-        .bank-btn:hover:not(.bank-active) {
+        .btn-delete.delete-active {
+            background-color: var(--gb-accent);
+            color: var(--gb-text-inverse);
+            font-weight: bold;
+        }
+        
+        .bank-btn:hover:not(.bank-active):not(.delete-active) {
             background-color: var(--shadow-color-light);
         }
         
@@ -515,7 +521,7 @@
 
         /* Audio Control Sliders */
         .slider-row {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
@@ -1315,6 +1321,170 @@
             }
         }
         
+        /* Estilos para el modo delete pad - usando paleta preexistente */
+        .btn-delete.delete-active {
+            background-color: var(--gb-accent);
+            color: var(--gb-text-inverse);
+            transform: scale(1.05);
+        }
+        
+        .pad.delete-selectable {
+            border-color: var(--gb-accent);
+            box-shadow: 0 0 15px var(--gb-accent);
+            animation: deletePulse 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes deletePulse {
+            0% { 
+                box-shadow: 0 0 15px var(--gb-accent);
+                transform: scale(1);
+            }
+            100% { 
+                box-shadow: 0 0 25px var(--gb-accent);
+                transform: scale(1.02);
+            }
+        }
+        
+        /* Estilos para el botón EDIT activo */
+        .btn-edit.edit-active {
+            background-color: var(--gb-accent);
+            color: var(--gb-text-inverse);
+            transform: scale(1.05);
+        }
+        
+        /* Estilos para el modal del editor */
+        .audio-editor-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 56, 15, 0.9);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-editor-panel {
+            background: var(--bg-color);
+            border: 4px solid var(--shadow-color-dark);
+            box-shadow: 8px 8px 0 var(--shadow-color-dark);
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .audio-editor-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .audio-editor-info {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+
+        .audio-editor-info p {
+            margin: 5px 0;
+        }
+
+        .waveform-container {
+            margin: 20px 0;
+            border: 2px solid var(--shadow-color-dark);
+            background: var(--shadow-color-dark);
+            min-height: 200px;
+            border-radius: 0;
+        }
+
+        .audio-editor-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .audio-editor-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .audio-editor-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: 2px solid var(--shadow-color-dark);
+            box-shadow: 4px 4px 0 var(--shadow-color-dark);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .audio-editor-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--shadow-color-dark);
+        }
+
+        .audio-editor-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 var(--shadow-color-dark);
+        }
+
+        .audio-editor-btn.primary {
+            background: var(--gb-active);
+            color: var(--gb-text-inverse);
+        }
+
+        .audio-editor-btn.primary:hover {
+            background: var(--shadow-color-dark);
+        }
+
+        /* Estilos para pads seleccionables para edición */
+        .pad.edit-selectable {
+            border-color: var(--gb-accent);
+            box-shadow: 0 0 15px var(--gb-accent);
+            animation: editPulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes editPulse {
+            0% { 
+                box-shadow: 0 0 15px var(--gb-accent);
+                transform: scale(1);
+            }
+            100% { 
+                box-shadow: 0 0 25px var(--gb-accent);
+                transform: scale(1.02);
+            }
+        }
+
+        /* Responsive para el editor */
+        @media (max-width: 768px) {
+            .audio-editor-panel {
+                padding: 20px;
+                max-width: 95%;
+            }
+            
+            .audio-editor-controls,
+            .audio-editor-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .audio-editor-btn {
+                padding: 8px 16px;
+                font-size: 10px;
+            }
+        }
+        
         /* Responsive para el botón slicer */
         @media (max-width: 768px) {
             .btn-slicer {
@@ -1399,7 +1569,7 @@
                         <ul>
                             <li><strong>A, B, C, D</strong> - Sample banks (switch between different sample sets)</li>
                             <li><strong>L/S</strong> - Load Samples (load multiple audio files)</li>
-                            <li><strong>CL/B</strong> - Clear Bank (clear current bank samples)</li>
+                            <li><strong>DEL</strong> - Delete Pad (delete individual pad samples)</li>
                             <li><strong>SLCR</strong> - Slicer (slice samples into parts)</li>
                         </ul>
                     </div>
@@ -1426,7 +1596,7 @@
             </div>
         </div>
         <div class="empty-space"></div>
-        <button id="shift-button" class="header-button">SHIFT</button>
+        <button id="shift-button" class="header-button" disabled style="opacity: 0.5; cursor: not-allowed;" title="SHIFT temporarily disabled - Use MIC and EDIT buttons below">SHIFT</button>
     </div>
         
         <!-- NEW: Input Status Indicator -->
@@ -1442,6 +1612,14 @@
             <button id="play-sequence" class="header-button btn-play">PLAY</button>
             <button id="stop-sequence" class="header-button" title="Stop all audio and sequences">STOP ALL</button>
             <button id="clear-sequence" class="header-button">CLEAR</button>
+        </div>
+        
+        <!-- NUEVA FILA: Botones MIC y EDIT (reemplaza funcionalidad SHIFT) -->
+        <div class="header-row">
+            <button id="mic-button" class="header-button btn-record">MIC</button>
+            <button id="edit-sample" class="header-button btn-edit">EDIT</button>
+            <div class="empty-space"></div>
+            <div class="empty-space"></div>
         </div>
         
         <div class="header-row tempo-controls">
@@ -1461,7 +1639,7 @@
             <button id="bank-d" class="header-button bank-btn">D</button>
             <button id="bank-e" class="header-button bank-btn">QT</button>
             <button id="bank-f" class="header-button bank-btn">L/S</button>
-            <button id="bank-g" class="header-button bank-btn">CL/B</button>
+                            <button id="bank-g" class="header-button bank-btn btn-delete">DEL</button>
             <button id="bank-h" class="header-button bank-btn">SLCR</button>
         </div>
         
@@ -1512,7 +1690,7 @@
     <!-- Modal del Sample Slicer -->
     <div id="slicer-modal" class="slicer-modal">
         <div class="slicer-panel">
-                            <div class="slicer-title">[SLICE] Sample Slicer</div>
+                            <div class="slicer-title">Sample Slicer</div>
             <div id="slicer-info" class="slicer-info">
                 Slice "sample-name" into equal parts
             </div>
@@ -1523,6 +1701,32 @@
             </div>
             <div class="slicer-actions">
                 <button class="slicer-cancel" onclick="embryoPlayer.closeSlicerModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal del Editor de Audio -->
+    <div id="audio-editor-modal" class="audio-editor-modal">
+        <div class="audio-editor-panel">
+            <div class="audio-editor-title">Audio Editor</div>
+            <div class="audio-editor-info">
+                <p>Pad: <span id="edit-pad-number">-</span> | Sample: <span id="edit-sample-name">-</span></p>
+                <p>Selection: <span id="edit-selection-time">0.00s - 0.00s</span></p>
+            </div>
+            
+            <div id="waveform-container" class="waveform-container">
+                <!-- El editor de ondas se renderiza aquí -->
+            </div>
+            
+            <div class="audio-editor-controls">
+                <button id="play-selection" class="audio-editor-btn">Play Selection</button>
+                <button id="play-full" class="audio-editor-btn">Play Full</button>
+                <button id="reset-selection" class="audio-editor-btn">Reset</button>
+            </div>
+            
+            <div class="audio-editor-actions">
+                <button id="apply-trim" class="audio-editor-btn primary">Apply Trim</button>
+                <button id="cancel-editing" class="audio-editor-btn">Cancel</button>
             </div>
         </div>
     </div>
@@ -1544,7 +1748,7 @@
          * FEATURES & CAPABILITIES
          * ============================================================================
          * 
-         * 🎵 AUDIO SYSTEM:
+         * AUDIO SYSTEM:
          * - Web Audio API optimized for minimum latency
          * - Pre-created audio nodes for instant response
          * - Master effects chain (Volume, Distortion, Filter, Resonance)
@@ -1575,15 +1779,15 @@
          * ============================================================================
          * PERFORMANCE OPTIMIZATIONS IMPLEMENTED
          * ============================================================================
-         * ✅ Deterministic musical scheduler (look-ahead + horizon)
-         * ✅ Timeline-based audio playback (source.start(when, offset, duration))
-         * ✅ Timeline-based metronome (no setTimeout delays)
-         * ✅ Terminal logging throttle in performance mode
-         * ✅ Non-destructive sample slicing (no buffer copying)
-         * ✅ Audio format compatibility with canPlayType()
-         * ✅ Enhanced resource management and cleanup
-         * ✅ Pre-created audio nodes for minimum latency
-         * ✅ Auto-switching performance modes
+         * Deterministic musical scheduler (look-ahead + horizon)
+         * Timeline-based audio playback (source.start(when, offset, duration))
+         * Timeline-based metronome (no setTimeout delays)
+         * Terminal logging throttle in performance mode
+         * Non-destructive sample slicing (no buffer copying)
+         * Audio format compatibility with canPlayType()
+         * Enhanced resource management and cleanup
+         * Pre-created audio nodes for minimum latency
+         * Auto-switching performance modes
          */
         
         // ============================================================================
@@ -1743,6 +1947,15 @@
                     
                     self.pressedKeys.add(key);
                     
+                    // NEW: ESC key to exit edit mode
+                    if (key === 'escape') {
+                        e.preventDefault();
+                        if (self.isEditMode) {
+                            self.exitEditMode();
+                        }
+                        return;
+                    }
+                    
                     if (self.keyToPad[key]) {
                         e.preventDefault();
                         self.triggerPad(self.keyToPad[key], 127, 'keyboard');
@@ -1757,6 +1970,13 @@
                 // Clear pressed keys when window loses focus
                 window.addEventListener('blur', function() {
                     self.pressedKeys.clear();
+                });
+                
+                // NEW: Click outside to exit edit mode
+                document.addEventListener('click', function(e) {
+                    if (self.isEditMode && !e.target.closest('.pad') && !e.target.closest('#edit-sample')) {
+                        self.exitEditMode();
+                    }
                 });
             }
             
@@ -2076,6 +2296,12 @@
                 this.slices = {};
                 this.slicerMode = false; // Slicer mode state
                 
+                // NEW: Prevent duplicate event scheduling
+                this.scheduledEvents = new Set(); // Track scheduled events to prevent duplicates
+                
+                // NEW: Delete Pad Mode
+                this.deletePadMode = false; // Toggle mode for deleting individual pads
+                
                 // QUANTIZATION SYSTEM
                 this.quantizeMode = true; // Enable quantization by default
                 this.quantizeStrength = QUANTIZE_STRENGTH;
@@ -2125,7 +2351,14 @@
                 this.recordingChunks = [];
                 this.mediaRecorder = null;
                 this.maxRecordingTimer = null;
-                this.isShiftActive = false;
+                this.isShiftActive = false; // Mantener para compatibilidad
+                this.isMicrophoneMode = false; // NUEVO: Modo micrófono independiente
+                
+                // NEW: Audio Editor System
+                this.isEditMode = false;
+                this.currentEditPad = null;
+                this.editSelection = { start: 0, end: 1 };
+                this.audioEditor = null;
 
                 
                 // ============================================================================
@@ -2225,7 +2458,7 @@
                 document.getElementById('record-sequence').addEventListener('click', function() { 
                     if (self.isShiftActive) {
                         // SHIFT active: Show microphone recording info
-                        self.logToTerminal('🎤 SHIFT + click empty pad to record from microphone', 'info');
+                        self.logToTerminal('SHIFT + click empty pad to record from microphone', 'info');
                     } else {
                         // SHIFT inactive: Normal sequence recording
                         self.toggleRecording(); 
@@ -2242,7 +2475,7 @@
                 document.getElementById('bank-d').addEventListener('click', function() { self.selectBank('D'); });
                 document.getElementById('bank-e').addEventListener('click', function() { self.cycleQuantizeConsolidated(); });
                 document.getElementById('bank-f').addEventListener('click', function() { self.loadMultipleSamples(); });
-                document.getElementById('bank-g').addEventListener('click', function() { self.clearCurrentBank(); });
+                document.getElementById('bank-g').addEventListener('click', function() { self.toggleDeletePadMode(); });
                 document.getElementById('bank-h').addEventListener('click', function() { 
                     if (self.slicerMode) {
                         self.deactivateSlicerMode();
@@ -2346,15 +2579,29 @@
                         console.log('[DEBUG] bankSamples[A]:', self.bankSamples['A']);
                         console.log('[DEBUG] samples[A]:', self.samples);
                         
-                        // Copy the entire bankSamples structure to samples
-                        self.samples = JSON.parse(JSON.stringify(self.bankSamples));
+                        // CORREGIDO: Sincronizar samples con bankSamples sin usar JSON (preserva AudioBuffer)
+                        self.samples = {};
+                        for (const bank in self.bankSamples) {
+                            self.samples[bank] = {};
+                            for (const padNumber in self.bankSamples[bank]) {
+                                self.samples[bank][padNumber] = self.bankSamples[bank][padNumber];
+                            }
+                        }
                         
                         console.log('[DEBUG] After synchronization:');
                         console.log('[DEBUG] samples object:', self.samples);
                         console.log('[DEBUG] samples[A]:', self.samples['A']);
                         console.log('[DEBUG] samples[B]:', self.samples['B']);
                         
+                        // VERIFICACIÓN: Comprobar que los AudioBuffer se preservaron correctamente
+                        console.log('[DEBUG] Verification - Bank A Pad 1:');
+                        console.log('[DEBUG]   bankSamples[A][1]:', self.bankSamples['A'][1]);
+                        console.log('[DEBUG]   samples[A][1]:', self.samples['A'][1]);
+                        console.log('[DEBUG]   samples[A][1] constructor:', self.samples['A'][1] ? self.samples['A'][1].constructor.name : 'undefined');
+                        console.log('[DEBUG]   samples[A][1] has getChannelData:', self.samples['A'][1] ? typeof self.samples['A'][1].getChannelData : 'undefined');
+                        
                         self.logToTerminal('All samples loaded. Ready to play.', 'info');
+                        self.logToTerminal('EDITOR FIXED: Samples can now be edited (GitHub + Microphone)', 'info');
                     }).catch(function(error) {
                         console.error('[DEBUG] Error in loadAllSamples():', error);
                     });
@@ -2759,43 +3006,51 @@
                     console.log('[DEBUG] hasSample in pad:', !!self.samples[self.currentBank] && !!self.samples[self.currentBank][padNumber]);
                     console.log('[DEBUG] isMicrophoneRecording:', self.isMicrophoneRecording);
                     
-                    // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
-                        self.selectPadForSlicing(padNumber);
-                    } else {
-                        // NEW: Improved SHIFT + pad recording system
-                        if (self.isShiftActive) {
-                            console.log('[DEBUG] SHIFT active - checking if pad is empty for recording');
-                            console.log('[DEBUG] Pad number:', padNumber);
-                            console.log('[DEBUG] Current bank:', self.currentBank);
-                            console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
-                            console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
-                            
-                            // Check if pad is empty (no sample assigned)
-                            const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
-                            console.log('[DEBUG] Pad is empty:', padIsEmpty);
-                            
-                            if (padIsEmpty) {
-                                console.log('[DEBUG] SHIFT active and pad empty - attempting recording');
-                                // Toggle recording: click to start, click again to stop
-                                if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                                    console.log('[DEBUG] Stopping recording on pad:', padNumber);
-                                    // Stop recording if already recording on this pad
-                                    self.stopMicrophoneRecording();
-                                } else if (!self.isMicrophoneRecording) {
-                                    console.log('[DEBUG] Starting recording on pad:', padNumber);
-                                    // Start recording on this pad
-                                    self.startMicrophoneRecording(padNumber);
+                            // Check if slicer mode is active
+        if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
+            self.selectPadForSlicing(padNumber);
+        } else if (self.deletePadMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
+            // DELETE mode: Delete the selected pad
+            self.deletePadSample(padNumber);
+            self.deactivateDeletePadMode(); // Auto-deactivate after deletion
+        } else if (self.isEditMode) {
+            // EDIT mode: Select pad for editing
+            console.log('[DEBUG] EDIT mode active - selecting pad for editing');
+            self.selectPadForEditing(padNumber);
+        } else {
+                                        // NEW: Improved MIC button + pad recording system (replaces SHIFT)
+                            if (self.isMicrophoneMode) {
+                                console.log('[DEBUG] MIC mode active - checking if pad is empty for recording');
+                                console.log('[DEBUG] Pad number:', padNumber);
+                                console.log('[DEBUG] Current bank:', self.currentBank);
+                                console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
+                                console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
+                                
+                                // Check if pad is empty (no sample assigned)
+                                const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
+                                console.log('[DEBUG] Pad is empty:', padIsEmpty);
+                                
+                                if (padIsEmpty) {
+                                    console.log('[DEBUG] MIC mode active and pad empty - attempting recording');
+                                    // Toggle recording: click to start, click again to stop
+                                    if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                        console.log('[DEBUG] Stopping recording on pad:', padNumber);
+                                        // Stop recording if already recording on this pad
+                                        self.stopMicrophoneRecording();
+                                    } else if (!self.isMicrophoneRecording) {
+                                        console.log('[DEBUG] Starting recording on pad:', padNumber);
+                                        // Start recording on this pad
+                                        self.startMicrophoneRecording(padNumber);
+                                    }
+                                } else {
+                                    console.log('[DEBUG] MIC mode active but pad has sample - playing sample instead');
+                                    self.padController.triggerPad(padNumber, 127, 'mouse');
                                 }
                             } else {
-                                console.log('[DEBUG] SHIFT active but pad has sample - playing sample instead');
+                                // MIC mode not active - normal pad behavior
                                 self.padController.triggerPad(padNumber, 127, 'mouse');
                             }
-                        } else {
-                            // SHIFT not active - normal pad behavior
-                            self.padController.triggerPad(padNumber, 127, 'mouse');
-                        }
-                    }
+        }
                 });
                 
                 // Touch events
@@ -2803,43 +3058,50 @@
                     if (e.target.classList.contains('delete-pad-btn')) return;
                     e.preventDefault();
                     
-                    // Check if slicer mode is active
-                    if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
-                        self.selectPadForSlicing(padNumber);
-                    } else {
-                        // NEW: Improved SHIFT + pad recording system for touch
-                        if (self.isShiftActive) {
-                            console.log('[DEBUG] SHIFT active (touch) - checking if pad is empty for recording');
-                            console.log('[DEBUG] Pad number:', padNumber);
-                            console.log('[DEBUG] Current bank:', self.currentBank);
-                            console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
-                            console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
-                            
-                            // Check if pad is empty (no sample assigned)
-                            const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
-                            console.log('[DEBUG] Pad is empty (touch):', padIsEmpty);
-                            
-                            if (padIsEmpty) {
-                                console.log('[DEBUG] SHIFT active and pad empty (touch) - attempting recording');
-                                // Toggle recording: touch to start, touch again to stop
-                                if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
-                                    // Stop recording if already recording on this pad
-                                    self.stopMicrophoneRecording();
-                                } else if (!self.isMicrophoneRecording) {
-                                    // Start recording on this pad
-                                    self.startMicrophoneRecording(padNumber);
-                                }
-                            } else {
-                                console.log('[DEBUG] SHIFT active but pad has sample (touch) - playing sample instead');
-                                self.padController.triggerPad(padNumber, 127, 'touch');
-                                self.touchedPads.add(padNumber);
+                                    // Check if slicer mode is active
+                if (self.slicerMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
+                    self.selectPadForSlicing(padNumber);
+                } else if (self.deletePadMode && self.samples[self.currentBank] && self.samples[self.currentBank][padNumber]) {
+                    // DELETE mode: Delete the selected pad
+                    self.deletePadSample(padNumber);
+                    self.deactivateDeletePadMode(); // Auto-deactivate after deletion
+                } else if (self.isEditMode) {
+                    // EDIT mode: Select pad for editing
+                    self.selectPadForEditing(padNumber);
+                } else {
+                    // NEW: Improved MIC button + pad recording system for touch (replaces SHIFT)
+                    if (self.isMicrophoneMode) {
+                        console.log('[DEBUG] MIC mode active (touch) - checking if pad is empty for recording');
+                        console.log('[DEBUG] Pad number:', padNumber);
+                        console.log('[DEBUG] Current bank:', self.currentBank);
+                        console.log('[DEBUG] Samples in current bank:', self.samples[self.currentBank]);
+                        console.log('[DEBUG] Sample in this pad:', self.samples[self.currentBank][padNumber]);
+                        
+                        // Check if pad is empty (no sample assigned)
+                        const padIsEmpty = !self.samples[self.currentBank] || !self.samples[self.currentBank][padNumber];
+                        console.log('[DEBUG] Pad is empty (touch):', padIsEmpty);
+                        
+                        if (padIsEmpty) {
+                            console.log('[DEBUG] MIC mode active and pad empty (touch) - attempting recording');
+                            // Toggle recording: touch to start, touch again to stop
+                            if (self.isMicrophoneRecording && self.recordingPadId === padNumber) {
+                                // Stop recording if already recording on this pad
+                                self.stopMicrophoneRecording();
+                            } else if (!self.isMicrophoneRecording) {
+                                // Start recording on this pad
+                                self.startMicrophoneRecording(padNumber);
                             }
                         } else {
-                            // SHIFT not active - normal pad behavior
+                            console.log('[DEBUG] MIC mode active but pad has sample (touch) - playing sample instead');
                             self.padController.triggerPad(padNumber, 127, 'touch');
                             self.touchedPads.add(padNumber);
                         }
+                    } else {
+                        // MIC mode not active - normal pad behavior
+                        self.padController.triggerPad(padNumber, 127, 'touch');
+                        self.touchedPads.add(padNumber);
                     }
+                }
                 });
                 
                 pad.addEventListener('touchend', function(e) {
@@ -2863,6 +3125,10 @@
              */
             playPad(padNumber, when = 0, offset = 0, duration = undefined) {
                 if (!this.validatePlayback(padNumber)) return;
+                
+                // NEW: Debug logging to track duplicate calls
+                const timestamp = this.audioContext ? this.audioContext.currentTime.toFixed(3) : '0.000';
+                console.log(`[DEBUG] playPad called: Pad ${padNumber}, when: ${when}, currentTime: ${timestamp}`);
                 
                 // Use pre-created nodes to reduce latency
                 const source = this.createAudioSource(padNumber);
@@ -2897,9 +3163,15 @@
                 // Optional visualization (can be disabled for maximum latency)
                 if (!this.performanceMode) {
                     const canvas = document.querySelector('.pad[data-number="' + padNumber + '"] .visualizer');
+                    console.log(`[DEBUG] Visualization check: performanceMode=${this.performanceMode}, canvas=${!!canvas}, analyser=${!!analyser}`);
                     if (canvas) {
+                        console.log(`[DEBUG] Starting visualization for Pad ${padNumber}`);
                         this.visualize(padNumber, analyser, canvas);
+                    } else {
+                        console.log(`[DEBUG] Canvas not found for Pad ${padNumber}`);
                     }
+                } else {
+                    console.log(`[DEBUG] Visualization disabled: performanceMode=${this.performanceMode}`);
                 }
                 
                 // Background recording
@@ -3236,7 +3508,17 @@
                 // Show bank status when selecting
                 this.showBankStatus();
                 
-                        this.logToTerminal('Bank ' + bank + ' selected.', 'info');
+                // NEW: Deactivate delete mode when changing banks
+                if (this.deletePadMode) {
+                    this.deactivateDeletePadMode();
+                }
+                
+                // NEW: Deactivate edit mode when changing banks
+                if (this.isEditMode) {
+                    this.exitEditMode();
+                }
+                
+                this.logToTerminal('Bank ' + bank + ' selected.', 'info');
             }
 
             /**
@@ -3497,8 +3779,9 @@
                 
                 this.stopPadIfPlaying(padNumber);
                 
+                // CORREGIDO: Limpiar correctamente tanto en bankSamples como en samples
                 delete this.bankSamples[bank][padNumber];
-                delete this.samples[padNumber];
+                delete this.samples[bank][padNumber]; // CORREGIDO: Usar bank[padNumber] en lugar de samples[padNumber]
                 delete this.sampleNames[bank][padNumber];
                 
                 const pad = document.querySelector('.pad[data-number="' + padNumber + '"]');
@@ -3804,7 +4087,7 @@
                         self.bankSamples[bank][padNumber] = audioBuffer;
                         
                         if (bank === self.currentBank) {
-                            self.samples[padNumber] = audioBuffer;
+                            self.samples[bank][padNumber] = audioBuffer;
                         }
                         
                         const fileName = file.name;
@@ -3892,11 +4175,11 @@
              * @description Automatically loads pre-configured samples from GitHub repository
              */
             loadAllSamples() {
-                this.logToTerminal('🚀 Loading GitHub samples using unified approach...', 'info');
-                this.logToTerminal('📁 Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
-                this.logToTerminal('📊 Total files to load: ' + allSampleFiles.length, 'info');
-                this.logToTerminal('🎵 Bank A files: ' + allSampleFiles.filter(f => f.startsWith('A_')).length + ' samples', 'info');
-                this.logToTerminal('🎵 Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).length + ' samples', 'info');
+                this.logToTerminal('Loading GitHub samples using unified approach...', 'info');
+                this.logToTerminal('Samples URL: ' + GITHUB_SAMPLES_URL, 'info');
+                this.logToTerminal('Total files to load: ' + allSampleFiles.length, 'info');
+                this.logToTerminal('Bank A files: ' + allSampleFiles.filter(f => f.startsWith('A_')).length + ' samples', 'info');
+                this.logToTerminal('Bank B files: ' + allSampleFiles.filter(f => f.startsWith('B_')).length + ' samples', 'info');
                 
                 // Clear both banks to ensure clean loading
                 this.bankSamples['A'] = {};
@@ -3930,7 +4213,7 @@
                                 self.sampleNames['A'][padNumber] = nameWithoutExt;
                                 
                                 self.showLoadedEffect(pad);
-                                self.logToTerminal('✅ Bank A: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
+                                self.logToTerminal('Bank A: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
                             }
                         })
                         .catch(function(error) {
@@ -3967,7 +4250,7 @@
                                 self.sampleNames['B'][padNumber] = nameWithoutExt;
                                 
                                 self.showLoadedEffect(pad);
-                                self.logToTerminal('✅ Bank B: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
+                                self.logToTerminal('Bank B: ' + nameWithoutExt + ' loaded in Pad ' + padNumber, 'info');
                             }
                         })
                         .catch(function(error) {
@@ -3990,9 +4273,9 @@
                     const bankACount = Object.keys(self.bankSamples['A']).length;
                     const bankBCount = Object.keys(self.bankSamples['B']).length;
                     
-                    self.logToTerminal('✅ Bank A: ' + bankACount + ' samples loaded (88 BPM, pads 1-8)', 'info');
-                    self.logToTerminal('✅ Bank B: ' + bankBCount + ' samples loaded (135 BPM, pads 1-7)', 'info');
-                    self.logToTerminal('🎵 Total: ' + (bankACount + bankBCount) + ' samples ready to play!', 'info');
+                                            self.logToTerminal('Bank A: ' + bankACount + ' samples loaded (88 BPM, pads 1-8)', 'info');
+                        self.logToTerminal('Bank B: ' + bankBCount + ' samples loaded (135 BPM, pads 1-7)', 'info');
+                        self.logToTerminal('Total: ' + (bankACount + bankBCount) + ' samples ready to play!', 'info');
                     
                     // Debug info
                     console.log('[BANK A] Samples:', self.bankSamples['A']);
@@ -4037,7 +4320,7 @@
                         self.bankSamples[bank][padNumber] = audioBuffer;
                         
                         if (bank === self.currentBank) {
-                            self.samples[padNumber] = audioBuffer;
+                            self.samples[bank][padNumber] = audioBuffer;
                         }
                         
                         const nameWithoutExt = audioName.split('.').slice(0, -1).join('.');
@@ -4229,12 +4512,19 @@
              * @description Creates real-time audio visualization with optimized performance
              */
             visualize(padNumber, analyser, canvas) {
-                if (!canvas || this.performanceMode) return;
+                console.log(`[DEBUG] visualize() called for Pad ${padNumber}: canvas=${!!canvas}, performanceMode=${this.performanceMode}`);
+                
+                if (!canvas || this.performanceMode) {
+                    console.log(`[DEBUG] visualize() early return: canvas=${!!canvas}, performanceMode=${this.performanceMode}`);
+                    return;
+                }
                 
                 const canvasCtx = canvas.getContext('2d');
                 const width = canvas.width;
                 const height = canvas.height;
                 const bufferLength = analyser.frequencyBinCount;
+                
+                console.log(`[DEBUG] Canvas dimensions: ${width}x${height}, bufferLength: ${bufferLength}`);
                 
                 // OPTIMIZATION: Reuse arrays to avoid garbage collection
                 if (!this.waveformDataArrays) {
@@ -4381,11 +4671,15 @@
              */
             resizeCanvases() {
                 const pads = document.querySelectorAll('.pad');
-                pads.forEach(function(pad) {
+                console.log(`[DEBUG] resizeCanvases: Found ${pads.length} pads`);
+                pads.forEach(function(pad, index) {
                     const canvas = pad.querySelector('.visualizer');
                     if (canvas) {
                         canvas.width = pad.offsetWidth;
                         canvas.height = pad.offsetHeight;
+                        console.log(`[DEBUG] Pad ${index + 1}: Canvas resized to ${canvas.width}x${canvas.height}`);
+                    } else {
+                        console.log(`[DEBUG] Pad ${index + 1}: No canvas found`);
                     }
                 });
             }
@@ -4398,19 +4692,19 @@
              * @description Opens the slicer interface for sample manipulation
              */
             openSlicerModal(padNumber, maxAvailableSlices = null) {
-                if (!this.samples[padNumber]) {
+                if (!this.samples[this.currentBank] || !this.samples[this.currentBank][padNumber]) {
                     this.logToTerminal('No sample in this pad to slice', 'error');
                     return;
                 }
                 
-                const duration = this.samples[padNumber].duration;
+                const duration = this.samples[this.currentBank][padNumber].duration;
                 if (duration < 1) {
                     this.logToTerminal('Sample is too short to slice', 'error');
                     return;
                 }
                 
                 this.slicerSourcePad = padNumber;
-                this.slicerSourceBuffer = this.samples[padNumber];
+                this.slicerSourceBuffer = this.samples[this.currentBank][padNumber];
                 
                 const sampleName = this.sampleNames[this.currentBank][padNumber] || ('Sample ' + padNumber);
                 const durationText = duration.toFixed(2) + 's';
@@ -4569,7 +4863,7 @@
                         
                         // NEW: Store slice reference instead of copied buffer
                         self.bankSamples[self.currentBank][targetPad] = slice;
-                        self.samples[targetPad] = slice;
+                        self.samples[self.currentBank][targetPad] = slice;
                         
                         const sliceNumber = (index + 1).toString().padStart(2, '0');
                         const sliceName = sourcePadName + '-Slice' + sliceNumber;
@@ -4607,7 +4901,7 @@
                 
                 // Start from the next pad after the source pad
                 for (let i = sourcePad + 1; i <= 16; i++) {
-                    if (!this.samples[i]) {
+                    if (!this.samples[this.currentBank] || !this.samples[this.currentBank][i]) {
                         availablePads.push(i);
                     }
                 }
@@ -4615,7 +4909,7 @@
                 // If we don't have enough pads after the source, look for any empty pads
                 if (availablePads.length === 0) {
                     for (let i = 1; i <= 16; i++) {
-                        if (i !== sourcePad && !this.samples[i]) {
+                        if (i !== sourcePad && (!this.samples[this.currentBank] || !this.samples[this.currentBank][i])) {
                             availablePads.push(i);
                         }
                     }
@@ -4896,9 +5190,12 @@
                     if (bar && bar.length > 0) {
                         for (const ev of bar) {
                             const when = this.sequenceStartTime + (cycle * loopDuration) + (barIndex * this.barDuration()) + ev.time;
-                            if (when >= now && when < now + SCHEDULE_AHEAD_TIME) {
+                            // NEW: Prevent scheduling events that are too close to current time
+                            if (when >= now + 0.01 && when < now + SCHEDULE_AHEAD_TIME) {
                                 this.logToTerminal(`Scheduling event: Pad ${ev.pad} at ${when.toFixed(3)}s (Bar ${barIndex + 1}, Cycle ${cycle + 1})`, 'info');
                                 this.triggerScheduled(ev, when);
+                            } else if (when < now + 0.01) {
+                                console.log(`[DEBUG] Skipping event too close to current time: Pad ${ev.pad} at ${when.toFixed(3)}s (current: ${now.toFixed(3)}s)`);
                             }
                         }
                     }
@@ -4916,6 +5213,21 @@
              * @description Executes scheduled events with automatic bank switching
              */
             triggerScheduled(ev, when) {
+                // NEW: Prevent duplicate event execution
+                const eventKey = `${ev.pad}-${ev.bank || this.currentBank}-${when.toFixed(3)}`;
+                if (this.scheduledEvents.has(eventKey)) {
+                    console.log(`[DEBUG] Duplicate event prevented: ${eventKey}`);
+                    return;
+                }
+                
+                // Mark this event as scheduled
+                this.scheduledEvents.add(eventKey);
+                
+                // Clean up old events after a reasonable time
+                setTimeout(() => {
+                    this.scheduledEvents.delete(eventKey);
+                }, 1000); // Keep for 1 second to prevent duplicates
+                
                 const originalBank = this.currentBank;
                 if (ev.bank && ev.bank !== originalBank) this.selectBank(ev.bank);
                 this.playPad(ev.pad, when); // <-- usa la nueva firma con when
@@ -4977,6 +5289,9 @@
                     }
                 });
                 
+                // NEW: Clear scheduled events to prevent duplicates
+                this.scheduledEvents.clear();
+                
                 if (sourcesCleaned > 0) {
                     this.logToTerminal(`Cleaned up ${sourcesCleaned} active audio sources`, 'info');
                 }
@@ -5004,6 +5319,14 @@
                 // Clean up all active audio sources to prevent double playback
                 this.cleanupActiveSources();
                 
+                // NEW: Clear scheduled events when stopping sequence
+                this.scheduledEvents.clear();
+                
+                // NEW: Deactivate edit mode when stopping sequence
+                if (this.isEditMode) {
+                    this.exitEditMode();
+                }
+                
                 // Reset UI buttons
                 const playBtn = document.getElementById('play-sequence');
                 const recordBtn = document.getElementById('record-sequence');
@@ -5020,9 +5343,13 @@
                 this.updateBarBeatDisplay();
                 
                 // AUTO: Return to performance mode when sequence stops
+                console.log(`[DEBUG] Before sequence stop: performanceMode=${this.performanceMode}`);
                 if (!this.performanceMode) {
                     this.performanceMode = true;
+                    console.log(`[DEBUG] Switched back to performance mode: performanceMode=${this.performanceMode}`);
                     this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
+                } else {
+                    console.log(`[DEBUG] Already in performance mode: performanceMode=${this.performanceMode}`);
                 }
                 
                 this.logToTerminal('Sequence playback stopped and reset', 'info');
@@ -5194,9 +5521,13 @@
                 document.getElementById('play-sequence').classList.add('active');
                 
                 // AUTO: Activate visualization mode when sequence starts playing
+                console.log(`[DEBUG] Before sequence start: performanceMode=${this.performanceMode}`);
                 if (this.performanceMode) {
                     this.performanceMode = false;
+                    console.log(`[DEBUG] Switched to visualization mode: performanceMode=${this.performanceMode}`);
                     this.logToTerminal('Auto-switched to visualization mode for sequence playback', 'info');
+                } else {
+                    console.log(`[DEBUG] Already in visualization mode: performanceMode=${this.performanceMode}`);
                 }
                 
                 this.logToTerminal('Playing sequence with deterministic scheduler', 'info');
@@ -5428,10 +5759,10 @@
                     return;
                 }
                 
-                // Check if any samples are loaded
+                // Check if any samples are loaded in the current bank
                 let hasSamples = false;
                 for (let i = 1; i <= 16; i++) {
-                    if (this.samples[i]) {
+                    if (this.samples[this.currentBank] && this.samples[this.currentBank][i]) {
                         hasSamples = true;
                         break;
                     }
@@ -5459,7 +5790,7 @@
                 // Add visual feedback to pads with samples
                 for (let i = 1; i <= 16; i++) {
                     const pad = document.querySelector('.pad[data-number="' + i + '"]');
-                    if (pad && this.samples[i]) {
+                    if (pad && this.samples[this.currentBank] && this.samples[this.currentBank][i]) {
                         pad.classList.add('slicer-selectable');
                         pad.style.cursor = 'pointer';
                     }
@@ -5468,7 +5799,7 @@
                 // Change button appearance
                 const slicerBtn = document.getElementById('bank-h');
                 slicerBtn.classList.add('slicer-active');
-                slicerBtn.textContent = 'CANCEL';
+                slicerBtn.textContent = 'CNL';
             }
             
             /**
@@ -5492,6 +5823,74 @@
             }
             
             /**
+             * Toggle delete pad mode for individual pad deletion
+             * @method toggleDeletePadMode
+             * @description Activates/deactivates delete mode for individual pad selection
+             */
+            toggleDeletePadMode() {
+                if (this.deletePadMode) {
+                    this.deactivateDeletePadMode();
+                } else {
+                    this.activateDeletePadMode();
+                }
+            }
+            
+            /**
+             * Activate delete pad mode
+             * @method activateDeletePadMode
+             * @description Enables delete mode with visual feedback on deletable pads
+             */
+            activateDeletePadMode() {
+                // Deactivate other modes first
+                if (this.slicerMode) {
+                    this.deactivateSlicerMode();
+                }
+                if (this.isEditMode) {
+                    this.deactivateEditMode();
+                }
+                
+                this.deletePadMode = true;
+                
+                // Add visual feedback to pads with samples
+                for (let i = 1; i <= 16; i++) {
+                    const pad = document.querySelector('.pad[data-number="' + i + '"]');
+                    if (pad && this.samples[this.currentBank] && this.samples[this.currentBank][i]) {
+                        pad.classList.add('delete-selectable');
+                        pad.style.cursor = 'pointer';
+                    }
+                }
+                
+                // Change button appearance
+                const deleteBtn = document.getElementById('bank-g');
+                deleteBtn.classList.add('delete-active');
+                deleteBtn.textContent = 'CNL';
+                
+                this.logToTerminal('Delete mode activated! Click on any pad with a sample to delete it.', 'info');
+            }
+            
+            /**
+             * Deactivate delete pad mode
+             * @method deactivateDeletePadMode
+             * @description Disables delete mode and removes visual feedback
+             */
+            deactivateDeletePadMode() {
+                this.deletePadMode = false;
+                
+                // Remove visual feedback from all pads
+                document.querySelectorAll('.pad.delete-selectable').forEach(pad => {
+                    pad.classList.remove('delete-selectable');
+                    pad.style.cursor = '';
+                });
+                
+                // Restore button appearance
+                const deleteBtn = document.getElementById('bank-g');
+                deleteBtn.classList.remove('delete-active');
+                deleteBtn.textContent = 'DEL';
+                
+                this.logToTerminal('Delete mode deactivated', 'info');
+            }
+            
+            /**
              * Get list of loaded pads for slicer mode
              * @method getLoadedPadsList
              * @returns {string} Comma-separated list of loaded pad numbers
@@ -5500,7 +5899,7 @@
             getLoadedPadsList() {
                 const loadedPads = [];
                 for (let i = 1; i <= 16; i++) {
-                    if (this.samples[i]) {
+                    if (this.samples[this.currentBank] && this.samples[this.currentBank][i]) {
                         loadedPads.push(i);
                     }
                 }
@@ -5514,7 +5913,7 @@
              * @description Processes pad selection and opens slicer modal with available options
              */
             selectPadForSlicing(padNumber) {
-                if (!this.samples[padNumber]) {
+                if (!this.samples[this.currentBank] || !this.samples[this.currentBank][padNumber]) {
                     this.logToTerminal('Pad ' + padNumber + ' has no sample to slice', 'warning');
                     return;
                 }
@@ -5548,7 +5947,7 @@
                 
                 // Check pads from startPad + 1 to 16 (preferred order)
                 for (let i = startPad + 1; i <= 16; i++) {
-                    if (!this.samples[i]) {
+                    if (!this.samples[this.currentBank] || !this.samples[this.currentBank][i]) {
                         availablePads.push(i);
                     }
                 }
@@ -5556,7 +5955,7 @@
                 // If we don't have enough pads after the source, look for any empty pads
                 if (availablePads.length === 0) {
                     for (let i = 1; i <= 16; i++) {
-                        if (i !== startPad && !this.samples[i]) {
+                        if (i !== startPad && (!this.samples[this.currentBank] || !this.samples[this.currentBank][i])) {
                             availablePads.push(i);
                         }
                     }
@@ -5661,7 +6060,7 @@
                 console.log('[DEBUG] startMicrophoneRecording called with padId:', padId);
                 console.log('[DEBUG] hasMicrophoneAccess:', this.hasMicrophoneAccess);
                 console.log('[DEBUG] microphoneStream:', this.microphoneStream);
-                console.log('[DEBUG] isShiftActive:', this.isShiftActive);
+                console.log('[DEBUG] isMicrophoneMode:', this.isMicrophoneMode);
                 
                 if (!this.hasMicrophoneAccess || !this.microphoneStream) {
                     this.logToTerminal('Microphone not available. Press START first.', 'warning');
@@ -5859,106 +6258,836 @@
             stopVUMeter() {
                 // VU meter stops automatically when isRecording becomes false
             }
+            
+            // ============================================================================
+            // AUDIO EDITOR METHODS
+            // ============================================================================
+            
+            /**
+             * Manejar sliders en modo EDIT
+             */
+            handleEditSlider(sliderId, value) {
+                if (!this.currentEditPad || !this.audioEditor) return;
+                
+                const normalizedValue = value / 100; // Convertir 0-100 a 0-1
+                
+                switch(sliderId) {
+                    case 'slider-1': // VOL → START POINT
+                        this.editSelection.start = normalizedValue;
+                        this.audioEditor.selectionStart = normalizedValue * this.audioEditor.audioBuffer.duration;
+                        this.audioEditor.drawSelection();
+                        this.audioEditor.updateSelectionDisplay();
+                        this.logToTerminal(`EDIT: Start point set to ${(normalizedValue * 100).toFixed(1)}%`, 'info');
+                        break;
+                        
+                    case 'slider-2': // DISTORTION → END POINT  
+                        this.editSelection.end = normalizedValue;
+                        this.audioEditor.selectionEnd = normalizedValue * this.audioEditor.audioBuffer.duration;
+                        this.audioEditor.drawSelection();
+                        this.audioEditor.updateSelectionDisplay();
+                        this.logToTerminal(`EDIT: End point set to ${(normalizedValue * 100).toFixed(1)}%`, 'info');
+                        break;
+                        
+                    case 'slider-3': // FILT → ZOOM
+                        this.audioEditor.setZoom(normalizedValue);
+                        this.logToTerminal(`EDIT: Zoom set to ${(normalizedValue * 100).toFixed(1)}%`, 'info');
+                        break;
+                        
+                    case 'slider-4': // RES → PLAYBACK SPEED
+                        const speed = 0.5 + (normalizedValue * 1.5); // 0.5x a 2.0x
+                        this.audioEditor.setPlaybackSpeed(speed);
+                        this.logToTerminal(`EDIT: Playback speed set to ${speed.toFixed(1)}x`, 'info');
+                        break;
+                }
+            }
+            
+            /**
+             * Toggle del modo EDIT (activar/desactivar)
+             */
+            toggleEditMode() {
+                if (this.isEditMode) {
+                    this.exitEditMode();
+                } else {
+                    this.enterEditMode();
+                }
+            }
+            
+            /**
+             * Entrar en modo EDIT
+             */
+            enterEditMode() {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before editing samples.', 'warning');
+                    return;
+                }
+                
+                // Desactivar otros modos primero
+                if (this.slicerMode) {
+                    this.deactivateSlicerMode();
+                }
+                if (this.deletePadMode) {
+                    this.deactivateDeletePadMode();
+                }
+                
+                // Activar modo EDIT
+                this.isEditMode = true;
+                
+                // Cambiar etiquetas de sliders
+                this.updateSliderLabelsForEdit();
+                
+                // Mostrar instrucciones
+                this.logToTerminal('EDIT MODE: Click on any pad with a sample to edit it', 'info');
+                this.logToTerminal('Sliders: START | END | ZOOM | SPEED', 'info');
+                this.logToTerminal('Press EDIT again or click outside to exit', 'info');
+                
+                // Activar selección de pads para edición
+                this.activateEditPadSelection();
+                
+                // Cambiar apariencia del botón
+                const editBtn = document.getElementById('edit-sample');
+                editBtn.classList.add('edit-active');
+                editBtn.textContent = 'CNL';
+            }
+            
+            /**
+             * Salir del modo EDIT
+             */
+            exitEditMode() {
+                this.isEditMode = false;
+                
+                // Restaurar etiquetas de sliders normales
+                this.restoreSliderLabels();
+                
+                // Desactivar selección de pads para edición
+                this.deactivateEditPadSelection();
+                
+                // Restaurar apariencia del botón
+                const editBtn = document.getElementById('edit-sample');
+                editBtn.classList.remove('edit-active');
+                editBtn.textContent = 'EDIT';
+                
+                this.logToTerminal('EDIT mode deactivated', 'info');
+            }
+            
+            /**
+             * Actualizar etiquetas de sliders para modo EDIT
+             * CORREGIDO: No crear etiquetas de texto no solicitadas
+             */
+            updateSliderLabelsForEdit() {
+                // CORREGIDO: No crear etiquetas de texto - solo cambiar el comportamiento de los sliders
+                this.logToTerminal('EDIT MODE: Sliders now control START/END/ZOOM/SPEED', 'info');
+            }
+            
+            /**
+             * Restaurar etiquetas de sliders normales
+             * CORREGIDO: No restaurar etiquetas que no existen
+             */
+            restoreSliderLabels() {
+                // CORREGIDO: No restaurar etiquetas que no existen
+                this.logToTerminal('Normal mode: Sliders control VOL/DISTORTION/FILT/RES', 'info');
+            }
+            
+            /**
+             * Activar selección de pads para edición
+             * CORREGIDO: Usar fallback a bankSamples si samples no tiene la muestra
+             */
+            activateEditPadSelection() {
+                // Hacer todos los pads con samples seleccionables para edición
+                for (let i = 1; i <= 16; i++) {
+                    const pad = document.querySelector(`.pad[data-number="${i}"]`);
+                    // Verificar si hay muestra en samples o en bankSamples
+                    const hasSample = (this.samples[this.currentBank] && this.samples[this.currentBank][i]) || 
+                                    (this.bankSamples[this.currentBank] && this.bankSamples[this.currentBank][i]);
+                    
+                    if (pad && hasSample) {
+                        pad.classList.add('edit-selectable');
+                        pad.style.cursor = 'pointer';
+                        console.log(`[DEBUG] Pad ${i} made editable - has sample`);
+                    }
+                }
+            }
+            
+            /**
+             * Desactivar selección de pads para edición
+             */
+            deactivateEditPadSelection() {
+                document.querySelectorAll('.pad.edit-selectable').forEach(pad => {
+                    pad.classList.remove('edit-selectable');
+                    pad.style.cursor = '';
+                });
+            }
+            
+            /**
+             * Seleccionar pad para edición
+             * CORREGIDO: Mejor logging y verificación para muestras precargadas
+             */
+            selectPadForEditing(padNumber) {
+                console.log('[DEBUG] selectPadForEditing called for pad:', padNumber);
+                console.log('[DEBUG] currentBank:', this.currentBank);
+                console.log('[DEBUG] samples[currentBank]:', this.samples[this.currentBank]);
+                console.log('[DEBUG] sample in pad:', this.samples[this.currentBank] ? this.samples[this.currentBank][padNumber] : 'undefined');
+                
+                // VERIFICACIÓN ADICIONAL: Comprobar también bankSamples como fallback
+                if (!this.samples[this.currentBank] || !this.samples[this.currentBank][padNumber]) {
+                    console.log('[DEBUG] Sample not found in samples, checking bankSamples...');
+                    if (this.bankSamples[this.currentBank] && this.bankSamples[this.currentBank][padNumber]) {
+                        console.log('[DEBUG] Sample found in bankSamples, using that instead');
+                        // Usar bankSamples como fallback si samples no tiene la muestra
+                        const sample = this.bankSamples[this.currentBank][padNumber];
+                        this.currentEditPad = padNumber;
+                        
+                        console.log('[DEBUG] Fallback sample object:', sample);
+                        console.log('[DEBUG] Fallback sample constructor:', sample ? sample.constructor.name : 'undefined');
+                        console.log('[DEBUG] Fallback has getChannelData:', sample ? typeof sample.getChannelData : 'undefined');
+                        
+                        // Abrir modal del editor con la muestra de bankSamples
+                        this.openAudioEditor(padNumber, sample);
+                        this.logToTerminal('Pad ' + padNumber + ' selected for editing (using bankSamples)', 'info');
+                        return;
+                    } else {
+                        this.logToTerminal('Pad ' + padNumber + ' has no sample to edit', 'warning');
+                        return;
+                    }
+                }
+                
+                this.currentEditPad = padNumber;
+                const sample = this.samples[this.currentBank][padNumber];
+                
+                console.log('[DEBUG] Sample object for editing:', sample);
+                console.log('[DEBUG] Sample type:', typeof sample);
+                console.log('[DEBUG] Sample constructor:', sample ? sample.constructor.name : 'undefined');
+                console.log('[DEBUG] Has getChannelData:', sample ? typeof sample.getChannelData : 'undefined');
+                
+                // Abrir modal del editor
+                this.openAudioEditor(padNumber, sample);
+                
+                this.logToTerminal('Pad ' + padNumber + ' selected for editing', 'info');
+            }
+            
+            /**
+             * Abrir el editor de audio
+             * CORREGIDO: Maneja tanto muestras precargadas (AudioBuffer) como grabadas (objetos)
+             */
+            openAudioEditor(padNumber, sample) {
+                const modal = document.getElementById('audio-editor-modal');
+                const padNumberSpan = document.getElementById('edit-pad-number');
+                const sampleNameSpan = document.getElementById('edit-sample-name');
+                
+                // Actualizar información del modal
+                padNumberSpan.textContent = padNumber;
+                sampleNameSpan.textContent = this.sampleNames[this.currentBank][padNumber] || 'Sample ' + padNumber;
+                
+                // CORREGIDO: Manejar diferentes tipos de muestras
+                let audioBuffer;
+                let sampleDuration;
+                
+                if (sample && typeof sample === 'object' && sample.buffer) {
+                    // Es un sample con metadatos (como los grabados con micrófono)
+                    audioBuffer = sample.buffer;
+                    sampleDuration = sample.duration || audioBuffer.duration;
+                    console.log('[DEBUG] Sample con metadatos - Duration:', sampleDuration);
+                } else if (sample && typeof sample.getChannelData === 'function') {
+                    // Es un AudioBuffer directo (como las muestras precargadas de GitHub)
+                    audioBuffer = sample;
+                    sampleDuration = sample.duration;
+                    console.log('[DEBUG] AudioBuffer directo - Duration:', sampleDuration);
+                } else {
+                    // Fallback para compatibilidad
+                    audioBuffer = sample;
+                    sampleDuration = sample ? sample.duration : 0;
+                    console.log('[DEBUG] Fallback - Duration:', sampleDuration);
+                }
+                
+                console.log('[DEBUG] Sample object:', sample);
+                console.log('[DEBUG] AudioBuffer:', audioBuffer);
+                console.log('[DEBUG] AudioBuffer type:', typeof audioBuffer);
+                console.log('[DEBUG] AudioBuffer constructor:', audioBuffer.constructor.name);
+                console.log('[DEBUG] Has getChannelData:', typeof audioBuffer.getChannelData === 'function');
+                console.log('[DEBUG] Sample duration:', sampleDuration);
+                
+                if (!audioBuffer || typeof audioBuffer.getChannelData !== 'function') {
+                    this.logToTerminal('Error: Invalid audio buffer for editing', 'error');
+                    console.error('[DEBUG] Invalid audio buffer:', audioBuffer);
+                    return;
+                }
+                
+                // CORREGIDO: Crear editor con información de duración
+                try {
+                    console.log('[DEBUG] Creating AudioWaveformEditor...');
+                    this.audioEditor = new AudioWaveformEditor(audioBuffer, document.getElementById('waveform-container'), this.audioContext);
+                    console.log('[DEBUG] AudioWaveformEditor created successfully');
+                    
+                    // Mostrar modal
+                    modal.style.display = 'flex';
+                    console.log('[DEBUG] Modal displayed');
+                    
+                    // Configurar event listeners del editor
+                    this.setupEditorEventListeners();
+                    console.log('[DEBUG] Editor event listeners configured');
+                    
+                    this.logToTerminal(`Audio editor opened for Pad ${padNumber} - Duration: ${sampleDuration.toFixed(2)}s`, 'info');
+                } catch (error) {
+                    console.error('[DEBUG] Error creating audio editor:', error);
+                    this.logToTerminal('Error creating audio editor: ' + error.message, 'error');
+                }
+            }
+            
+            /**
+             * Configurar event listeners del editor
+             */
+            setupEditorEventListeners() {
+                document.getElementById('play-selection').addEventListener('click', () => {
+                    this.audioEditor.playSelection();
+                });
+                
+                document.getElementById('play-full').addEventListener('click', () => {
+                    this.audioEditor.playFull();
+                });
+                
+                document.getElementById('reset-selection').addEventListener('click', () => {
+                    this.audioEditor.resetSelection();
+                });
+                
+                document.getElementById('apply-trim').addEventListener('click', () => {
+                    this.applyTrimToSample();
+                });
+                
+                document.getElementById('cancel-editing').addEventListener('click', () => {
+                    this.closeAudioEditor();
+                });
+            }
+            
+            /**
+             * Aplicar trim a la muestra
+             */
+            async applyTrimToSample() {
+                if (!this.audioEditor || !this.currentEditPad) return;
+                
+                try {
+                    const trimmedBuffer = this.audioEditor.getTrimmedAudio();
+                    
+                    // Obtener el sample original para preservar metadatos
+                    const originalSample = this.samples[this.currentBank][this.currentEditPad];
+                    
+                    // Si el sample original es un objeto con metadatos, preservarlos
+                    if (originalSample && typeof originalSample === 'object' && originalSample.buffer) {
+                        // Es un sample con metadatos (como los grabados con micrófono)
+                        this.samples[this.currentBank][this.currentEditPad] = {
+                            ...originalSample,
+                            buffer: trimmedBuffer,
+                            duration: trimmedBuffer.duration
+                        };
+                        this.bankSamples[this.currentBank][this.currentEditPad] = {
+                            ...originalSample,
+                            buffer: trimmedBuffer,
+                            duration: trimmedBuffer.duration
+                        };
+                    } else {
+                        // Es un AudioBuffer directo (como los samples de GitHub)
+                        this.samples[this.currentBank][this.currentEditPad] = trimmedBuffer;
+                        this.bankSamples[this.currentBank][this.currentEditPad] = trimmedBuffer;
+                    }
+                    
+                    // Actualizar nombre de la muestra
+                    const originalName = this.sampleNames[this.currentBank][this.currentEditPad];
+                    this.sampleNames[this.currentBank][this.currentEditPad] = originalName + '_TRIMMED';
+                    
+                    // Guardar cambios
+                    this.saveSampleInfo();
+                    this.updatePadBankIndicators();
+                    
+                    this.logToTerminal(`Sample trimmed and saved to Pad ${this.currentEditPad}`, 'info');
+                    
+                    // Cerrar editor
+                    this.closeAudioEditor();
+                    
+                } catch (error) {
+                    this.logToTerminal('Error applying trim: ' + error.message, 'error');
+                }
+            }
+            
+            /**
+             * Cerrar el editor de audio
+             */
+            closeAudioEditor() {
+                const modal = document.getElementById('audio-editor-modal');
+                modal.style.display = 'none';
+                
+                // Limpiar editor
+                if (this.audioEditor) {
+                    this.audioEditor.destroy();
+                    this.audioEditor = null;
+                }
+                
+                this.currentEditPad = null;
+                this.isEditMode = false;
+                
+                // Restaurar etiquetas de sliders
+                this.restoreSliderLabels();
+                
+                // Desactivar selección de pads para edición
+                this.deactivateEditPadSelection();
+                
+                this.logToTerminal('Audio editor closed', 'info');
+            }
 
         }
         
         // ============================================================================
-        // SHIFT BUTTON INITIALIZATION
+        // AUDIO WAVEFORM EDITOR CLASS
         // ============================================================================
         
         /**
-         * Initialize SHIFT button for microphone recording functionality
-         * @function initializeShiftButton
-         * @description Sets up event listeners for SHIFT button toggle functionality
+         * Audio Waveform Editor for Microphone Samples
+         * Permite editar muestras de micrófono con control visual
          */
-        function initializeShiftButton() {
-            const shiftButton = document.getElementById('shift-button');
-            
-            if (shiftButton) {
-                // Remove any existing event listeners to prevent duplicates
-                const newShiftButton = shiftButton.cloneNode(true);
-                shiftButton.parentNode.replaceChild(newShiftButton, shiftButton);
+        class AudioWaveformEditor {
+            constructor(audioBuffer, container, audioContext) {
+                console.log('[DEBUG] AudioWaveformEditor constructor called');
+                console.log('[DEBUG] audioBuffer:', audioBuffer);
+                console.log('[DEBUG] container:', container);
+                console.log('[DEBUG] audioContext:', audioContext);
                 
-                newShiftButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                this.audioBuffer = audioBuffer;
+                this.container = container;
+                this.audioContext = audioContext;
+                this.canvas = null;
+                this.ctx = null;
+                this.isDragging = false;
+                this.selectionStart = 0;
+                this.selectionEnd = audioBuffer.duration;
+                this.zoomLevel = 1;
+                this.playbackSpeed = 1;
+                
+                console.log('[DEBUG] AudioWaveformEditor properties set, calling init()');
+                this.init();
+            }
+            
+            init() {
+                try {
+                    console.log('[DEBUG] AudioWaveformEditor init() called');
+                    this.createCanvas();
+                    console.log('[DEBUG] Canvas created');
+                    this.renderWaveform();
+                    console.log('[DEBUG] Waveform rendered');
+                    this.setupEventListeners();
+                    console.log('[DEBUG] Event listeners set up');
+                    this.drawSelection();
+                    console.log('[DEBUG] Selection drawn');
+                    console.log('[DEBUG] AudioWaveformEditor initialization completed successfully');
+                } catch (error) {
+                    console.error('[DEBUG] Error in AudioWaveformEditor init():', error);
+                    throw error;
+                }
+            }
+            
+            createCanvas() {
+                this.canvas = document.createElement('canvas');
+                
+                // Asegurar que el canvas tenga dimensiones apropiadas
+                const containerWidth = this.container.offsetWidth || 400;
+                this.canvas.width = containerWidth;
+                this.canvas.height = 200;
+                
+                // Estilos del canvas
+                this.canvas.style.border = '2px solid var(--shadow-color-dark)';
+                this.canvas.style.cursor = 'crosshair';
+                this.canvas.style.backgroundColor = 'var(--shadow-color-dark)';
+                this.canvas.style.display = 'block';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '200px';
+                
+                // Agregar al contenedor
+                this.container.appendChild(this.canvas);
+                
+                // Obtener contexto 2D
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Configurar contexto para mejor calidad
+                this.ctx.imageSmoothingEnabled = false;
+                this.ctx.imageSmoothingQuality = 'high';
+                
+                console.log('[CANVAS] Canvas created:', {
+                    width: this.canvas.width,
+                    height: this.canvas.height,
+                    containerWidth: containerWidth
+                });
+            }
+            
+            renderWaveform() {
+                try {
+                    console.log('[DEBUG] renderWaveform() called');
+                    console.log('[DEBUG] Canvas dimensions:', { width: this.canvas.width, height: this.canvas.height });
+                    console.log('[DEBUG] AudioBuffer info:', {
+                        duration: this.audioBuffer.duration,
+                        sampleRate: this.audioBuffer.sampleRate,
+                        numberOfChannels: this.audioBuffer.numberOfChannels
+                    });
                     
-                    if (window.embryoPlayer) {
-                        // Toggle SHIFT state
-                        const newState = !window.embryoPlayer.isShiftActive;
-                        window.embryoPlayer.isShiftActive = newState;
+                    const { width, height } = this.canvas;
+                    const data = this.audioBuffer.getChannelData(0);
+                    console.log('[DEBUG] Channel data length:', data.length);
+                    
+                    const step = Math.ceil(data.length / width);
+                    const amp = height / 2;
+                    
+                    console.log('[DEBUG] Step size:', step, 'Amplitude:', amp);
+                    
+                    // Limpiar canvas
+                    this.ctx.clearRect(0, 0, width, height);
+                    
+                    // Configurar estilo de línea
+                    this.ctx.strokeStyle = 'var(--gb-primary)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.lineCap = 'round';
+                    
+                    // Dibujar línea central
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, height / 2);
+                    this.ctx.lineTo(width, height / 2);
+                    this.ctx.stroke();
+                    
+                    // Dibujar forma de onda
+                    this.ctx.strokeStyle = 'var(--gb-primary)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    
+                    for (let i = 0; i < width; i++) {
+                        let min = 1.0;
+                        let max = -1.0;
                         
-                        console.log('[DEBUG] SHIFT button clicked, new state:', newState);
-                        
-                        // Update button appearance
-                        if (newState) {
-                            this.style.background = 'var(--gb-active)';
-                            this.style.color = 'var(--gb-text-inverse)';
-                            window.embryoPlayer.logToTerminal('SHIFT ACTIVE - Click empty pad to start recording, click again to stop', 'info');
-                            
-                            // NEW: Transform REC button to MIC
-                            const recordButton = document.getElementById('record-sequence');
-                            if (recordButton) {
-                                recordButton.textContent = 'MIC';
-                                recordButton.classList.add('mic-mode');
-                            }
-                        } else {
-                            this.style.background = 'var(--bg-color)';
-                            this.style.color = 'var(--text-color)';
-                            window.embryoPlayer.logToTerminal('SHIFT deactivated', 'info');
-                            
-                            // NEW: Transform MIC button back to REC
-                            const recordButton = document.getElementById('record-sequence');
-                            if (recordButton) {
-                                recordButton.textContent = 'REC';
-                                recordButton.classList.remove('mic-mode');
+                        // Calcular min/max para este paso
+                        for (let j = 0; j < step; j++) {
+                            const index = (i * step) + j;
+                            if (index < data.length) {
+                                const datum = data[index];
+                                if (datum < min) min = datum;
+                                if (datum > max) max = datum;
                             }
                         }
+                        
+                        // Convertir coordenadas de audio (-1 a 1) a coordenadas de canvas (0 a height)
+                        const y1 = (height / 2) + (min * amp);
+                        const y2 = (height / 2) + (max * amp);
+                        
+                        // Dibujar línea vertical para este punto
+                        this.ctx.moveTo(i, y1);
+                        this.ctx.lineTo(i, y2);
                     }
-                });
+                    
+                    this.ctx.stroke();
+                    
+                    // Debug: mostrar información de la forma de onda
+                    console.log('[WAVEFORM] Rendered waveform:', {
+                        width: width,
+                        height: height,
+                        dataLength: data.length,
+                        step: step,
+                        duration: this.audioBuffer.duration,
+                        sampleRate: this.audioBuffer.sampleRate
+                    });
+                    
+                    console.log('[DEBUG] renderWaveform() completed successfully');
+                } catch (error) {
+                    console.error('[DEBUG] Error in renderWaveform():', error);
+                    throw error;
+                }
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
                 
-                console.log('[SHIFT] SHIFT button initialized for microphone recording (duplicate prevention)');
-            } else {
-                console.warn('[SHIFT] SHIFT button not found in DOM');
+                // Touch events para móviles
+                this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this));
+                this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this));
+                this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
+            }
+            
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                this.isDragging = true;
+                this.selectionStart = (x / this.canvas.width) * this.audioBuffer.duration;
+                this.drawSelection();
+                this.updateSelectionDisplay();
+            }
+            
+            onMouseMove(e) {
+                if (!this.isDragging) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                this.selectionEnd = (x / this.canvas.width) * this.audioBuffer.duration;
+                this.drawSelection();
+                this.updateSelectionDisplay();
+            }
+            
+            onMouseUp() {
+                this.isDragging = false;
+            }
+            
+            onTouchStart(e) {
+                e.preventDefault();
+                const rect = this.canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                this.isDragging = true;
+                this.selectionStart = (x / this.canvas.width) * this.audioBuffer.duration;
+                this.drawSelection();
+                this.updateSelectionDisplay();
+            }
+            
+            onTouchMove(e) {
+                e.preventDefault();
+                if (!this.isDragging) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                this.selectionEnd = (x / this.canvas.width) * this.audioBuffer.duration;
+                this.drawSelection();
+                this.updateSelectionDisplay();
+            }
+            
+            onTouchEnd(e) {
+                e.preventDefault();
+                this.isDragging = false;
+            }
+            
+            drawSelection() {
+                const { width, height } = this.canvas;
+                const startX = (this.selectionStart / this.audioBuffer.duration) * width;
+                const endX = (this.selectionEnd / this.audioBuffer.duration) * width;
+                
+                // Limpiar selección anterior
+                this.renderWaveform();
+                
+                // Dibujar nueva selección
+                this.ctx.fillStyle = 'rgba(155, 188, 15, 0.3)';
+                this.ctx.fillRect(startX, 0, endX - startX, height);
+                
+                // Marcadores de inicio y fin
+                this.ctx.strokeStyle = 'var(--gb-active)';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(startX, 0);
+                this.ctx.lineTo(startX, height);
+                this.ctx.moveTo(endX, 0);
+                this.ctx.lineTo(endX, height);
+                this.ctx.stroke();
+            }
+            
+            updateSelectionDisplay() {
+                const selectionTimeSpan = document.getElementById('edit-selection-time');
+                if (selectionTimeSpan) {
+                    const startTime = this.selectionStart.toFixed(2);
+                    const endTime = this.selectionEnd.toFixed(2);
+                    selectionTimeSpan.textContent = `${startTime}s - ${endTime}s`;
+                }
+            }
+            
+            playSelection() {
+                if (!this.audioContext) return;
+                
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.audioBuffer;
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = 0.5;
+                
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                source.start(0, this.selectionStart, this.selectionEnd - this.selectionStart);
+                
+                // Log de reproducción
+                if (window.embryoPlayer) {
+                    window.embryoPlayer.logToTerminal(`Playing selection: ${this.selectionStart.toFixed(2)}s - ${this.selectionEnd.toFixed(2)}s`, 'info');
+                }
+            }
+            
+            playFull() {
+                if (!this.audioContext) return;
+                
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.audioBuffer;
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = 0.5;
+                
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                source.start();
+                
+                // Log de reproducción
+                if (window.embryoPlayer) {
+                    window.embryoPlayer.logToTerminal('Playing full sample', 'info');
+                }
+            }
+            
+            resetSelection() {
+                this.selectionStart = 0;
+                this.selectionEnd = this.audioBuffer.duration;
+                this.drawSelection();
+                this.updateSelectionDisplay();
+                
+                if (window.embryoPlayer) {
+                    window.embryoPlayer.logToTerminal('Selection reset to full sample', 'info');
+                }
+            }
+            
+            setZoom(zoomLevel) {
+                this.zoomLevel = zoomLevel;
+                // Implementar zoom en la visualización
+                this.renderWaveform();
+            }
+            
+            setPlaybackSpeed(speed) {
+                this.playbackSpeed = speed;
+                // La velocidad se aplica al reproducir
+            }
+            
+            getTrimmedAudio() {
+                const startSample = Math.floor(this.selectionStart * this.audioBuffer.sampleRate);
+                const endSample = Math.floor(this.selectionEnd * this.audioBuffer.sampleRate);
+                const length = endSample - startSample;
+                
+                const trimmedBuffer = this.audioContext.createBuffer(
+                    this.audioBuffer.numberOfChannels,
+                    length,
+                    this.audioBuffer.sampleRate
+                );
+                
+                for (let channel = 0; channel < this.audioBuffer.numberOfChannels; channel++) {
+                    const channelData = this.audioBuffer.getChannelData(channel);
+                    const trimmedData = trimmedBuffer.getChannelData(channel);
+                    
+                    for (let i = 0; i < length; i++) {
+                        trimmedData[i] = channelData[startSample + i];
+                    }
+                }
+                
+                return trimmedBuffer;
+            }
+            
+            destroy() {
+                if (this.canvas && this.canvas.parentNode) {
+                    this.canvas.parentNode.removeChild(this.canvas);
+                }
+                this.canvas = null;
+                this.ctx = null;
             }
         }
+        
+        // ============================================================================
+        // MIC AND EDIT BUTTONS INITIALIZATION (REPLACES SHIFT)
+        // ============================================================================
+        
+        /**
+ * Initialize MIC and EDIT buttons for microphone recording and editing functionality
+ * @function initializeMicAndEditButtons
+ * @description Sets up event listeners for MIC and EDIT buttons
+ */
+function initializeMicAndEditButtons() {
+    const micButton = document.getElementById('mic-button');
+    const editButton = document.getElementById('edit-sample');
+    
+    if (micButton) {
+        micButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (window.embryoPlayer) {
+                // Toggle MIC mode
+                const newState = !window.embryoPlayer.isMicrophoneMode;
+                window.embryoPlayer.isMicrophoneMode = newState;
+                
+                console.log('[DEBUG] MIC button clicked, new state:', newState);
+                
+                // Update button appearance
+                if (newState) {
+                    this.style.background = 'var(--gb-active)';
+                    this.style.color = 'var(--gb-text-inverse)';
+                    this.textContent = 'MIC ON';
+                    
+                    window.embryoPlayer.logToTerminal('MIC MODE ACTIVE - Click empty pad to record (0-10s)', 'info');
+                } else {
+                    this.style.background = 'var(--bg-color)';
+                    this.style.color = 'var(--text-color)';
+                    this.textContent = 'MIC';
+                    
+                    window.embryoPlayer.logToTerminal('MIC mode deactivated', 'info');
+                }
+            }
+        });
+        
+        console.log('[MIC] MIC button initialized for microphone recording');
+    } else {
+        console.warn('[MIC] MIC button not found in DOM');
+    }
+    
+    if (editButton) {
+        editButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (window.embryoPlayer) {
+                window.embryoPlayer.toggleEditMode();
+            }
+        });
+        
+        console.log('[EDIT] EDIT button initialized for sample editing');
+    } else {
+        console.warn('[EDIT] EDIT button not found in DOM');
+    }
+}
         
         // ============================================================================
         // AUDIO SLIDERS INITIALIZATION
         // ============================================================================
         
         /**
-         * Initialize audio control sliders
-         * @function initializeAudioSliders
-         * @description Sets up event listeners for master effects control sliders
-         */
-        function initializeAudioSliders() {
-            const sliders = document.querySelectorAll('.audio-slider');
+ * Initialize audio control sliders
+ * @function initializeAudioSliders
+ * @description Sets up event listeners for master effects control sliders
+ */
+function initializeAudioSliders() {
+    const sliders = document.querySelectorAll('.audio-slider');
+    
+    sliders.forEach(slider => {
+        // Apply audio effects based on slider type
+        slider.addEventListener('input', function() {
+            const sliderId = this.id;
+            const value = parseFloat(this.value);
             
-            sliders.forEach(slider => {
-                // Apply audio effects based on slider type
-                slider.addEventListener('input', function() {
-                    const sliderId = this.id;
-                    const value = parseFloat(this.value);
-                    
-                    // NEW: Use the master effects system
-                    if (window.embryoPlayer && window.embryoPlayer.applyMasterEffect) {
-                        window.embryoPlayer.applyMasterEffect(sliderId, value);
-                    }
-                });
-                
-                // Clear terminal footer when slider is no longer being used
-                slider.addEventListener('change', function() {
-                    setTimeout(() => {
-                        if (window.embryoPlayer && window.embryoPlayer.updateTerminal) {
-                            window.embryoPlayer.updateTerminal('Waiting Input...', 'info');
-                        }
-                    }, 1000);
-                });
-            });
-            
-            console.log('[SLIDERS] Audio control sliders initialized with master effects system');
-        }
+            if (window.embryoPlayer) {
+                if (window.embryoPlayer.isEditMode) {
+                    // MODO EDIT: Los sliders controlan la edición de audio
+                    window.embryoPlayer.handleEditSlider(sliderId, value);
+                } else {
+                    // MODO NORMAL: Los sliders controlan efectos de audio
+                    window.embryoPlayer.applyMasterEffect(sliderId, value);
+                }
+            }
+        });
+        
+        // Clear terminal footer when slider is no longer being used
+        slider.addEventListener('change', function() {
+            setTimeout(() => {
+                if (window.embryoPlayer && window.embryoPlayer.updateTerminal) {
+                    window.embryoPlayer.updateTerminal('Waiting Input...', 'info');
+                }
+            }, 1000);
+        });
+    });
+    
+    console.log('[SLIDERS] Audio control sliders initialized with dual-mode system (effects + editing)');
+}
         
         // ============================================================================
         // APPLICATION INITIALIZATION
@@ -5975,8 +7104,18 @@
             // Initialize audio control sliders
             initializeAudioSliders();
             
-            // NEW: Initialize SHIFT button for microphone recording
-            initializeShiftButton();
+                    // NEW: Initialize MIC and EDIT buttons (replaces SHIFT functionality)
+        initializeMicAndEditButtons();
+            
+            // NEW: Initialize EDIT button (already handled in initializeMicAndEditButtons)
+            // const editButton = document.getElementById('edit-sample');
+            // if (editButton) {
+            //     editButton.addEventListener('click', function() {
+            //         if (window.embryoPlayer) {
+            //             window.embryoPlayer.enterEditMode();
+            //         }
+            //     });
+            // }
             
             // ============================================================================
             // WELCOME MESSAGE & STATUS
@@ -5986,9 +7125,9 @@
             setTimeout(() => {
                 if (window.embryoPlayer && window.embryoPlayer.logToTerminal) {
                     window.embryoPlayer.logToTerminal('Embryo Player v3.0 Started', 'info');
-                    window.embryoPlayer.logToTerminal('🎵 Auto-loading 15 GitHub samples into banks A and B...', 'info');
-                    window.embryoPlayer.logToTerminal('🎤 NEW: Press START to enable microphone recording', 'info');
-                    window.embryoPlayer.logToTerminal('🎤 NEW: SHIFT + empty pad = record from microphone (0-10s)', 'info');
+                    window.embryoPlayer.logToTerminal('Auto-loading 15 GitHub samples into banks A and B...', 'info');
+                    window.embryoPlayer.logToTerminal('NEW: Press START to enable microphone recording', 'info');
+                    window.embryoPlayer.logToTerminal('NEW: Click MIC button, then click empty pad to record (0-10s)', 'info');
                 }
             }, 100);
             
@@ -6006,7 +7145,7 @@
             console.log('   - Enhanced visual feedback');
             console.log('   - Unified pad control system');
             console.log('   - Touch button for mobile slicer');
-            console.log('   - NEW: Microphone recording with SHIFT + pad (0-10s)');
+            console.log('   - NEW: Microphone recording with MIC button + pad (0-10s)');
             console.log('   - NEW: Real-time VU meter during recording');
             console.log('   - NEW: WAV format output for recorded samples');
             
