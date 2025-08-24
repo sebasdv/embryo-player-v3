@@ -16,6 +16,7 @@ A powerful, browser-based audio sampler and sequencer built with modern web tech
 - **Pre-created audio nodes** for instant response
 - **Master effects chain**: Volume, Distortion, Filter, Resonance
 - **Non-destructive sample slicing** (no buffer copying)
+- **Smart slicing logic**: Automatically handles single-sample banks for 16-slice operations
 - **Multi-format support**: WAV, MP3, OGG, AAC, M4A, FLAC
 
 ### **Sequencer**
@@ -85,6 +86,7 @@ embrio-player-v3/
 - **Sequencer recording** for loop creation
 - **Live performance** with MIDI controllers
 - **Sample manipulation** with non-destructive slicing
+- **Smart slicing logic**: Automatically handles single-sample banks for 16-slice operations
 
 ### **Learning & Education**
 - **Music theory practice** with visual feedback

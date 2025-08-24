@@ -4852,7 +4852,13 @@
                 // NEW: Find available empty pads starting from the next available pad
                 const availablePads = this.findAvailablePadsForSlicing(startPadNumber);
                 
-                if (availablePads.length < slices.length) {
+                // Check if this is the special case (only 1 sample in bank)
+                const totalSamples = Object.keys(this.samples[this.currentBank] || {}).length;
+                const isSpecialCase = totalSamples === 1;
+                
+                if (isSpecialCase) {
+                    this.logToTerminal('Special case: Only 1 sample in bank. Creating ' + slices.length + ' slices (will overwrite pad 1)', 'warning');
+                } else if (availablePads.length < slices.length) {
                     this.logToTerminal('Warning: Only ' + availablePads.length + ' empty pads available for ' + slices.length + ' slices', 'warning');
                 }
                 
@@ -4895,9 +4901,22 @@
              * @param {number} sourcePad - Source pad number (excluded from results)
              * @returns {Array<number>} Array of available empty pad numbers
              * @description Identifies empty pads available for placing slice results
+             * Special case: When only 1 sample exists, allows 16 slices by including pad 1
              */
             findAvailablePadsForSlicing(sourcePad) {
                 const availablePads = [];
+                
+                // Count total samples in current bank
+                const totalSamples = Object.keys(this.samples[this.currentBank] || {}).length;
+                
+                // Special case: If only 1 sample exists in the bank, allow 16 slices
+                // This will overwrite the first pad with the first slice
+                if (totalSamples === 1) {
+                    for (let i = 1; i <= 16; i++) {
+                        availablePads.push(i);
+                    }
+                    return availablePads;
+                }
                 
                 // Start from the next pad after the source pad
                 for (let i = sourcePad + 1; i <= 16; i++) {
@@ -5941,9 +5960,22 @@
              * @param {number} startPad - Starting pad number for calculation
              * @returns {Array<number>} Array of available empty pad numbers
              * @description Determines how many slices can be created based on available space
+             * Special case: When only 1 sample exists, allows 16 slices by including pad 1
              */
             calculateAvailablePadsForSlicing(startPad) {
                 const availablePads = [];
+                
+                // Count total samples in current bank
+                const totalSamples = Object.keys(this.samples[this.currentBank] || {}).length;
+                
+                // Special case: If only 1 sample exists in the bank, allow 16 slices
+                // This will overwrite the first pad with the first slice
+                if (totalSamples === 1) {
+                    for (let i = 1; i <= 16; i++) {
+                        availablePads.push(i);
+                    }
+                    return availablePads;
+                }
                 
                 // Check pads from startPad + 1 to 16 (preferred order)
                 for (let i = startPad + 1; i <= 16; i++) {
