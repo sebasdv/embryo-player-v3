@@ -199,7 +199,27 @@
             border-color: var(--gb-active);
         }
         
-
+        /* Botón de Overdub */
+        .btn-overdub {
+            background-color: var(--gb-accent);
+            color: var(--gb-text-inverse);
+            font-weight: normal;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-overdub:hover {
+            background-color: var(--gb-dark);
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 var(--shadow-color-dark);
+        }
+        
+        .btn-overdub.active {
+            background-color: var(--gb-dark);
+            color: var(--gb-text-inverse);
+            font-weight: bold;
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0 var(--shadow-color-dark);
+        }
         
         /* Botón de Reproducción (Play) */
         .btn-play {
@@ -404,6 +424,9 @@
         .sequencer-row {
             position: relative;
             margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
         }
         
 
@@ -1547,7 +1570,8 @@
                                     <div class="help-section">
                         <h4>Sequencer Controls</h4>
                         <ul>
-                            <li><strong>REC</strong> - Start recording a sequence</li>
+                            <li><strong>REC</strong> - Start recording a new sequence (clears existing)</li>
+                            <li><strong>DUB</strong> - Add events to existing sequence (overdub)</li>
                             <li><strong>PLAY</strong> - Play the recorded sequence</li>
                             <li><strong>STOP ALL</strong> - Stop all audio and sequences</li>
                             <li><strong>CLEAR</strong> - Clear the recorded sequence</li>
@@ -1609,6 +1633,7 @@
 
         <div class="header-row sequencer-row">
             <button id="record-sequence" class="header-button btn-record">REC</button>
+            <button id="overdub-sequence" class="header-button btn-overdub">DUB</button>
             <button id="play-sequence" class="header-button btn-play">PLAY</button>
             <button id="stop-sequence" class="header-button" title="Stop all audio and sequences">STOP ALL</button>
             <button id="clear-sequence" class="header-button">CLEAR</button>
@@ -2195,9 +2220,15 @@
                     
                     // Update BPM if it's different
                     if (clampedBPM !== this.embryoPlayer.bpm) {
+                        const oldBPM = this.embryoPlayer.bpm;
                         this.embryoPlayer.bpm = clampedBPM;
                         this.embryoPlayer.updateTempoDisplay();
                         this.embryoPlayer.logToTerminal(`Tap tempo: ${clampedBPM} BPM`, 'info');
+                        
+                        // NEW: Recalculate sequence timing if we have a recorded sequence
+                        if (this.embryoPlayer.hasRecordedSequence()) {
+                            this.embryoPlayer.recalculateSequenceTiming(oldBPM, clampedBPM);
+                        }
                     }
                 }
                 
@@ -2262,6 +2293,8 @@
                 
                 // Secuenciador
                 this.isRecording = false;
+                this.isOverdubbing = false; // NEW: Overdub mode flag
+                this.overdubStartTime = 0; // NEW: Start time for overdub sessions
                 this.isPlaying = false;
                 this.bpm = 120;
                 this.currentBar = 0;
@@ -2464,6 +2497,12 @@
                         self.toggleRecording(); 
                     }
                 });
+                
+                // NEW: Overdub button for adding to existing sequences
+                document.getElementById('overdub-sequence').addEventListener('click', function() { 
+                    self.toggleOverdub(); 
+                });
+                
                 document.getElementById('play-sequence').addEventListener('click', function() { self.playSequence(); });
                 document.getElementById('stop-sequence').addEventListener('click', function() { self.stopAll(); });
                 document.getElementById('clear-sequence').addEventListener('click', function() { self.clearSequence(); });
@@ -3409,14 +3448,74 @@
              * @description Updates BPM within valid range and restarts timers if needed
              */
             changeTempo(change) {
+                const oldBPM = this.bpm;
                 this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, this.bpm + change));
                 this.updateTempoDisplay();
                 
                 // Log BPM change to terminal
-                this.logToTerminal(`BPM changed to ${this.bpm}`, 'info');
+                this.logToTerminal(`BPM changed from ${oldBPM} to ${this.bpm}`, 'info');
+                
+                // NEW: Recalculate sequence timing if we have a recorded sequence
+                if (this.hasRecordedSequence()) {
+                    this.recalculateSequenceTiming(oldBPM, this.bpm);
+                }
                 
                 if (this.isRecording || this.isPlaying) {
                     this.restartTimers();
+                }
+            }
+            
+            /**
+             * Check if there's a recorded sequence with data
+             * @method hasRecordedSequence
+             * @returns {boolean} True if there's a recorded sequence with events
+             * @description Determines if there's a recorded sequence that needs timing recalculation
+             */
+            hasRecordedSequence() {
+                return this.sequence && this.sequence.some(bar => bar && bar.length > 0);
+            }
+            
+            /**
+             * Recalculate sequence timing when BPM changes
+             * @method recalculateSequenceTiming
+             * @param {number} oldBPM - Previous BPM value
+             * @param {number} newBPM - New BPM value
+             * @description Converts all sequence event times from old BPM to new BPM
+             */
+            recalculateSequenceTiming(oldBPM, newBPM) {
+                if (oldBPM === newBPM) return;
+                
+                const bpmRatio = oldBPM / newBPM;
+                let eventsRecalculated = 0;
+                
+                this.sequence.forEach((bar, barIndex) => {
+                    if (bar && bar.length > 0) {
+                        bar.forEach(event => {
+                            // Convert time from old BPM to new BPM
+                            const oldTime = event.time;
+                            event.time = oldTime * bpmRatio;
+                            
+                            // Also convert originalTime if it exists (for quantization)
+                            if (event.originalTime !== undefined) {
+                                event.originalTime = event.originalTime * bpmRatio;
+                            }
+                            
+                            eventsRecalculated++;
+                        });
+                    }
+                });
+                
+                if (eventsRecalculated > 0) {
+                    this.logToTerminal(`Recalculated timing for ${eventsRecalculated} sequence events (${oldBPM} → ${newBPM} BPM)`, 'info');
+                    
+                    // If sequence is currently playing, restart it with new timing
+                    if (this.isPlaying) {
+                        this.logToTerminal('Restarting sequence playback with new BPM...', 'info');
+                        this.stopSequence();
+                        setTimeout(() => {
+                            this.startSequence();
+                        }, 100);
+                    }
                 }
             }
             
@@ -4344,7 +4443,16 @@
              */
             recordPadEvent(padNumber) {
                 const currentTime = this.audioContext.currentTime;
-                const relativeTime = (currentTime - this.sequenceStartTime) % (60 / this.bpm * BEATS_PER_BAR);
+                
+                // NEW: Calculate relative time based on mode
+                let relativeTime;
+                if (this.isOverdubbing) {
+                    // In overdub mode, calculate time from overdub start
+                    relativeTime = (currentTime - this.overdubStartTime) % (60 / this.bpm * BEATS_PER_BAR);
+                } else {
+                    // In normal recording mode, calculate time from sequence start
+                    relativeTime = (currentTime - this.sequenceStartTime) % (60 / this.bpm * BEATS_PER_BAR);
+                }
                 
                 // NEW: Apply quantization if enabled
                 let quantizedTime = relativeTime;
@@ -4352,19 +4460,41 @@
                     quantizedTime = this.quantizeTime(relativeTime);
                 }
                 
-                this.sequence[this.currentBar].push({
-                    pad: padNumber,
-                    time: quantizedTime,
-                    bank: this.currentBank,
-                    originalTime: relativeTime, // Keep original timing for reference
-                    quantized: this.quantizeMode
-                });
-                
-                const timingInfo = this.quantizeMode ? 
-                    `(Original: ${relativeTime.toFixed(3)}s → Quantized: ${quantizedTime.toFixed(3)}s)` :
-                    `(Time: ${relativeTime.toFixed(3)}s)`;
-                
-                console.log('Recorded in bar ' + (this.currentBar+1) + ', ' + timingInfo + ', bank: ' + this.currentBank);
+                // NEW: Handle overdub mode differently
+                if (this.isOverdubbing) {
+                    // In overdub mode, add to existing sequence without clearing
+                    this.sequence[this.currentBar].push({
+                        pad: padNumber,
+                        time: quantizedTime,
+                        bank: this.currentBank,
+                        originalTime: relativeTime,
+                        quantized: this.quantizeMode,
+                        overdubbed: true // NEW: Flag to indicate this was added via overdub
+                    });
+                    
+                    const timingInfo = this.quantizeMode ? 
+                        `(Original: ${relativeTime.toFixed(3)}s → Quantized: ${quantizedTime.toFixed(3)}s)` :
+                        `(Time: ${relativeTime.toFixed(3)}s)`;
+                    
+                    console.log('Overdubbed in bar ' + (this.currentBar+1) + ', ' + timingInfo + ', bank: ' + this.currentBank);
+                    console.log('[DEBUG] Overdub timing - currentTime:', currentTime.toFixed(3), 'overdubStartTime:', this.overdubStartTime.toFixed(3), 'relativeTime:', relativeTime.toFixed(3));
+                } else {
+                    // Normal recording mode
+                    this.sequence[this.currentBar].push({
+                        pad: padNumber,
+                        time: quantizedTime,
+                        bank: this.currentBank,
+                        originalTime: relativeTime,
+                        quantized: this.quantizeMode
+                    });
+                    
+                    const timingInfo = this.quantizeMode ? 
+                        `(Original: ${relativeTime.toFixed(3)}s → Quantized: ${quantizedTime.toFixed(3)}s)` :
+                        `(Time: ${relativeTime.toFixed(3)}s)`;
+                    
+                    console.log('Recorded in bar ' + (this.currentBar+1) + ', ' + timingInfo + ', bank: ' + this.currentBank);
+                    console.log('[DEBUG] Normal recording timing - currentTime:', currentTime.toFixed(3), 'sequenceStartTime:', this.sequenceStartTime.toFixed(3), 'relativeTime:', relativeTime.toFixed(3));
+                }
             }
             
             // NEW: QUANTIZATION SYSTEM FUNCTIONS
@@ -5388,6 +5518,19 @@
             }
             
             /**
+             * Toggle overdub state
+             * @method toggleOverdub
+             * @description Switches between overdub and stopped states
+             */
+            toggleOverdub() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    this.startOverdub();
+                }
+            }
+            
+            /**
              * Start sequence recording
              * @method startRecording
              * @description Begins recording a new sequence with metronome count-in
@@ -5426,6 +5569,54 @@
             }
             
             /**
+             * Start sequence overdub (add to existing sequence)
+             * @method startOverdub
+             * @description Begins overdubbing to add events to existing sequence
+             * @throws {Error} If audio system is not initialized or no sequence exists
+             */
+            startOverdub() {
+                if (!this.audioContext) {
+                    this.logToTerminal('Please start audio before overdubbing.', 'warning');
+                    return;
+                }
+                
+                // Check if there's an existing sequence to overdub
+                if (!this.hasRecordedSequence()) {
+                    this.logToTerminal('No existing sequence to overdub. Use REC to create a new sequence first.', 'warning');
+                    return;
+                }
+                
+                if (this.isPlaying) {
+                    this.isPlaying = false;
+                    document.getElementById('play-sequence').classList.remove('active');
+                }
+                
+                this.isRecording = true;
+                this.isOverdubbing = true; // NEW: Flag to indicate overdub mode
+                this.currentBar = 0;
+                this.currentBeat = 1;
+                
+                // NEW: Store the original sequence start time for overdub
+                this.overdubStartTime = this.audioContext.currentTime;
+                
+                const overdubBtn = document.getElementById('overdub-sequence');
+                overdubBtn.textContent = "STOP";
+                overdubBtn.classList.add('active');
+                this.updateBarBeatDisplay();
+                
+                // NEW: Show quantization and grid information for overdub
+                if (this.quantizeMode) {
+                    this.logToTerminal('Preparing to overdub with QUANTIZATION...', 'info');
+                    this.showGridInfo();
+                } else {
+                    this.logToTerminal('Preparing to overdub (FREE TIMING)...', 'info');
+                }
+                
+                this.logToTerminal('Overdub mode: Adding to existing sequence...', 'info');
+                this.startPrecount();
+            }
+            
+            /**
              * Start pre-count metronome before recording
              * @method startPrecount
              * @description Provides count-in beats before actual recording begins
@@ -5450,8 +5641,15 @@
                         // Programar la siguiente función preCount
                         setTimeout(preCount, beatDuration * 1000);
                     } else {
-                        self.sequenceStartTime = self.audioContext.currentTime;
-                        self.logToTerminal('Recording sequence...', 'info');
+                        // NEW: Handle overdub mode differently
+                        if (self.isOverdubbing) {
+                            // In overdub mode, don't change sequenceStartTime
+                            self.logToTerminal('Overdubbing sequence...', 'info');
+                        } else {
+                            // In normal recording mode, set new sequence start time
+                            self.sequenceStartTime = self.audioContext.currentTime;
+                            self.logToTerminal('Recording sequence...', 'info');
+                        }
                         self.startBarAdvancement();
                     }
                 }
@@ -5499,18 +5697,28 @@
              */
             stopRecording() {
                 this.isRecording = false;
+                
+                // NEW: Handle overdub mode differently
+                if (this.isOverdubbing) {
+                    this.isOverdubbing = false;
+                    const overdubBtn = document.getElementById('overdub-sequence');
+                    overdubBtn.textContent = "DUB";
+                    overdubBtn.classList.remove('active');
+                    this.logToTerminal('Overdub stopped - sequence updated', 'info');
+                } else {
+                    const recordBtn = document.getElementById('record-sequence');
+                    recordBtn.textContent = "REC";
+                    recordBtn.classList.remove('active');
+                    this.logToTerminal('Recording stopped', 'info');
+                }
+                
                 this.stopTimers();
-                const recordBtn = document.getElementById('record-sequence');
-                recordBtn.textContent = "REC";
-                recordBtn.classList.remove('active');
                 
                 // AUTO: Return to performance mode when recording stops
                 if (!this.performanceMode) {
                     this.performanceMode = true;
                     this.logToTerminal('Auto-switched back to performance mode (minimum latency)', 'info');
                 }
-                
-                this.logToTerminal('Recording stopped', 'info');
             }
             
             /**

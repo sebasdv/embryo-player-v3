@@ -48,6 +48,8 @@ This version represents a complete overhaul with professional-grade features and
 - **Bank Switching** during sequence playback
 - **Event Timing** with millisecond precision
 - **Quantization Statistics** for performance monitoring
+- **Dynamic BPM Adaptation** - sequences automatically adjust to tempo changes
+- **Overdub Recording** - add new events to existing sequences without clearing previous content
 
 ### **User Experience**
 - **GameBoy-inspired Retro Aesthetic** with modern functionality
@@ -63,6 +65,11 @@ This version represents a complete overhaul with professional-grade features and
 - **Local Storage Integration** for sample persistence
 - **MIDI System** with multi-channel support
 - **Audio Visualization** with real-time waveform display
+
+### **Bug Fixes**
+- **Fixed BPM Synchronization Issue** - recorded sequences now automatically adapt to tempo changes
+- **Improved Sequence Timing** - events maintain musical proportions when BPM is modified
+- **Enhanced Tap Tempo** - now properly recalculates sequence timing for recorded content
 
 ### **Mobile & Accessibility**
 - **Touch Event Support** for mobile devices
