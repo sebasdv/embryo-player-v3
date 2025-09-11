@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mostrario de Sliders Interactivos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #2c2c2c;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    .showcase-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      padding: 10px;
+    }
+
+    h1 {
+      color: #ebebeb;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Tarjeta con estética del botón base */
+    .slider {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      background: #ebebeb;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Pista horizontal centrada */
+    .slider-track {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 8px;
+      background: #d0d0d0;
+      border-radius: 4px;
+    }
+
+    /* Relleno desde la izquierda según valor */
+    .slider-fill {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 8px;
+      width: 0%; /* se actualiza por JS */
+      background: #333;
+      border-radius: 4px;
+    }
+
+    /* Thumb tipo fader (línea vertical) */
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 32px;
+      border-radius: 3px;
+      background: #333;
+      left: 10px; /* se actualiza por JS */
+    }
+
+    /* Línea de contraste centrada dentro del fader */
+    .slider-thumb::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      background: #ebebeb; /* mismo color de fondo del slider */
+      border-radius: 1px;
+      opacity: 0.95;
+    }
+
+    .slider-label {
+      color: #ebebeb;
+      font-size: 0.9em;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Sin hover (alineado con decisión en diales) */
+    /* .slider:hover { } */
+
+    /* Active discreto opcional (podemos quitar si no se desea) */
+    .slider:active { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+    @media (max-width: 480px) {
+      .sliders-grid { gap: 20px; max-width: 300px; }
+      .slider { width: 70px; height: 70px; }
+      .slider-thumb { width: 20px; height: 20px; }
+      .slider-track, .slider-fill { width: 7px; }
+      h1 { font-size: 1.5em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="showcase-container">
+    <h1>Mostrario de Sliders Interactivos</h1>
+
+    <div class="sliders-grid">
+      <div class="slider-container">
+        <div class="slider" data-label="Volume" data-value="95"></div>
+        <div class="slider-label">Volume</div>
+      </div>
+
+      <div class="slider-container">
+        <div class="slider" data-label="Distortion" data-value="57"></div>
+        <div class="slider-label">Distortion</div>
+      </div>
+
+      <div class="slider-container">
+        <div class="slider" data-label="Cutoff" data-value="76"></div>
+        <div class="slider-label">Cutoff</div>
+      </div>
+
+      <div class="slider-container">
+        <div class="slider" data-label="Resonance" data-value="38"></div>
+        <div class="slider-label">Resonance</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function createSliderInternals(el){
+      const track = document.createElement('div'); track.className = 'slider-track';
+      const fill  = document.createElement('div'); fill.className = 'slider-fill';
+      const thumb = document.createElement('div'); thumb.className = 'slider-thumb';
+      el.appendChild(track); el.appendChild(fill); el.appendChild(thumb);
+    }
+
+    function valueToUI(el, value){
+      const v = clamp(value, 0, 127);
+      const pct = v / 127; // 0..1
+      const padL = 10, padR = 10; // padding laterales
+      const w = el.clientWidth - (padL + padR); // ancho útil de pista
+      const thumbRadius = 3; // mitad del ancho del thumb (6px)
+      const xRaw = padL + pct * w; // centro deseado del thumb
+      const x = clamp(xRaw, padL + thumbRadius, padL + w - thumbRadius);
+      const fill = el.querySelector('.slider-fill');
+      const thumb = el.querySelector('.slider-thumb');
+      // ancho del relleno hasta el centro del thumb, limitado a la pista
+      if (fill) fill.style.width = `${clamp(x - padL, 0, w)}px`;
+      if (thumb) thumb.style.left = `${x}px`;
+      el.dataset.value = String(Math.round(v));
+    }
+
+    function pointerValue(el, clientX){
+      const rect = el.getBoundingClientRect();
+      const left = rect.left + 10; // padding izquierdo
+      const right = rect.right - 10; // padding derecho
+      const w = right - left;
+      const clampedX = clamp(clientX, left, right);
+      const pct = (clampedX - left) / w; // 0..1
+      return clamp(Math.round(pct * 127), 0, 127);
+    }
+
+    function bindSlider(el){
+      let isDragging = false;
+
+      el.addEventListener('mousedown', (e)=>{
+        isDragging = true;
+        const v = pointerValue(el, e.clientX);
+        valueToUI(el, v);
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e)=>{
+        if (!isDragging) return;
+        const v = pointerValue(el, e.clientX);
+        valueToUI(el, v);
+      });
+
+      document.addEventListener('mouseup', ()=>{ isDragging = false; });
+
+      el.addEventListener('touchstart', (e)=>{
+        isDragging = true;
+        const v = pointerValue(el, e.touches[0].clientX);
+        valueToUI(el, v);
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', (e)=>{
+        if (!isDragging) return;
+        const v = pointerValue(el, e.touches[0].clientX);
+        valueToUI(el, v);
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchend', ()=>{ isDragging = false; });
+
+      // Inicializar
+      const initial = parseFloat(el.getAttribute('data-value') || '64');
+      createSliderInternals(el);
+      valueToUI(el, initial);
+    }
+
+    document.querySelectorAll('.slider').forEach(bindSlider);
+  </script>
+</body>
+</html>
+
+

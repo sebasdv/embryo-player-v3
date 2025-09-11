@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mostrario de Diales Interactivos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #2c2c2c;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    .showcase-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      padding: 10px;
+    }
+
+    h1 {
+      color: #ebebeb;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .dials-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .dial-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dial {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #ebebeb;
+      border: 3px solid #333;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Hover desactivado */
+
+    .dial:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .dial::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 30px;
+      background: #333;
+      transform-origin: bottom center;
+      transform: translate(-50%, -100%);
+      border-radius: 2px;
+      transition: transform 0.1s ease;
+    }
+
+    .dial-label {
+      color: #ebebeb;
+      font-size: 0.9em;
+      text-align: center;
+      font-weight: 500;
+    }
+
+
+    /* Diferentes estilos de diales */
+    .dial.volume {
+      /* Colores unificados con base_grid.html */
+      background: #ebebeb;
+      border-color: #333;
+    }
+
+    .dial.volume::before {
+      background: #333;
+    }
+
+    .dial.distortion {
+      background: linear-gradient(45deg, #ff9500, #ef8500);
+      border-color: #df7500;
+    }
+
+    .dial.distortion::before {
+      background: white;
+    }
+
+    .dial.cutoff {
+      background: linear-gradient(45deg, #ff6b6b, #ff5252);
+      border-color: #e53935;
+    }
+
+    .dial.cutoff::before {
+      background: white;
+    }
+
+    .dial.resonance {
+      background: linear-gradient(45deg, #9c27b0, #8e24aa);
+      border-color: #7b1fa2;
+    }
+
+    .dial.resonance::before {
+      background: white;
+    }
+
+    /* Variantes visuales de diales */
+    /* 1) Minimal: ya es el estilo base (sin cambios) */
+
+    /* 2) Muescas alrededor (ticks) */
+    .dial--ticks {
+      background:
+        radial-gradient(circle at center, transparent 54%, #333 54% 57%, transparent 57%) ,
+        conic-gradient(from -90deg,
+          #333 0deg 2deg, transparent 2deg 30deg,
+          #333 30deg 32deg, transparent 32deg 60deg,
+          #333 60deg 62deg, transparent 62deg 90deg,
+          #333 90deg 92deg, transparent 92deg 120deg,
+          #333 120deg 122deg, transparent 122deg 150deg,
+          #333 150deg 152deg, transparent 152deg 180deg,
+          #333 180deg 182deg, transparent 182deg 210deg,
+          #333 210deg 212deg, transparent 212deg 240deg,
+          #333 240deg 242deg, transparent 242deg 270deg,
+          #333 270deg 272deg, transparent 272deg 300deg,
+          #333 300deg 302deg, transparent 302deg 330deg,
+          #333 330deg 332deg, transparent 332deg 360deg);
+    }
+
+    /* 3) Arco de progreso (conic) */
+    .dial--arc {
+      --p: 0; /* 0..1 */
+      background:
+        conic-gradient(from -90deg, #4a9eff calc(var(--p)*360deg), #ebebeb 0),
+        radial-gradient(circle at center, transparent 58%, #333 58% 60%, transparent 60%);
+    }
+
+    /* 4) Punto orbital (dot girando) */
+    .dial--orbit::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #333;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform-origin: -25px -25px; /* radio aprox */
+      transform: translate(-50%, -50%) rotate(var(--rotation, -90deg));
+      box-shadow: 0 0 0 3px #ebebeb inset;
+    }
+
+    /* 5) Segmentos discretos (12 pasos visuales) */
+    .dial--segments {
+      --p: 0;
+      background:
+        conic-gradient(from -90deg,
+          #3a8eef calc(var(--p)*360deg), #ebebeb 0),
+        repeating-conic-gradient(from -90deg,
+          transparent 0 25deg, rgba(0,0,0,0.06) 25deg 30deg);
+    }
+
+    /* 6) Anillo doble (progreso + anillo interior) */
+    .dial--double {
+      --p: 0;
+      background:
+        radial-gradient(circle at center, transparent 64%, #333 64% 66%, transparent 66%),
+        conic-gradient(from -90deg, #ef8500 calc(var(--p)*360deg), #ebebeb 0);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .dials-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        max-width: 300px;
+      }
+      
+      .dial {
+        width: 70px;
+        height: 70px;
+      }
+      
+      .dial::before {
+        height: 25px;
+      }
+      
+      h1 {
+        font-size: 1.5em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="showcase-container">
+    <h1>Mostrario de Diales Interactivos</h1>
+    
+    <div class="dials-grid">
+      <div class="dial-container">
+        <div class="dial volume" data-value="95" data-label="Volume" data-min-angle="-150" data-max-angle="150"></div>
+        <div class="dial-label">Volume (300°)</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial distortion" data-value="57" data-label="Distortion" data-min-angle="-135" data-max-angle="135"></div>
+        <div class="dial-label">Distortion (270°)</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial cutoff" data-value="76" data-label="Cutoff" data-min-angle="-110" data-max-angle="110"></div>
+        <div class="dial-label">Cutoff (220°)</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial resonance" data-value="38" data-label="Resonance" data-min-angle="-100" data-max-angle="100"></div>
+        <div class="dial-label">Resonance (200°)</div>
+      </div>
+    </div>
+
+    <div style="height:24px"></div>
+
+    <div class="dials-grid">
+      <div class="dial-container">
+        <div class="dial dial--ticks" data-value="32" data-label="Ticks"></div>
+        <div class="dial-label">Ticks</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial dial--arc" data-value="64" data-label="Arc"></div>
+        <div class="dial-label">Arc</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial dial--orbit" data-value="96" data-label="Orbit"></div>
+        <div class="dial-label">Orbit</div>
+      </div>
+      
+      <div class="dial-container">
+        <div class="dial dial--segments" data-value="48" data-label="Segments"></div>
+        <div class="dial-label">Segments</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.dial').forEach(dial => {
+      let isDragging = false;
+      let startAngle = 0;
+      let startValue = 0;
+      
+      // Función para actualizar la posición del indicador
+      function updateDial(value) {
+        // Permitir ángulos por-dial a través de data-min-angle / data-max-angle
+        const minAttr = parseFloat(dial.getAttribute('data-min-angle'));
+        const maxAttr = parseFloat(dial.getAttribute('data-max-angle'));
+        const MIN_ANGLE = Number.isFinite(minAttr) ? minAttr : -135;
+        const MAX_ANGLE = Number.isFinite(maxAttr) ? maxAttr : 135;
+        const SWEEP = MAX_ANGLE - MIN_ANGLE;
+
+        const clamped = Math.max(0, Math.min(127, value));
+        const angle = MIN_ANGLE + (clamped / 127) * SWEEP;
+        const indicator = dial.querySelector('::before') || dial;
+        dial.style.setProperty('--rotation', `${angle}deg`);
+        dial.style.setProperty('--p', `${clamped/127}`);
+        
+        // Solo actualizar el valor interno para MIDI
+        dial.dataset.value = Math.round(clamped);
+      }
+      
+      // Función para obtener el ángulo del mouse respecto al centro del dial
+      function getAngle(event) {
+        const rect = dial.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
+        
+        const angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+        return (angle * 180 / Math.PI + 90 + 360) % 360;
+      }
+      
+      // Eventos del mouse
+      dial.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startAngle = getAngle(e);
+        startValue = parseFloat(dial.dataset.value);
+        dial.style.cursor = 'grabbing';
+        e.preventDefault();
+      });
+      
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const currentAngle = getAngle(e);
+        const angleDiff = currentAngle - startAngle;
+        const valueDiff = (angleDiff / 360) * 127;
+        let newValue = startValue + valueDiff;
+        
+        // Limitar el valor entre 0 y 127 (estándar MIDI)
+        newValue = Math.max(0, Math.min(127, newValue));
+        
+        updateDial(newValue);
+      });
+      
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          dial.style.cursor = 'pointer';
+        }
+      });
+      
+      // Eventos táctiles para móviles
+      dial.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startAngle = getAngle(e.touches[0]);
+        startValue = parseFloat(dial.dataset.value);
+        e.preventDefault();
+      });
+      
+      document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        
+        const currentAngle = getAngle(e.touches[0]);
+        const angleDiff = currentAngle - startAngle;
+        const valueDiff = (angleDiff / 360) * 127;
+        let newValue = startValue + valueDiff;
+        
+        newValue = Math.max(0, Math.min(127, newValue));
+        
+        updateDial(newValue);
+        e.preventDefault();
+      });
+      
+      document.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+      
+      // Click para resetear al valor medio (64 = mitad de 127)
+      dial.addEventListener('click', (e) => {
+        if (!isDragging) {
+          updateDial(64);
+        }
+      });
+      
+      // Inicializar posición
+      updateDial(parseFloat(dial.dataset.value));
+    });
+    
+    // Aplicar rotación usando CSS custom properties
+    const style = document.createElement('style');
+    style.textContent = `
+      .dial::before {
+        transform: translate(-50%, -100%) rotate(var(--rotation, -90deg));
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

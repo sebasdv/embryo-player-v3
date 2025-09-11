@@ -21,12 +21,34 @@
             align-items: center;
         }
 
+        /* Eliminar padding en móviles para usar todo el espacio */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+        }
+
         .container {
             width: 100%;
             max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+
+        /* En móviles, usar todo el ancho disponible */
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                max-width: none;
+                gap: 15px;
+            }
         }
 
         .row {
@@ -84,39 +106,61 @@
         /* Responsive breakpoints */
         @media (max-width: 480px) {
             .container {
-                gap: 15px;
-            }
-            
-            .row {
                 gap: 10px;
             }
             
+            .row {
+                gap: 8px;
+                justify-content: space-between;
+            }
+            
             .square {
-                width: 50px;
-                height: 50px;
-                border-radius: 6px;
-                font-size: 10px;
+                width: calc((100% - 24px) / 4);
+                height: calc((100% - 24px) / 4);
+                aspect-ratio: 1;
+                border-radius: 8px;
+                font-size: 12px;
+                min-width: 50px;
+                min-height: 50px;
             }
             
             .rectangle {
-                width: 70px;
-                height: 50px;
-                border-radius: 6px;
-                font-size: 10px;
+                width: calc((100% - 16px) / 3);
+                height: calc((100% - 24px) / 4);
+                border-radius: 8px;
+                font-size: 12px;
+                min-width: 50px;
+                min-height: 50px;
             }
         }
 
         @media (min-width: 481px) and (max-width: 768px) {
+            .container {
+                gap: 15px;
+            }
+            
+            .row {
+                gap: 12px;
+                justify-content: space-between;
+            }
+            
             .square {
-                width: 55px;
-                height: 55px;
-                border-radius: 7px;
+                width: calc((100% - 36px) / 4);
+                height: calc((100% - 36px) / 4);
+                aspect-ratio: 1;
+                border-radius: 8px;
+                font-size: 13px;
+                min-width: 55px;
+                min-height: 55px;
             }
             
             .rectangle {
-                width: 75px;
-                height: 55px;
-                border-radius: 7px;
+                width: calc((100% - 24px) / 3);
+                height: calc((100% - 36px) / 4);
+                border-radius: 8px;
+                font-size: 13px;
+                min-width: 60px;
+                min-height: 55px;
             }
         }
 

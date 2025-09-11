@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interfaz Calculadora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        .calculator-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 700px;
+            max-height: 1060px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .calculator-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+            background: transparent;
+            border-radius: 20px;
+        }
+
+        /* Contenedor principal que mantiene proporción */
+        @media (min-aspect-ratio: 700/1060) {
+            .calculator-container {
+                height: min(100vh, 1060px);
+                width: max(320px, min(calc(100vh * 700 / 1060), 700px));
+            }
+        }
+
+        @media (max-aspect-ratio: 700/1060) {
+            .calculator-container {
+                width: min(100vw, 700px);
+                height: max(480px, min(calc(100vw * 1060 / 700), 1060px));
+            }
+        }
+
+        /* Filas */
+        .row {
+            display: flex;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .row-1, .row-3, .row-4, .row-5, .row-6, .row-7 {
+            gap: 20px;
+            height: calc((100% - 160px) / 6); /* 6 filas de cuadrados */
+        }
+
+        .row-2 {
+            gap: 35px;
+            height: calc((100% - 160px) / 6); /* Misma altura que las demás */
+        }
+
+        /* Elementos - Cuadrados */
+        .square {
+            aspect-ratio: 1/1;
+            height: 100%;
+            background: #ebebeb;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: #333;
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Elementos - Rectángulos (Fila 2) */
+        .rectangle {
+            aspect-ratio: 210/160;
+            height: 100%;
+            background: #ebebeb;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: #333;
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Efectos hover y active */
+        .square:hover, .rectangle:hover {
+            background: #d0d0d0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .square:active, .rectangle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: #c0c0c0;
+        }
+
+        /* Efecto ripple al hacer clic */
+        .square::after, .rectangle::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        .square:active::after, .rectangle:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Responsividad para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .calculator-wrapper {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .row-1, .row-3, .row-4, .row-5, .row-6, .row-7 {
+                gap: 10px;
+            }
+            
+            .row-2 {
+                gap: 15px;
+            }
+
+            .square, .rectangle {
+                font-size: 0.9em;
+                border-radius: 8px;
+            }
+        }
+
+        /* Safe area para iOS */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+
+        /* Clase para destacar elementos especiales */
+        .special {
+            background: #4a9eff;
+            color: white;
+        }
+
+        .special:hover {
+            background: #3a8eef;
+        }
+
+        .special:active {
+            background: #2a7edf;
+        }
+
+        /* Clase para operadores */
+        .operator {
+            background: #ff9500;
+            color: white;
+            font-weight: bold;
+        }
+
+        .operator:hover {
+            background: #ef8500;
+        }
+
+        .operator:active {
+            background: #df7500;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="calculator-wrapper">
+            <!-- Fila 1 -->
+            <div class="row row-1">
+                <div class="square" onclick="handleClick(this)">1</div>
+                <div class="square" onclick="handleClick(this)">2</div>
+                <div class="square" onclick="handleClick(this)">3</div>
+                <div class="square operator" onclick="handleClick(this)">+</div>
+            </div>
+
+            <!-- Fila 2 - Rectangulares -->
+            <div class="row row-2">
+                <div class="rectangle special" onclick="handleClick(this)">FUNC</div>
+                <div class="rectangle special" onclick="handleClick(this)">MODE</div>
+                <div class="rectangle special" onclick="handleClick(this)">CLEAR</div>
+            </div>
+
+            <!-- Fila 3 -->
+            <div class="row row-3">
+                <div class="square" onclick="handleClick(this)">4</div>
+                <div class="square" onclick="handleClick(this)">5</div>
+                <div class="square" onclick="handleClick(this)">6</div>
+                <div class="square operator" onclick="handleClick(this)">-</div>
+            </div>
+
+            <!-- Fila 4 -->
+            <div class="row row-4">
+                <div class="square" onclick="handleClick(this)">7</div>
+                <div class="square" onclick="handleClick(this)">8</div>
+                <div class="square" onclick="handleClick(this)">9</div>
+                <div class="square operator" onclick="handleClick(this)">×</div>
+            </div>
+
+            <!-- Fila 5 -->
+            <div class="row row-5">
+                <div class="square" onclick="handleClick(this)">.</div>
+                <div class="square" onclick="handleClick(this)">0</div>
+                <div class="square" onclick="handleClick(this)">=</div>
+                <div class="square operator" onclick="handleClick(this)">÷</div>
+            </div>
+
+            <!-- Fila 6 -->
+            <div class="row row-6">
+                <div class="square" onclick="handleClick(this)">(</div>
+                <div class="square" onclick="handleClick(this)">)</div>
+                <div class="square" onclick="handleClick(this)">%</div>
+                <div class="square operator" onclick="handleClick(this)">√</div>
+            </div>
+
+            <!-- Fila 7 -->
+            <div class="row row-7">
+                <div class="square" onclick="handleClick(this)">π</div>
+                <div class="square" onclick="handleClick(this)">e</div>
+                <div class="square" onclick="handleClick(this)">^</div>
+                <div class="square operator" onclick="handleClick(this)">AC</div>
+            </div>
+    </div>
+
+    <script>
+        // Función para manejar clics en los botones
+        function handleClick(element) {
+            const value = element.textContent;
+            console.log('Botón presionado:', value);
+            
+            // Añadir efecto visual de feedback
+            element.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                element.style.transform = '';
+            }, 100);
+
+            // Aquí puedes agregar la lógica específica para cada botón
+            switch(value) {
+                case 'CLEAR':
+                case 'AC':
+                    console.log('Limpiar pantalla');
+                    break;
+                case 'FUNC':
+                    console.log('Abrir funciones');
+                    break;
+                case 'MODE':
+                    console.log('Cambiar modo');
+                    break;
+                case '=':
+                    console.log('Calcular resultado');
+                    break;
+                default:
+                    console.log('Entrada:', value);
+            }
+        }
+
+        // Ajustar el tamaño de fuente basado en el tamaño del contenedor
+        function adjustFontSize() {
+            // Función removida ya que ahora usamos clamp() en CSS
+        }
+
+        // Detectar si es móvil para optimizar visualización
+        function optimizeForMobile() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.querySelector('.calculator-container').style.borderRadius = '0';
+            }
+        }
+
+        // Llamar al cargar
+        window.addEventListener('load', optimizeForMobile);
+    </script>
+</body>
+</html>
